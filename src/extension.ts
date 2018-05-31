@@ -28,20 +28,20 @@ export function activate(context: vscode.ExtensionContext) {
 
     autohint.setEditor(vscode.window.activeTextEditor);
 
-    context.subscriptions.push(vscode.commands.registerCommand('type', (args)=>{
+    context.subscriptions.push(vscode.commands.registerCommand('type', (args) => {
         if (/[^\s]/.test(args.text))
             autohint.setShould(true);
         vscode.commands.executeCommand('default:type', args);
     }));
 
-    vscode.window.onDidChangeTextEditorSelection(event=>{
-        if (autohint.cursorState==0) {
-            autohint.remove(autohint.should?function() {
+    vscode.window.onDidChangeTextEditorSelection(event => {
+        if (autohint.cursorState == 0) {
+            autohint.remove(autohint.should ? function () {
                 autohint.add(false);
-            }:null);
+            } : null);
             return;
         }
-        else if (autohint.cursorState==2) {
+        else if (autohint.cursorState == 2) {
             autohint.cursorState = 0;
         }
         if (autohint.should) {
@@ -49,7 +49,7 @@ export function activate(context: vscode.ExtensionContext) {
         }
     })
 
-    context.subscriptions.push(vscode.commands.registerCommand('extension.test', ()=>{
+    context.subscriptions.push(vscode.commands.registerCommand('extension.test', () => {
 
         autohint.insert();
 
