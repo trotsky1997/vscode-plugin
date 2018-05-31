@@ -35,6 +35,8 @@ export function activate(context: vscode.ExtensionContext) {
     }));
 
     vscode.window.onDidChangeTextEditorSelection(event => {
+        if (autohint.editor == null)
+            autohint.editor = vscode.window.activeTextEditor;
         if (autohint.cursorState == 0) {
             autohint.remove(autohint.should ? function () {
                 autohint.add(false);

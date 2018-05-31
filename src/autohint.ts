@@ -64,6 +64,7 @@ export default class Autohint {
 
     public setShould(should: boolean): void {
         this.should = should;
+        console.log(should)
     }
 
     public add(request: boolean): void {
@@ -79,28 +80,15 @@ export default class Autohint {
             return;
         var text = this.editor.document.getText();
         var position = this.editor.selection.active;
-        var current = "", prefix = text.substring(0, this.editor.document.offsetAt(position));
-        var wordRange = this.editor.document.getWordRangeAtPosition(position);
-        if (wordRange != null) {
-            current = this.editor.document.getText(new Range(wordRange.start, position));
-            prefix = text.substring(0, this.editor.document.offsetAt(wordRange.start));
-        }
 
         if (request || this.list.length <= 3) {
-            this.predict(prefix, current);
+            var prefix = text.substring(0, this.editor.document.offsetAt(position));
+            this.predict(prefix, null);
             return;
         }
 
         var indent = this.editor.document.lineAt(position).firstNonWhitespaceCharacterIndex;
         var temp = this.list.slice();
-        if (current.length != 0 && this.list[0].startsWith(current)) {
-            if (this.list[0] == current) {
-                this.list.shift();
-            }
-            else {
-                this.list[0] = this.list[0].substring(current.length);
-            }
-        }
 
         var builder = "", eol = this.editor.document.eol;
         this.list.forEach(wd => {
@@ -237,19 +225,18 @@ export default class Autohint {
 
         var autohint = this.autohint;
         this.req = request.post({
-            url: "http://162.105.89.54:23456/predict", form: {
+            url: "http://www.nnthink.com:8787/predict", form: {
                 "text": prefix,
-                "current": word
+                "current": null
             }
         }, function (error, response, body) {
             autohint.req = null;
             if (response && (response.statusCode == 200)) {
                 var data = JSON.parse(body);
-                if (data.code == 0) {
-                    autohint.list = data.data;
-                    if (autohint.list.length > 3)
-                        autohint.add(false);
-                }
+                autohint.list = data[0].tokens;
+                autohint.list = autohint.list.filter(v => v != '<BREAK>');
+                if (autohint.list.length > 3)
+                    autohint.add(false);
             }
         });
     }

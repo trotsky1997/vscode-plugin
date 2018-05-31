@@ -15,7 +15,7 @@
     ],
     "main": "./out/src/extension",
     "contributes": {
-        "keybindings":[
+        "keybindings": [
             {
                 "command": "extension.test",
                 "key": "Tab"
