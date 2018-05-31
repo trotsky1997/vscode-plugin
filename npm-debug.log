@@ -1,0 +1,36 @@
+0 info it worked if it ends with ok
+1 verbose cli [ 'D:\\nodejs\\node.exe',
+1 verbose cli   'D:\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
+1 verbose cli   'run',
+1 verbose cli   'watch' ]
+2 info using npm@3.10.10
+3 info using node@v6.11.3
+4 verbose run-script [ 'prewatch', 'watch', 'postwatch' ]
+5 info lifecycle autocomplete@0.0.1~prewatch: autocomplete@0.0.1
+6 silly lifecycle autocomplete@0.0.1~prewatch: no script for prewatch, continuing
+7 info lifecycle autocomplete@0.0.1~watch: autocomplete@0.0.1
+8 verbose lifecycle autocomplete@0.0.1~watch: unsafe-perm in lifecycle true
+9 verbose lifecycle autocomplete@0.0.1~watch: PATH: D:\nodejs\node_modules\npm\bin\node-gyp-bin;E:\js\vscode-plugin2\node_modules\.bin;D:\Python27\;D:\Python27\Scripts;C:\ProgramData\Oracle\Java\javapath;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\Program Files (x86)\AMD\ATI.ACE\Core-Static;D:\jdk\bin;D:\jdk\jre\bin;C:\Program Files (x86)\Windows Kits\8.1\Windows Performance Toolkit\;C:\Program Files (x86)\ATI Technologies\ATI.ACE\Core-Static;C:\WINDOWS\SysWOW64\WindowsPowerShell\v1.0\Modules\TShell\TShell\;C:\Program Files\Microsoft SQL Server\110\Tools\Binn\;D:\nodejs\;D:\Git\cmd;D:\Git\mingw64\bin;D:\Git\usr\bin;C:\Users\oc\AppData\Local\Microsoft\WindowsApps;D:\VSCode\bin;C:\Users\oc\AppData\Roaming\npm
+10 verbose lifecycle autocomplete@0.0.1~watch: CWD: E:\js\vscode-plugin2
+11 silly lifecycle autocomplete@0.0.1~watch: Args: [ '/d /s /c', 'tsc -watch -p ./' ]
+12 verbose stack Error: kill ENOSYS
+12 verbose stack     at exports._errnoException (util.js:1020:11)
+12 verbose stack     at process.kill (internal/process.js:190:13)
+12 verbose stack     at process.listener (D:\nodejs\node_modules\npm\node_modules\npmlog\node_modules\gauge\node_modules\signal-exit\index.js:86:15)
+12 verbose stack     at emitNone (events.js:91:20)
+12 verbose stack     at process.emit (events.js:185:7)
+12 verbose stack     at processEmit (D:\nodejs\node_modules\npm\node_modules\npmlog\node_modules\gauge\node_modules\signal-exit\index.js:146:32)
+12 verbose stack     at processEmit (D:\nodejs\node_modules\npm\node_modules\npm-registry-client\node_modules\npmlog\node_modules\gauge\node_modules\signal-exit\index.js:146:32)
+12 verbose stack     at Signal.wrap.onsignal (internal/process.js:217:44)
+13 verbose cwd E:\js\vscode-plugin2
+14 error Windows_NT 10.0.16299
+15 error argv "D:\\nodejs\\node.exe" "D:\\nodejs\\node_modules\\npm\\bin\\npm-cli.js" "run" "watch"
+16 error node v6.11.3
+17 error npm  v3.10.10
+18 error code ENOSYS
+19 error errno ENOSYS
+20 error syscall kill
+21 error kill ENOSYS
+22 error If you need help, you may report this error at:
+22 error     <https://github.com/npm/npm/issues>
+23 verbose exit [ 1, true ]
