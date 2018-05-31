@@ -1,9 +1,9 @@
 {
-    "name": "autocomplete",
-    "displayName": "autocomplete",
-    "description": "",
+    "name": "aixcoder",
+    "displayName": "aixcoder",
+    "description": "aixcoder code suggestion",
     "version": "0.0.1",
-    "publisher": "ckcz123",
+    "publisher": "nnthink",
     "engines": {
         "vscode": "^1.18.0"
     },
