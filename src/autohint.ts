@@ -64,7 +64,6 @@ export default class Autohint {
 
     public setShould(should: boolean): void {
         this.should = should;
-        console.log(should)
     }
 
     public add(request: boolean): void {
@@ -224,8 +223,19 @@ export default class Autohint {
         }
 
         var autohint = this.autohint;
-        this.req = request.post({
-            url: "http://www.nnthink.com:8787/predict", form: {
+        var proxyUrl = vscode.workspace.getConfiguration().get("http.proxy");
+        var proxyAuth = vscode.workspace.getConfiguration().get("http.proxyAuthorization");
+        var proxyStrictSSL = vscode.workspace.getConfiguration().get("http.proxyStrictSSL");
+        
+        this.req = request({
+            method: "post",
+            url: "http://www.nnthink.com:8787/predict",
+            headers: {
+                "Proxy-Authorization": proxyAuth
+            },
+            proxy: proxyUrl,
+            strickSSL: proxyStrictSSL,
+            form: {
                 "text": prefix,
                 "current": null
             }
