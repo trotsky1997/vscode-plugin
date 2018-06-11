@@ -12,4 +12,19 @@ WARNING: This is a beta version. Many features are currently under development.
 4. You should see suggestions appear momentarily.
 5. Use "tab" to advance.
 
+## Configurations
+
+```json
+{
+  // The delay in milliseconds before sending requests.
+  "aiXcoder.delay": 3000,
+
+  // Specifies the endpoint for code suggestion server.
+  "aiXcoder.endpoint": "http://www.nnthink.com:8787/predict",
+
+  // Default programming language, one of ["java", "python", "cpp"].
+  "aiXcoder.language": "java"
+}
+```
+
 **Enjoy!**

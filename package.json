@@ -2,8 +2,11 @@
     "name": "aixcoder",
     "displayName": "aixcoder",
     "description": "aixcoder code suggestion",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "publisher": "nnthink",
+    "repository": {
+        "url": "https://github.com/felixhao28/vscode-plugin"
+    },
     "engines": {
         "vscode": "^1.18.0"
     },
@@ -20,7 +23,28 @@
                 "command": "extension.test",
                 "key": "Tab"
             }
-        ]
+        ],
+        "configuration": {
+            "type": "object",
+            "title": "aiXcoder configuration",
+            "properties": {
+                "aiXcoder.language": {
+                    "type": "string",
+                    "default": "java",
+                    "description": "Default programming language, one of [\"java\", \"python\", \"cpp\"]."
+                },
+                "aiXcoder.endpoint": {
+                    "type": "string",
+                    "default": "http://www.nnthink.com:8787/predict",
+                    "description": "Specifies the endpoint for code suggestion server."
+                },
+                "aiXcoder.delay": {
+                    "type": "integer",
+                    "default": 3000,
+                    "description": "The delay in milliseconds before sending requests."
+                }
+            }
+        }
     },
     "scripts": {
         "vscode:prepublish": "npm run compile",
@@ -30,10 +54,13 @@
         "test": "npm run compile && node ./node_modules/vscode/bin/test"
     },
     "devDependencies": {
-        "typescript": "^2.5.2",
-        "vscode": "^1.1.5",
-        "mocha": "^3.5.0",
-        "@types/node": "^7.0.43",
-        "@types/mocha": "^2.2.42"
+        "typescript": "^2.9.1",
+        "vscode": "^1.1.18",
+        "mocha": "^5.2.0",
+        "@types/node": "^10.3.2",
+        "@types/mocha": "^5.2.1"
+    },
+    "dependencies": {
+        "request": "^2.87.0"
     }
 }

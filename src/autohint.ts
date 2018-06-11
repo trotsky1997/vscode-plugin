@@ -5,6 +5,7 @@ import { TextEditor, TextEditorDecorationType, Range } from 'vscode';
 var request = require('request');
 
 export default class Autohint {
+    delayed: NodeJS.Timer;
     list: Array<string>;
     completeStr: string;
     completeLen: number;
@@ -226,29 +227,39 @@ export default class Autohint {
         var proxyUrl = vscode.workspace.getConfiguration().get("http.proxy");
         var proxyAuth = vscode.workspace.getConfiguration().get("http.proxyAuthorization");
         var proxyStrictSSL = vscode.workspace.getConfiguration().get("http.proxyStrictSSL");
-        
-        this.req = request({
-            method: "post",
-            url: "http://www.nnthink.com:8787/predict",
-            headers: {
-                "Proxy-Authorization": proxyAuth
-            },
-            proxy: proxyUrl,
-            strickSSL: proxyStrictSSL,
-            form: {
-                "text": prefix,
-                "current": null
-            }
-        }, function (error, response, body) {
-            autohint.req = null;
-            if (response && (response.statusCode == 200)) {
-                var data = JSON.parse(body);
-                autohint.list = data[0].tokens;
-                autohint.list = autohint.list.filter(v => v != '<BREAK>');
-                if (autohint.list.length > 3)
-                    autohint.add(false);
-            }
-        });
+
+        var endpoint = vscode.workspace.getConfiguration().get("aiXcoder.endpoint");
+        var lang = vscode.workspace.getConfiguration().get("aiXcoder.language");
+        var delay = vscode.workspace.getConfiguration().get("aiXcoder.delay");
+
+        clearTimeout(this.delayed);
+        this.delayed = setTimeout(() => {
+            console.log("sending request");
+            this.req = request({
+                method: "post",
+                url: endpoint,
+                headers: {
+                    "Proxy-Authorization": proxyAuth
+                },
+                proxy: proxyUrl,
+                strickSSL: proxyStrictSSL,
+                form: {
+                    "text": prefix,
+                    "current": null,
+                    "ext": lang
+                }
+            }, function (error, response, body) {
+                autohint.req = null;
+                if (response && (response.statusCode == 200)) {
+                    console.log(body);
+                    var data = JSON.parse(body);
+                    autohint.list = data[0].tokens;
+                    autohint.list = autohint.list.filter(v => v != '<BREAK>');
+                    if (autohint.list.length > 3)
+                        autohint.add(false);
+                }
+            });
+        }, Number(delay));
     }
 
 }
