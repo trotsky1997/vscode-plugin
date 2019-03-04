@@ -14,7 +14,7 @@ WARNING: This is a beta version. Many features are currently under development.
 
 ## Configurations
 
-```json
+```java
 {
   // The delay in milliseconds before sending requests.
   "aiXcoder.delay": 3000,
