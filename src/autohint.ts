@@ -233,22 +233,28 @@ export default class Autohint {
         var delay = vscode.workspace.getConfiguration().get("aiXcoder.delay");
 
         clearTimeout(this.delayed);
+        var startTime = new Date().getTime();
         this.delayed = setTimeout(() => {
             console.log("sending request");
             this.req = request({
                 method: "post",
-                url: endpoint,
+                url: endpoint + "predict",
                 headers: {
                     "Proxy-Authorization": proxyAuth
                 },
                 proxy: proxyUrl,
-                strickSSL: proxyStrictSSL,
+                strictSSL: proxyStrictSSL,
                 form: {
                     "text": prefix,
                     "current": null,
-                    "ext": lang
+                    "ext": lang,
+                    "uuid": 'vscode',
+                    'fileid': 'testfile',
+                    'project': 'testproj'
                 }
             }, function (error, response, body) {
+                console.log(`request took ${new Date().getTime() -  startTime}ms`);
+                if (error) console.log(error);
                 autohint.req = null;
                 if (response && (response.statusCode == 200)) {
                     console.log(body);
