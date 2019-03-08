@@ -1,23 +1,9 @@
-'use strict';
+"use strict";
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 
-import {
-    commands, CompletionItem, CompletionItemKind, Disposable,
-    ExtensionContext, languages, Position, Range, TextDocument, Uri, window,
-    workspace,
-    CancellationToken,
-    CompletionContext,
-    CompletionList,
-    ProviderResult,
-} from "vscode";
-import Autohint from './autohint';
-import { eventNames } from 'cluster';
-import { resolve } from 'dns';
-
-var request = require('request');
-
+const request = require("request-promise");
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
@@ -30,130 +16,155 @@ export function activate(context: vscode.ExtensionContext) {
     // Now provide the implementation of the command with  registerCommand
     // The commandId parameter must match the command field in package.json
 
-    context.subscriptions.push(vscode.languages.registerCompletionItemProvider('java', {
-        async provideCompletionItems(document, position, token: CancellationToken, context: CompletionContext): Promise<CompletionItem[] | CompletionList> {
-            let result = '';
-            // 敲键的时候执行这个
-            let strLabel = await new Promise((resolve)=> {
-                var proxyUrl = vscode.workspace.getConfiguration().get("http.proxy");
-                var proxyAuth = vscode.workspace.getConfiguration().get("http.proxyAuthorization");
-                var proxyStrictSSL = vscode.workspace.getConfiguration().get("http.proxyStrictSSL");
-                var endpoint = vscode.workspace.getConfiguration().get("aiXcoder.endpoint");
-                var lang = vscode.workspace.getConfiguration().get("aiXcoder.language");
-                request({
-                    method: "post",
-                    url: endpoint + "predict",
-                    headers: {
-                        "Proxy-Authorization": proxyAuth
-                    },
-                    proxy: proxyUrl,
-                    strictSSL: proxyStrictSSL,
-                    form: {
-                        "text": vscode.window.activeTextEditor.document.getText(),    // 这个是输入的内容，暂时先用p来代替
-                        "current": null,
-                        "ext": lang,
-                        "uuid": 'vscode',
-                        'fileid': 'testfile',
-                        'project': 'testproj'
-                    }
-                }, function (error, response, body) {
-                    if (error) console.log(error);
-                    if (response && (response.statusCode == 200)) {
-                        resolve(formatResData(body));
-                    }
-                });
-            })
-            console.log(strLabel);
-            // return [{label: strLabel}];    // 好无奈，报错了！ 😭
-            return [{label: result}];
-        },
-        resolveCompletionItem(item: CompletionItem, token: CancellationToken): ProviderResult<CompletionItem> {
-            return null;
-        }
-    }, ".",";",'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'));
+    let lastText = "";
+    let lastPromise = null;
+    let lastFetchTime = 0;
 
-    function getReqText() {
-        let text = vscode.window.activeTextEditor.document.getText();   // 获取编辑器上面已有的文字
-        return text;
+    async function fetch() {
+        const proxyUrl: string = vscode.workspace.getConfiguration().get("http.proxy");
+        const proxyAuth: string = vscode.workspace.getConfiguration().get("http.proxyAuthorization");
+        const proxyStrictSSL: string = vscode.workspace.getConfiguration().get("http.proxyStrictSSL");
+        const endpoint: string = vscode.workspace.getConfiguration().get("aiXcoder.endpoint");
+        const lang: string = vscode.workspace.getConfiguration().get("aiXcoder.language");
+        const text = getReqText();
+
+        let host = proxyUrl || endpoint.substring(endpoint.indexOf("://") + 3);
+        if (host.indexOf("/") >= 0) {
+            host = host.substr(0, host.indexOf("/"));
+        }
+        if (lastText === text && lastPromise != null) {
+            return lastPromise;
+        } else {
+            console.log("send request");
+            lastText = text;
+            lastFetchTime = new Date().getTime();
+            const thisFetchTime = lastFetchTime;
+            lastPromise = request({
+                method: "post",
+                url: endpoint + "predict",
+                headers: {
+                    "Proxy-Authorization": proxyAuth,
+                },
+                proxy: proxyUrl,
+                strictSSL: proxyStrictSSL,
+                form: {
+                    text,    // 这个是输入的内容，暂时先用p来代替
+                    ext: lang,
+                    uuid: "vscode",
+                    fileid: "testfile",
+                    project: "testproj",
+                    prob_th_rnn_t: 0,
+                    prob_th_rnn: 0,
+                },
+            });
+            const body: string = await lastPromise;
+            if (thisFetchTime < lastFetchTime) {
+                // expire
+                return "";
+            }
+            console.log("get request " + (new Date().getTime() - lastFetchTime));
+            console.log(body);
+            return body;
+        }
     }
 
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider("java", {
+        async provideCompletionItems(): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
+            const body = await fetch();
+            const strLabels = formatResData(body);
+            return strLabels;
+        },
+        resolveCompletionItem(): vscode.ProviderResult<vscode.CompletionItem> {
+            return null;
+        },
+    }, ".", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "="));
+
+    function getReqText() {
+        const selectionStart = vscode.window.activeTextEditor.selection.start;
+        const offset = vscode.window.activeTextEditor.document.offsetAt(selectionStart);
+        const text = vscode.window.activeTextEditor.document.getText();   // 获取编辑器上面已有的文字
+        return text.substring(0, offset);
+    }
+
+    const rightTrim = ["if", "else", "catch", "finally", "for", "return", "++", "--", "]", ","];
+    const allTrim = ["+=", "-=", "==", "*=", "/=", "**", "%=", "!=", "<>", "||", "&&", ">=", "<=", "&=", "^=", "|=", "<<", ">>", "^|", "->", "::", "*", "%", ":", "}", "{", "<<=", ">>=", "*", "/", "%", ">>>", "<", ">", "?", "="];
+
     // 处理返回的值，最终变成放入提示框的内容
-    function formatResData(data) {
-        let builder = '';
-        var data = JSON.parse(data);
-        data[0].tokens = data[0].tokens.filter(v => v != '<BREAK>');    // 过滤<BREAK>
-
-        let leftTrim = [];
-        let rightTrim = ['if', 'else', 'catch', 'finally', 'for','return', '++', '--', ']', ','];
-        let allTrim = ['+=', '-=', '==', '*=', '/=', '**', '%=', '!=', '<>', '||', '&&', ">=", "<=", "&=", "^=", "|=", "<<", ">>", "^|", "->", "::", '*', '%', ':', '}', '{', '<<=', '>>=', '*', '/', '%', '>>>', '<', '>', '?','='];
-        let unsureTrim = ['+', '-', ':','<BREAK>'];
-
-        if (data[0].tokens.length > 3) {
-            let list = data[0].tokens;
-            var position = vscode.window.activeTextEditor.selection.active;
+    function formatResData(json: string): vscode.CompletionItem[] {
+        const data = JSON.parse(json);
+        const completions = [];
+        for (const item of data) {
+            let builder = "";
+            const list: string[] = item.tokens.filter((v: string) => v !== "<BREAK>");    // 过滤<BREAK>
+            const position = vscode.window.activeTextEditor.selection.active;
             let indent = vscode.window.activeTextEditor.document.lineAt(position).firstNonWhitespaceCharacterIndex;
-            list.forEach((wd,key,arr)=> {
-                if(key != list.length - 1) {
-                    let nextWd = arr[key + 1];
-                     /*
-                        将非<ENTER><UNK><null><BREAK>转换成空字符串的左右各加一个空格。但是如果该字符串出现在了一行的最后，不加。
-                    */
-                    if(/^<.{1,}>$/.test(wd) && (wd != '<ENTER>') && (wd != '<UNK>') && (wd != '<null>') && (wd != '<BREAK>') && (wd != '<str>')) {
-                        wd = ' ' + wd;
-                        if(nextWd != ';') {
-                            wd+= ' ';
+            list.forEach((wd, key, arr) => {
+                if (key !== list.length - 1) {
+                    const nextWd = arr[key + 1];
+                    /*
+                       将非<ENTER><UNK><null><BREAK>转换成空字符串的左右各加一个空格。但是如果该字符串出现在了一行的最后，不加。
+                   */
+                    if (/^<.{1,}>$/.test(wd) && (wd !== "<ENTER>") && (wd !== "<UNK>") && (wd !== "<null>") && (wd !== "<BREAK>") && (wd !== "<str>")) {
+                        wd = " " + wd;
+                        if (nextWd !== ";") {
+                            wd += " ";
                         }
                     }
 
-                     // 加右空格
-                    for (var j = 0; j < rightTrim.length; j++) {
-                        if (wd == rightTrim[j]) {
-                            if (nextWd && nextWd == ';' || nextWd && nextWd == ')') {
+                    if (/^[a-zA-Z$_0-9]+$/.test(wd) && /^[a-zA-Z$_0-9]+$/.test(nextWd)) {
+                        wd += " ";
+                    }
+
+                    // 加右空格
+                    for (const rightTrimWord of rightTrim) {
+                        if (wd === rightTrimWord) {
+                            if (nextWd && nextWd === ";" || nextWd && nextWd === ")") {
                                 break;
                             }
-                            wd = wd + ' ';
+                            wd = wd + " ";
                             break;
                         }
                     }
 
                     // 加两侧空格
-                    for (var j = 0; j < allTrim.length; j++) {
-                        if (wd == allTrim[j]) {
-                            if (nextWd && nextWd == ';') {
+                    for (const allTrimWord of allTrim) {
+                        if (wd === allTrimWord) {
+                            if (nextWd && nextWd === ";") {
                                 break;
                             }
-                            wd = ' ' + wd + ' ';
+                            wd = " " + wd + " ";
                             break;
                         }
                     }
 
-                    wd = '' ? ' ' + wd : wd;
-                    wd = wd.replace(/<str>([\w|\W]+)/,function(a,a1) {
+                    wd = "" ? " " + wd : wd;
+                    wd = wd.replace(/<str>([\w|\W]+)/, function(a, a1) {
                         return '"' + a1 + '"';
                     });
                 }
-               
-                if (wd == "<ENTER>") {
+
+                if (wd === "<ENTER>") {
                     builder += "\r";
                     builder += "\n";
-                    for (var i = 0; i < indent; i++) builder += " ";     // enter换行
-                }
-                else if (wd == "<IND>") {
+                    for (let i = 0; i < indent; i++) { builder += " "; }     // enter换行
+                } else if (wd === "<IND>") {
                     indent += 4;
                     builder += "    ";  // ind加缩进
-                }
-                else if (wd == "<UNIND>") {    // unind减缩进
-                    if (builder.length >= 4 && builder.substring(builder.length - 4) == "    ") {
+                } else if (wd === "<UNIND>") {    // unind减缩进
+                    if (builder.length >= 4 && builder.substring(builder.length - 4) === "    ") {
                         builder = builder.substring(0, builder.length - 4);
                     }
-                } 
-                else {
+                } else {
                     // builder += wd + " ";   // 每两个返回值之间加个空格
                     builder += wd;
                 }
-            })
+            });
+            completions.push({
+                label: item.current + builder,
+                insertString: builder,
+            });
         }
-        return builder;
+        return completions;
     }
 }
 

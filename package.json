@@ -19,24 +19,18 @@
     ],
     "main": "./out/src/extension",
     "contributes": {
-        "keybindings": [
-            {
-                "command": "extension.test",
-                "key": "Tab"
-            }
-        ],
         "configuration": {
             "type": "object",
             "title": "aiXcoder configuration",
             "properties": {
                 "aiXcoder.language": {
                     "type": "string",
-                    "default": "java",
+                    "default": "java(Java)",
                     "description": "Default programming language, one of [\"java\", \"python\", \"cpp\"]."
                 },
                 "aiXcoder.endpoint": {
                     "type": "string",
-                    "default": "https://api.aixcoder.com/",
+                    "default": "https://dev.aixcoder.com/",
                     "description": "Specifies the endpoint for code suggestion server."
                 },
                 "aiXcoder.delay": {
@@ -57,12 +51,19 @@
     "devDependencies": {
         "@types/mocha": "^5.2.6",
         "@types/node": "^11.10.4",
+        "eslint": "^5.15.1",
+        "eslint-config-standard": "^12.0.0",
+        "eslint-plugin-import": "^2.16.0",
+        "eslint-plugin-node": "^8.0.1",
+        "eslint-plugin-promise": "^4.0.1",
+        "eslint-plugin-standard": "^4.0.0",
         "mocha": "^6.0.2",
         "tslint": "^5.13.1",
         "typescript": "^3.3.3333",
         "vscode": "^1.1.30"
     },
     "dependencies": {
-        "request": "^2.88.0"
+        "agentkeepalive": "^4.0.2",
+        "request-promise": "^4.2.4"
     }
 }

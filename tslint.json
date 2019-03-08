@@ -1,0 +1,12 @@
+{
+    "extends": "tslint:latest",
+    "rules": {
+        "no-implicit-dependencies": false,
+        "no-var-requires": false,
+        "no-console": false,
+        "object-literal-sort-keys": false,
+        "max-line-length": false,
+        "only-arrow-functions": false,
+        "no-empty": false
+    }
+}
