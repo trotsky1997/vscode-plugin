@@ -7,7 +7,6 @@ const request = require("request-promise");
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-
     // Use the console to output diagnostic information (console.log) and errors (console.error)
     // This line of code will only be executed once when your extension is activated
     // console.log('Congratulations, your extension "autocomplete" is now active!');
@@ -36,6 +35,7 @@ export function activate(context: vscode.ExtensionContext) {
             return lastPromise;
         } else {
             console.log("send request");
+            console.log(vscode.workspace.textDocuments);
             lastText = text;
             lastFetchTime = new Date().getTime();
             const thisFetchTime = lastFetchTime;
@@ -48,8 +48,8 @@ export function activate(context: vscode.ExtensionContext) {
                 proxy: proxyUrl,
                 strictSSL: proxyStrictSSL,
                 form: {
-                    text,    // 这个是输入的内容，暂时先用p来代替
-                    ext: lang,
+                    text,
+                    ext: vscode.workspace.textDocuments[vscode.workspace.textDocuments.length - 1].languageId === "java" ? "java(Java)" : "TensorFlow(Python)",
                     uuid: "vscode",
                     fileid: "testfile",
                     project: "testproj",
@@ -67,6 +67,18 @@ export function activate(context: vscode.ExtensionContext) {
             return body;
         }
     }
+
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider("python", {
+
+        async provideCompletionItems(): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
+            const body = await fetch();
+            const strLabels = formatResData(body);
+            return strLabels;
+        },
+        resolveCompletionItem(): vscode.ProviderResult<vscode.CompletionItem> {
+            return null;
+        },
+    }, ".", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "="));
 
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider("java", {
         async provideCompletionItems(): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
