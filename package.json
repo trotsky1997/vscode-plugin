@@ -23,20 +23,20 @@
             "type": "object",
             "title": "aiXcoder configuration",
             "properties": {
-                "aiXcoder.language": {
-                    "type": "string",
-                    "default": "java(Java)",
-                    "description": "Default programming language, one of [\"java\", \"python\", \"cpp\"]."
-                },
                 "aiXcoder.endpoint": {
                     "type": "string",
-                    "default": "https://dev.aixcoder.com/",
+                    "default": "https://api.aixcoder.com/",
                     "description": "Specifies the endpoint for code suggestion server."
                 },
-                "aiXcoder.delay": {
-                    "type": "integer",
-                    "default": 3000,
-                    "description": "The delay in milliseconds before sending requests."
+                "aiXcoder.socketEndpoint": {
+                    "type": "string",
+                    "default": "api.aixcoder.com:8991",
+                    "description": "Specifies the endpoint for code suggestion socket server."
+                },
+                "aiXcoder.uuid": {
+                    "type": "string",
+                    "default": "",
+                    "description": "You do not need to set this manually."
                 }
             }
         }
