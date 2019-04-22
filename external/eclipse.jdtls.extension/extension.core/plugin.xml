@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.5"?>
+<plugin>
+   <extension point="org.eclipse.jdt.ls.core.delegateCommandHandler">
+      <delegateCommandHandler class="com.aixcoder.jdtls.extension.core.internal.SampleDelegateCommandHandler">
+            <command id="com.aixcoder.jdtls.extension.completion"/>
+            <command id="com.aixcoder.jdtls.extension.enable"/>
+       </delegateCommandHandler>
+   </extension>
+</plugin>

@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <Platforms>AnyCPU;x64</Platforms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="Microsoft.Python.Analysis">
+      <HintPath>C:\Users\felix\.vscode\extensions\ms-python.python-2019.3.6558\languageServer.0.2.59\Microsoft.Python.Analysis.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Python.Analysis.Core">
+      <HintPath>C:\Users\felix\.vscode\extensions\ms-python.python-2019.3.6558\languageServer.0.2.59\Microsoft.Python.Analysis.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Python.Core">
+      <HintPath>C:\Users\felix\.vscode\extensions\ms-python.python-2019.3.6558\languageServer.0.2.59\Microsoft.Python.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Python.LanguageServer">
+      <HintPath>C:\Users\felix\.vscode\extensions\ms-python.python-2019.3.6558\languageServer.0.2.59\Microsoft.Python.LanguageServer.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Python.Parsing">
+      <HintPath>C:\Users\felix\.vscode\extensions\ms-python.python-2019.3.6558\languageServer.0.2.59\Microsoft.Python.Parsing.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>C:\Users\felix\.vscode\extensions\ms-python.python-2019.3.6558\languageServer.0.2.59\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

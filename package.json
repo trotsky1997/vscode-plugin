@@ -31,7 +31,7 @@
             }
         },
         "javaExtensions": [
-            "D:\\workspace\\extension\\extension.core\\target\\extension.core-0.0.1-SNAPSHOT.jar"
+            "out/src/aixjdtls.jar"
         ]
     },
     "scripts": {
