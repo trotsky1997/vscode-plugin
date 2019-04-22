@@ -13,15 +13,15 @@ function localize(key: string) {
     const messages = {
         "mspythonExtension.install": {
             "en": "AiXCoder: Microsoft Python extension is not installed or enabled. Please install Microsoft Python extension for the best experience.",
-            "zh-cn": "AiXCoder: Microsoft Python插件没有安装或启用。请安装Microsoft Python插件以获得最佳体验。",
+            "zh-cn": "AiXCoder: Microsoft Python 插件没有安装或启用。请安装 Microsoft Python 插件以获得最佳体验。",
         },
         "assembly.load.fail": {
             "en": "AiXCoder: assembly load failed, reason: ",
             "zh-cn": "AiXCoder: 程序集加载失败，原因：",
         },
         "mspythonExtension.activate.fail": {
-            "en": "AiXCoder: Microsoft Python Extension activate failed, reason: ",
-            "zh-cn": "AiXCoder: Microsoft Python Extension 启动失败，原因：",
+            "en": "AiXCoder: Microsoft Python extension activate failed, reason: ",
+            "zh-cn": "AiXCoder: Microsoft Python 插件启动失败，原因：",
         },
         "action.install": {
             "en": "Install...",
@@ -30,6 +30,10 @@ function localize(key: string) {
         "redhatjavaExtension.activate.fail": {
             "en": "AiXCoder: Language Support for Java(TM) by Red Hat activate failed, reason: ",
             "zh-cn": "AiXCoder: Language Support for Java(TM) by Red Hat 启动失败，原因：",
+        },
+        "redhatjavaExtension.install": {
+            "en": "AiXCoder: Language Support for Java(TM) by Red Hat is not installed or enabled. Please installLanguage Support for Java(TM) by Red Hat for the best experience.",
+            "zh-cn": "AiXCoder: Language Support for Java(TM) by Red Hat 插件没有安装或启用。请安装 Language Support for Java(TM) by Red Hat 插件以获得最佳体验。",
         },
     };
     return messages[key][vscode.env.language] || messages[key].en;
@@ -299,6 +303,12 @@ function activateJava(context: vscode.ExtensionContext) {
                 vscode.window.showErrorMessage(localize("redhatjavaExtension.activate.fail") + reason);
             });
         }
+    } else {
+        vscode.window.showInformationMessage(localize("redhatjavaExtension.install"), localize("action.install")).then((selection) => {
+            if (selection === localize("action.install")) {
+                vscode.commands.executeCommand("vscode.open", vscode.Uri.parse("vscode:extension/redhat.java"));
+            }
+        });
     }
 
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "java", scheme: "file" }, {
