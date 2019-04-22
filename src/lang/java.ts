@@ -21,4 +21,48 @@ export class JavaLangUtil extends LangUtil {
         }
         return true;
     }
+
+    public datamask(s: string, trivialLiterals: Set<string>): string {
+        let stringBuilder = "";
+        for (let i = 0; i < s.length; i++) {
+            const c = s.charAt(i);
+            stringBuilder += (c);
+            if (c === '"') {
+                i++;
+                const strStart = i;
+                for (; i < s.length; i++) {
+                    if (s.charAt(i) === '"') {
+                        break;
+                    }
+                    if (s.charAt(i) === "\\") {
+                        i++;
+                    }
+                }
+                const strContent = s.substring(strStart, i);
+                if (trivialLiterals.has(strContent)) {
+                    stringBuilder += (strContent);
+                }
+                stringBuilder += ("\"");
+
+            } else if (c === "'") {
+                i++;
+                const strStart = i;
+                for (; i < s.length; i++) {
+                    stringBuilder += (s.charAt(i));
+                    if (s.charAt(i) === "'") {
+                        break;
+                    }
+                    if (s.charAt(i) === "\\") {
+                        i++;
+                    }
+                }
+                const strContent = s.substring(strStart, i);
+                if (trivialLiterals.has(strContent)) {
+                    stringBuilder += (strContent);
+                }
+                stringBuilder += ("'");
+            }
+        }
+        return stringBuilder.toString();
+    }
 }
