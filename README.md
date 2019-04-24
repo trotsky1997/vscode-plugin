@@ -8,23 +8,12 @@ WARNING: This is a beta version. Many features are currently under development.
 
 1. Make sure you have internet access.
 2. If you need to use proxy, configure it in VSCode configurations (ctrl+, and search "proxy").
-3. Open or create a file, type "impo" and pause.
-4. You should see suggestions appear momentarily.
-5. Use "tab" to advance.
+3. Install Microsoft Python Extension (for Python) and Language Support for Java(TM) by Red Hat (for Java).
+3. Open or create a Java or Python file, type "impo" and pause.
+4. You should see suggestions appear momentarily marked by ⭐.
 
-## Configurations
+## About us
 
-```java
-{
-  // The delay in milliseconds before sending requests.
-  "aiXcoder.delay": 3000,
-
-  // Specifies the endpoint for code suggestion server.
-  "aiXcoder.endpoint": "http://www.nnthink.com:8787/predict",
-
-  // Default programming language, one of ["java", "python", "cpp"].
-  "aiXcoder.language": "java"
-}
-```
+We are aiXcoder team. Find more on https://aixcoder.com !
 
 **Enjoy!**

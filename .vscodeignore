@@ -7,3 +7,9 @@ src/**
 .gitignore
 tsconfig.json
 vsc-extension-quickstart.md
+external
+out
+node_modules
+npm-debug.log
+tslint.json
+webpack.config.js

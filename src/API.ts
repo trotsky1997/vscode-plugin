@@ -1,6 +1,7 @@
 import * as crypto from "crypto";
 import * as request from "request-promise";
 import * as vscode from "vscode";
+import log from "./logger";
 import Preference from "./Preference";
 import CodeStore from "./utils/CodeStore";
 import DataMasking from "./utils/DataMasking";
@@ -9,6 +10,9 @@ function md5Hash(s: string) {
     return crypto.createHash("md5").update(s).digest("hex");
 }
 
+// const HttpsAgent = require("agentkeepalive").HttpsAgent;
+
+// const keepaliveAgent = new HttpsAgent();
 function myRequest(options: request.OptionsWithUrl) {
     const proxyUrl: string = vscode.workspace.getConfiguration().get("http.proxy");
     const proxyAuth: string = vscode.workspace.getConfiguration().get("http.proxyAuthorization");
@@ -30,15 +34,23 @@ function myRequest(options: request.OptionsWithUrl) {
         },
         proxy: proxyUrl,
         strictSSL: proxyStrictSSL,
+        // agent: keepaliveAgent,
+        time: true,
+        resolveWithFullResponse: true,
     };
-    return request(options);
+    return request(options).then((resp) => {
+        log(JSON.stringify(resp.timings));
+        return resp.body;
+    }, (err) => {
+        log(err);
+    });
 }
 
 export async function predict(text: string, ext: string, remainingText: string, lastQueryUUID: number, fileID: string) {
     const maskedText = await DataMasking.mask(text, ext);
     const maskedRemainingText = await DataMasking.mask(remainingText, ext);
     const u = vscode.window.activeTextEditor.document.uri;
-    const proj  = vscode.workspace.getWorkspaceFolder(u);
+    const proj = vscode.workspace.getWorkspaceFolder(u);
     const offset = CodeStore.getInstance().getDiffPosition(fileID, maskedText);
     const md5 = md5Hash(maskedText);
 
@@ -56,6 +68,8 @@ export async function predict(text: string, ext: string, remainingText: string, 
             offset,
             md5,
             sort: 1,
+            prob_th_ngram: 1,
+            prob_th_ngram_t: 1,
         },
         timeout: 2000,
     });

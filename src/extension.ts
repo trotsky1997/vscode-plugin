@@ -7,6 +7,7 @@ import * as vscode from "vscode";
 import * as API from "./API";
 import { getInstance } from "./lang/commons";
 import { LangUtil } from "./lang/langUtil";
+import log from "./logger";
 import Preference from "./Preference";
 
 function localize(key: string) {
@@ -58,19 +59,19 @@ function fetch(ext: string, text: string, remainingText: string, fileID: string)
     if (lastText === text && lastPromise != null) {
         return { body: lastPromise, queryUUID: lastQueryUUID, remote: false };
     } else {
-        console.log("send request");
+        log("> send request for ext=" + ext + " and text=..." + text.substr(Math.max(0, text.length - 20)));
         lastText = text;
         lastFetchTime = new Date().getTime();
         const queryUUID = Math.floor(Math.random() * 10000);
         lastQueryUUID = queryUUID;
         lastPromise = API.predict(text, ext, remainingText, lastQueryUUID, fileID).catch((err) => {
-            console.log(err);
+            log(err);
             if (lastQueryUUID === queryUUID) {
                 lastQueryUUID = null;
                 lastPromise = null;
             }
         });
-        return { body: lastPromise, queryUUID, remote: true };
+        return { body: lastPromise, queryUUID };
     }
 }
 
@@ -90,7 +91,7 @@ function getReqText(document: vscode.TextDocument, position: vscode.Position) {
 function formatResData(results: any, langUtil: LangUtil): vscode.CompletionItem[] {
     const r: vscode.CompletionItem[] = [];
     for (const result of results.data) {
-        if (result.tokens.length > 0) {
+        if (result.tokens.length > 1) {
             const mergedTokens = [result.current + result.tokens[0], ...result.tokens.slice(1)];
             let title = langUtil.render(mergedTokens, 0);
             let rendered = title.replace(/(?=\$\{[^}]+\})/g, "\\");
@@ -133,6 +134,34 @@ function formatSortData(results: SortResult | null) {
     return r;
 }
 
+async function fetchResults(document, position) {
+    const _s = Date.now();
+    const { text, remainingText, offsetID } = getReqText(document, position);
+    const { body, queryUUID } = fetch("python(Python)", text, remainingText, document.fileName);
+
+    let fetchBody = await body;
+    log(fetchBody);
+    if (fetchBody == null) {
+        fetchBody = "{data:[]}";
+    }
+    const predictResults = fetchBody && typeof fetchBody === "string" ? JSON.parse(fetchBody) : fetchBody;
+    const strLabels = formatResData(predictResults, getInstance("python"));
+    // log("predict result:");
+    // log(strLabels);
+    const results = {
+        queryUUID: queryUUID.toString(),
+        list: predictResults.data.length > 0 ? predictResults.data[0].sort || [] : [],
+    };
+    // log("mina result:");
+    results.list = results.list.map(([prob, word]) => ({ prob, word }));
+    log("< fetch took " + (Date.now() - _s) + "ms");
+    return {
+        longResults: strLabels,
+        sortResults: results,
+        offsetID,
+    };
+}
+
 const onDeactivateHandlers = [];
 
 function activatePython(context: vscode.ExtensionContext) {
@@ -141,32 +170,32 @@ function activatePython(context: vscode.ExtensionContext) {
 
     if (mspythonExtension) {
         function loadLanguageServerExtension(port) {
-            const assemblyPath = "D:\\projects\\AiXForMSPython\\AiXForMSPython\\bin\\x64\\Debug\\netcoreapp2.1\\AiXForMSPython.dll";
+            const assemblyPath = __dirname + "/AiXForMSPython.dll";
             const l = vscode.commands.executeCommand("python._loadLanguageServerExtension", {
                 assembly: assemblyPath,
                 typeName: "AiXCoder.PythonTools.LanguageServerExtensionProvider",
-                properties: { port },
+                properties: { port, debug: false },
             });
             if (l) {
-                // console.log("AiX: command issued");
+                // log("AiX: command issued");
                 l.then(() => {
-                    console.log("AiX: assembly loaded");
+                    log("AiX: assembly loaded");
                 }, (reason) => {
-                    console.error("AiX: assembly load failed reason: " + reason);
+                    log("AiX: assembly load failed reason: " + reason);
                     vscode.window.showErrorMessage(localize("assembly.load.fail") + reason);
                 });
             } else {
-                console.log("AiX: command failed");
+                log("AiX: command failed");
             }
         }
         const server = net.createServer(function(s) {
-            console.log("AiX: socket server connected");
+            log("AiX: socket server connected");
             s.on("data", (data) => {
                 const offset = data.readInt32LE(0);
-                // console.log("AiX: socket server received " + offset);
+                // log("AiX: socket server received " + offset);
                 if (sortResultAwaiters[offset]) {
                     if (sortResultAwaiters[offset].queryUUID) {
-                        // console.log("AiX: socket server send fast");
+                        // log("AiX: socket server send fast");
                         s.write(JSON.stringify(sortResultAwaiters[offset]));
                         delete sortResultAwaiters[offset];
                     } else {
@@ -175,10 +204,10 @@ function activatePython(context: vscode.ExtensionContext) {
                 } else {
                     new Promise((resolve, reject) => {
                         const cancelTask = setTimeout(() => {
-                            // console.log("AiX: socket server canceled");
+                            // log("AiX: socket server canceled");
                             resolve(null);
                         }, 1000 * 5);
-                        // console.log("sortResultAwaiters[" + offset + "] set");
+                        // log("sortResultAwaiters[" + offset + "] set");
                         sortResultAwaiters[offset] = (sortResult4LSE) => {
                             clearTimeout(cancelTask);
                             resolve(sortResult4LSE);
@@ -186,11 +215,11 @@ function activatePython(context: vscode.ExtensionContext) {
                     }).then((sortResult4LSE) => {
                         if (sortResult4LSE) {
                             delete sortResultAwaiters[offset];
-                            // console.log("AiX: socket server send " + sortResult4LSE);
+                            // log("AiX: socket server send " + sortResult4LSE);
                             s.write(JSON.stringify(sortResult4LSE));
                         } else {
                             sortResultAwaiters[offset] = "canceled";
-                            // console.log("AiX: socket server no result");
+                            // log("AiX: socket server no result");
                             s.write("-");
                         }
                     });
@@ -199,29 +228,29 @@ function activatePython(context: vscode.ExtensionContext) {
         });
 
         server.on("close", () => {
-            console.log("AiX: socket server closed.");
+            log("AiX: socket server closed.");
         });
 
         server.on("error", (e) => {
-            console.log(e);
+            log(e);
         });
 
         portfinder.getPort({
             port: 20000,
         }, (err, localPort) => {
             if (err) {
-                console.log(err);
+                log(err);
                 return;
             }
             server.listen(localPort, "localhost");
-            console.log("AiX: socket server listen on " + localPort);
+            log("AiX: socket server listen on " + localPort);
             if (mspythonExtension.isActive) {
                 loadLanguageServerExtension(localPort);
             } else {
                 mspythonExtension.activate().then(() => {
                     loadLanguageServerExtension(localPort);
                 }, (reason) => {
-                    console.error("AiX: mspythonExtension activate failed reason: " + reason);
+                    log("AiX: mspythonExtension activate failed reason: " + reason);
                     vscode.window.showErrorMessage(localize("mspythonExtension.activate.fail") + reason);
                 });
             }
@@ -236,48 +265,31 @@ function activatePython(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "python", scheme: "file" }, {
         async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
-            // console.log("=====================");
+            // log("=====================");
             try {
-                const { text, remainingText, offsetID } = getReqText(document, position);
-                const { body, queryUUID, remote } = fetch("python(Python)", text, remainingText, document.fileName);
-
-                const fetchBody = await body;
-                console.log("get request " + (new Date().getTime() - lastFetchTime));
-                console.log(fetchBody);
-                if (fetchBody == null) { return []; }
-                const predictResults = JSON.parse(fetchBody);
-                let strLabels = formatResData(predictResults, getInstance("python"));
-                // console.log("predict result:");
-                // console.log(strLabels);
-                const results = {
-                    queryUUID: queryUUID.toString(),
-                    list: predictResults.data.length > 0 ? predictResults.data[0].sort : [],
-                };
-                // console.log("mina result:");
-                results.list = results.list.map(([prob, word]) => ({ prob, word }));
-                // console.log(results);
+                const { longResults, sortResults, offsetID } = await fetchResults(document, position);
 
                 if (mspythonExtension) {
-                    // console.log("AiX: resolve " + offsetID + " " + extension[offsetID]);
+                    // log("AiX: resolve " + offsetID + " " + extension[offsetID]);
                     if (sortResultAwaiters[offsetID] !== "canceled") {
                         if (sortResultAwaiters[offsetID] == null) {
                             // LSE will go later
-                            sortResultAwaiters[offsetID] = results;
+                            sortResultAwaiters[offsetID] = sortResults;
                         } else if (typeof sortResultAwaiters[offsetID] === "function") {
                             // LSE went earlier
-                            sortResultAwaiters[offsetID](results);
+                            sortResultAwaiters[offsetID](sortResults);
                         }
                     } else {
                         delete sortResultAwaiters[offsetID];
                     }
                 } else {
-                    const sortLabels = formatSortData(results);
-                    strLabels = strLabels.concat(sortLabels);
+                    const sortLabels = formatSortData(sortResults);
+                    longResults.push(...sortLabels);
                 }
-                // console.log("provideCompletionItems ends");
-                return strLabels;
+                // log("provideCompletionItems ends");
+                return longResults;
             } catch (e) {
-                console.log(e);
+                log(e);
             }
         },
         resolveCompletionItem(): vscode.ProviderResult<vscode.CompletionItem> {
@@ -299,7 +311,7 @@ function activateJava(context: vscode.ExtensionContext) {
                 });
                 return vscode.commands.executeCommand("java.execute.workspaceCommand", "com.aixcoder.jdtls.extension.enable", false);
             }, (reason) => {
-                console.error("AiX: redhatjavaExtension activate failed reason: " + reason);
+                log("AiX: redhatjavaExtension activate failed reason: " + reason);
                 vscode.window.showErrorMessage(localize("redhatjavaExtension.activate.fail") + reason);
             });
         }
@@ -313,26 +325,9 @@ function activateJava(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "java", scheme: "file" }, {
         async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
-            // console.log("=====================");
+            // log("=====================");
             try {
-                const { text, remainingText } = getReqText(document, position);
-                const { body, queryUUID } = fetch("java(Java)", text, remainingText, document.fileName);
-
-                const fetchBody = await body;
-                console.log("get request " + (new Date().getTime() - lastFetchTime));
-                console.log(fetchBody);
-                if (fetchBody == null) { return []; }
-                const predictResults = JSON.parse(fetchBody);
-                let strLabels = formatResData(predictResults, getInstance("java"));
-                // console.log("predict result:");
-                // console.log(strLabels);
-                const results = {
-                    queryUUID: queryUUID.toString(),
-                    list: predictResults.data.length > 0 ? predictResults.data[0].sort : [],
-                };
-                // console.log("mina result:");
-                results.list = results.list == null ? [] : results.list.map(([prob, word]) => ({ prob, word }));
-                // console.log(results);
+                const { longResults, sortResults } = await fetchResults(document, position);
 
                 if (redhatjavaExtension) {
                     if (msintellicode && msintellicodeTriggers.indexOf(context.triggerCharacter) >= 0) {
@@ -345,8 +340,8 @@ function activateJava(context: vscode.ExtensionContext) {
                             position,
                             context,
                         });
-                        for (let i = 0; i < results.list.length; i++) {
-                            const single: SingleWordCompletion = results.list[i];
+                        for (let i = 0; i < sortResults.list.length; i++) {
+                            const single: SingleWordCompletion = sortResults.list[i];
                             for (const systemCompletion of l) {
                                 if (systemCompletion.sortText == null) {
                                     systemCompletion.sortText = systemCompletion.filterText;
@@ -358,16 +353,16 @@ function activateJava(context: vscode.ExtensionContext) {
                                 }
                             }
                         }
-                        strLabels = strLabels.concat(l);
+                        longResults.push(...l);
                     }
                 } else {
-                    const sortLabels = formatSortData(results);
-                    strLabels = strLabels.concat(sortLabels);
+                    const sortLabels = formatSortData(sortResults);
+                    longResults.push(...sortLabels);
                 }
-                // console.log("provideCompletionItems ends");
-                return strLabels;
+                // log("provideCompletionItems ends");
+                return longResults;
             } catch (e) {
-                console.log(e);
+                log(e);
             }
         },
         resolveCompletionItem(): vscode.ProviderResult<vscode.CompletionItem> {
@@ -376,14 +371,17 @@ function activateJava(context: vscode.ExtensionContext) {
     }, ".", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "="));
 }
 
+vscode.window.showInformationMessage("AiXcoder loading");
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-    console.log("AiX: aixcoder activate");
+    vscode.window.showInformationMessage("AiXcoder activating");
+    log("AiX: aixcoder activate");
     Preference.init(context);
 
     activatePython(context);
     activateJava(context);
+    vscode.window.showInformationMessage("AiXcoder activated");
 }
 
 // this method is called when your extension is deactivated

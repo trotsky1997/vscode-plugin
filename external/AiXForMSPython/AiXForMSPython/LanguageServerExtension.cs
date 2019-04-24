@@ -101,7 +101,7 @@ namespace AiXCoder.PythonTools
                     {
                         foreach (var completion in completions)
                         {
-                            if (completion.label.Equals(sortCompletion.word))
+                            if (completion.insertText.Equals(sortCompletion.word))
                             {
                                 BuildPythiaCompletionItem(completion, rank++);
                                 break;
