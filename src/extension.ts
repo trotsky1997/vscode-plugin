@@ -59,7 +59,7 @@ function fetch(ext: string, text: string, remainingText: string, fileID: string)
     if (lastText === text && lastPromise != null) {
         return { body: lastPromise, queryUUID: lastQueryUUID, remote: false };
     } else {
-        log("> send request for ext=" + ext + " and text=..." + text.substr(Math.max(0, text.length - 20)));
+        log("> send request for ext=" + ext + " and text=..." + JSON.stringify(text.substr(Math.max(0, text.length - 20))));
         lastText = text;
         lastFetchTime = new Date().getTime();
         const queryUUID = Math.floor(Math.random() * 10000);
@@ -165,106 +165,123 @@ async function fetchResults(document, position) {
 const onDeactivateHandlers = [];
 
 function activatePython(context: vscode.ExtensionContext) {
-    const mspythonExtension = vscode.extensions.getExtension("ms-python.python");
+    let mspythonExtension = vscode.extensions.getExtension("ms-python.python");
     const sortResultAwaiters = {};
 
-    if (mspythonExtension) {
-        function loadLanguageServerExtension(port) {
-            const assemblyPath = __dirname + "/AiXForMSPython.dll";
-            const l = vscode.commands.executeCommand("python._loadLanguageServerExtension", {
-                assembly: assemblyPath,
-                typeName: "AiXCoder.PythonTools.LanguageServerExtensionProvider",
-                properties: { port, debug: false },
-            });
-            if (l) {
-                // log("AiX: command issued");
-                l.then(() => {
-                    log("AiX: assembly loaded");
-                }, (reason) => {
-                    log("AiX: assembly load failed reason: " + reason);
-                    vscode.window.showErrorMessage(localize("assembly.load.fail") + reason);
-                });
-            } else {
-                log("AiX: command failed");
-            }
+    let activated = false;
+    async function _activate() {
+        if (activated) {
+            return;
         }
-        const server = net.createServer(function(s) {
-            log("AiX: socket server connected");
-            s.on("data", (data) => {
-                const offset = data.readInt32LE(0);
-                // log("AiX: socket server received " + offset);
-                if (sortResultAwaiters[offset]) {
-                    if (sortResultAwaiters[offset].queryUUID) {
-                        // log("AiX: socket server send fast");
-                        s.write(JSON.stringify(sortResultAwaiters[offset]));
-                        delete sortResultAwaiters[offset];
-                    } else {
-                        sortResultAwaiters[offset](null);
+        activated = true;
+
+        if (mspythonExtension) {
+            log("AiX: ms-python.python detected");
+            async function loadLanguageServerExtension(port) {
+                const assemblyPath = __dirname + "/AiXForMSPython.dll";
+                const l = vscode.commands.executeCommand("python._loadLanguageServerExtension", {
+                    assembly: assemblyPath,
+                    typeName: "AiXCoder.PythonTools.LanguageServerExtensionProvider",
+                    properties: { port, debug: false },
+                });
+                if (l) {
+                    // log("AiX: command issued");
+                    try {
+                        await l;
+                        log("AiX: python language server assembly loaded");
+                    } catch (e) {
+                        log("AiX: assembly load failed reason:");
+                        log(e);
+                        vscode.window.showErrorMessage(localize("assembly.load.fail") + e);
+                        mspythonExtension = undefined;
                     }
                 } else {
-                    new Promise((resolve, reject) => {
-                        const cancelTask = setTimeout(() => {
-                            // log("AiX: socket server canceled");
-                            resolve(null);
-                        }, 1000 * 5);
-                        // log("sortResultAwaiters[" + offset + "] set");
-                        sortResultAwaiters[offset] = (sortResult4LSE) => {
-                            clearTimeout(cancelTask);
-                            resolve(sortResult4LSE);
-                        };
-                    }).then((sortResult4LSE) => {
-                        if (sortResult4LSE) {
+                    log("AiX: command failed");
+                    mspythonExtension = undefined;
+                }
+            }
+            const server = net.createServer(function(s) {
+                log("AiX: python language server socket server connected");
+                s.on("data", (data) => {
+                    const offset = data.readInt32LE(0);
+                    // log("AiX: socket server received " + offset);
+                    if (sortResultAwaiters[offset]) {
+                        if (sortResultAwaiters[offset].queryUUID) {
+                            // log("AiX: socket server send fast");
+                            s.write(JSON.stringify(sortResultAwaiters[offset]));
                             delete sortResultAwaiters[offset];
-                            // log("AiX: socket server send " + sortResult4LSE);
-                            s.write(JSON.stringify(sortResult4LSE));
                         } else {
-                            sortResultAwaiters[offset] = "canceled";
-                            // log("AiX: socket server no result");
-                            s.write("-");
+                            sortResultAwaiters[offset](null);
                         }
-                    });
+                    } else {
+                        new Promise((resolve, reject) => {
+                            const cancelTask = setTimeout(() => {
+                                // log("AiX: socket server canceled");
+                                resolve(null);
+                            }, 1000 * 5);
+                            // log("sortResultAwaiters[" + offset + "] set");
+                            sortResultAwaiters[offset] = (sortResult4LSE) => {
+                                clearTimeout(cancelTask);
+                                resolve(sortResult4LSE);
+                            };
+                        }).then((sortResult4LSE) => {
+                            if (sortResult4LSE) {
+                                delete sortResultAwaiters[offset];
+                                // log("AiX: socket server send " + sortResult4LSE);
+                                s.write(JSON.stringify(sortResult4LSE));
+                            } else {
+                                sortResultAwaiters[offset] = "canceled";
+                                // log("AiX: socket server no result");
+                                s.write("-");
+                            }
+                        });
+                    }
+                });
+            });
+
+            server.on("close", () => {
+                log("AiX: python language server socket server closed.");
+            });
+
+            server.on("error", (e) => {
+                log(e);
+            });
+
+            return new Promise((resolve, reject) => {
+                portfinder.getPort({
+                    port: 20000,
+                }, (err, localPort) => {
+                    if (err) {
+                        log(err);
+                        reject(err);
+                        return;
+                    }
+                    server.listen(localPort, "localhost");
+                    log("AiX: python language server socket server listen on " + localPort);
+                    if (mspythonExtension.isActive) {
+                        resolve(loadLanguageServerExtension(localPort));
+                    } else {
+                        mspythonExtension.activate().then(() => {
+                            resolve(loadLanguageServerExtension(localPort));
+                        }, (reason) => {
+                            log("AiX: ms-python.python activate failed reason: " + reason);
+                            vscode.window.showErrorMessage(localize("mspythonExtension.activate.fail") + reason);
+                        });
+                    }
+                });
+            });
+        } else {
+            vscode.window.showInformationMessage(localize("mspythonExtension.install"), localize("action.install")).then((selection) => {
+                if (selection === localize("action.install")) {
+                    vscode.commands.executeCommand("vscode.open", vscode.Uri.parse("vscode:extension/ms-python.python"));
                 }
             });
-        });
-
-        server.on("close", () => {
-            log("AiX: socket server closed.");
-        });
-
-        server.on("error", (e) => {
-            log(e);
-        });
-
-        portfinder.getPort({
-            port: 20000,
-        }, (err, localPort) => {
-            if (err) {
-                log(err);
-                return;
-            }
-            server.listen(localPort, "localhost");
-            log("AiX: socket server listen on " + localPort);
-            if (mspythonExtension.isActive) {
-                loadLanguageServerExtension(localPort);
-            } else {
-                mspythonExtension.activate().then(() => {
-                    loadLanguageServerExtension(localPort);
-                }, (reason) => {
-                    log("AiX: mspythonExtension activate failed reason: " + reason);
-                    vscode.window.showErrorMessage(localize("mspythonExtension.activate.fail") + reason);
-                });
-            }
-        });
-    } else {
-        vscode.window.showInformationMessage(localize("mspythonExtension.install"), localize("action.install")).then((selection) => {
-            if (selection === localize("action.install")) {
-                vscode.commands.executeCommand("vscode.open", vscode.Uri.parse("vscode:extension/ms-python.python"));
-            }
-        });
+        }
     }
 
-    context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "python", scheme: "file" }, {
+    const provider = {
         async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
+            await _activate();
             // log("=====================");
             try {
                 const { longResults, sortResults, offsetID } = await fetchResults(document, position);
@@ -295,66 +312,83 @@ function activatePython(context: vscode.ExtensionContext) {
         resolveCompletionItem(): vscode.ProviderResult<vscode.CompletionItem> {
             return null;
         },
-    }, ".", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "="));
+    };
+    const triggerCharacters = [".", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "="];
+    // context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "python", scheme: "file" }, provider, ...triggerCharacters));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "python" }, provider, ...triggerCharacters));
 }
 
 function activateJava(context: vscode.ExtensionContext) {
     const redhatjavaExtension = vscode.extensions.getExtension("redhat.java");
     const msintellicode = vscode.extensions.getExtension("visualstudioexptteam.vscodeintellicode");
-    const msintellicodeTriggers = [".", "@", "#", "*"];
-    if (redhatjavaExtension) {
-        if (!msintellicode) {
-            const redhatjavaExtensionReady = redhatjavaExtension.isActive ? Promise.resolve() : redhatjavaExtension.activate();
-            redhatjavaExtensionReady.then(() => {
+    let activated = false;
+    async function _activate() {
+        if (activated) {
+            return;
+        }
+        activated = true;
+        if (redhatjavaExtension) {
+            log("AiX: redhat.java detected");
+            if (!msintellicode) {
+                if (!redhatjavaExtension.isActive) {
+                    try {
+                        await redhatjavaExtension.activate();
+                    } catch (error) {
+                        log("AiX: redhat.java activate failed reason:");
+                        log(error);
+                        vscode.window.showErrorMessage(localize("redhatjavaExtension.activate.fail") + error);
+                    }
+                }
                 onDeactivateHandlers.push(() => {
                     vscode.commands.executeCommand("java.execute.workspaceCommand", "com.aixcoder.jdtls.extension.enable", true);
                 });
-                return vscode.commands.executeCommand("java.execute.workspaceCommand", "com.aixcoder.jdtls.extension.enable", false);
-            }, (reason) => {
-                log("AiX: redhatjavaExtension activate failed reason: " + reason);
-                vscode.window.showErrorMessage(localize("redhatjavaExtension.activate.fail") + reason);
+                try {
+                    await vscode.commands.executeCommand("java.execute.workspaceCommand", "com.aixcoder.jdtls.extension.enable", false);
+                } catch (reason) {
+                    log("AiX: com.aixcoder.jdtls.extension.enable command  failed reason: " + reason);
+                }
+                log("AiX: com.aixcoder.jdtls.extension.enable command success");
+            } else {
+                log("AiX: visualstudioexptteam.vscodeintellicode detected");
+            }
+        } else {
+            vscode.window.showInformationMessage(localize("redhatjavaExtension.install"), localize("action.install")).then((selection) => {
+                if (selection === localize("action.install")) {
+                    vscode.commands.executeCommand("vscode.open", vscode.Uri.parse("vscode:extension/redhat.java"));
+                }
             });
         }
-    } else {
-        vscode.window.showInformationMessage(localize("redhatjavaExtension.install"), localize("action.install")).then((selection) => {
-            if (selection === localize("action.install")) {
-                vscode.commands.executeCommand("vscode.open", vscode.Uri.parse("vscode:extension/redhat.java"));
-            }
-        });
     }
 
-    context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "java", scheme: "file" }, {
+    const provider = {
         async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
+            await _activate();
             // log("=====================");
             try {
                 const { longResults, sortResults } = await fetchResults(document, position);
 
                 if (redhatjavaExtension) {
-                    if (msintellicode && msintellicodeTriggers.indexOf(context.triggerCharacter) >= 0) {
-                        // conflict with msintellicode
-                    } else {
-                        const l: vscode.CompletionItem[] = await vscode.commands.executeCommand("java.execute.workspaceCommand", "com.aixcoder.jdtls.extension.completion", {
-                            textDocument: {
-                                uri: document.uri.toString(),
-                            },
-                            position,
-                            context,
-                        });
-                        for (let i = 0; i < sortResults.list.length; i++) {
-                            const single: SingleWordCompletion = sortResults.list[i];
-                            for (const systemCompletion of l) {
-                                if (systemCompletion.sortText == null) {
-                                    systemCompletion.sortText = systemCompletion.filterText;
-                                }
-                                if (systemCompletion.insertText === single.word) {
-                                    systemCompletion.label = "⭐" + systemCompletion.label;
-                                    systemCompletion.sortText = "0." + i;
-                                    break;
-                                }
+                    const l: vscode.CompletionItem[] = await vscode.commands.executeCommand("java.execute.workspaceCommand", "com.aixcoder.jdtls.extension.completion", {
+                        textDocument: {
+                            uri: document.uri.toString(),
+                        },
+                        position,
+                        context,
+                    });
+                    for (let i = 0; i < sortResults.list.length; i++) {
+                        const single: SingleWordCompletion = sortResults.list[i];
+                        for (const systemCompletion of l) {
+                            if (systemCompletion.sortText == null) {
+                                systemCompletion.sortText = systemCompletion.filterText;
+                            }
+                            if (systemCompletion.insertText === single.word) {
+                                systemCompletion.label = "⭐" + systemCompletion.label;
+                                systemCompletion.sortText = "0." + i;
+                                break;
                             }
                         }
-                        longResults.push(...l);
                     }
+                    longResults.push(...l);
                 } else {
                     const sortLabels = formatSortData(sortResults);
                     longResults.push(...sortLabels);
@@ -368,20 +402,23 @@ function activateJava(context: vscode.ExtensionContext) {
         resolveCompletionItem(): vscode.ProviderResult<vscode.CompletionItem> {
             return null;
         },
-    }, ".", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "="));
+    };
+    const triggerCharacters = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "="];
+    if (msintellicode) {
+        triggerCharacters.push(".");
+    }
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "java", scheme: "file" }, provider, ...triggerCharacters));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "java", scheme: "untitled" }, provider, ...triggerCharacters));
 }
 
-vscode.window.showInformationMessage("AiXcoder loading");
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-    vscode.window.showInformationMessage("AiXcoder activating");
-    log("AiX: aixcoder activate");
+    log("AiX: aiXcoder activating");
     Preference.init(context);
-
     activatePython(context);
     activateJava(context);
-    vscode.window.showInformationMessage("AiXcoder activated");
+    log("AiX: aiXcoder activated");
 }
 
 // this method is called when your extension is deactivated

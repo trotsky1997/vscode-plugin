@@ -32,7 +32,7 @@
             }
         },
         "javaExtensions": [
-            "out/src/aixjdtls.jar"
+            "dist/aixjdtls.jar"
         ]
     },
     "scripts": {

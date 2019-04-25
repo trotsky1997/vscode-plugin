@@ -35,15 +35,8 @@ function myRequest(options: request.OptionsWithUrl) {
         proxy: proxyUrl,
         strictSSL: proxyStrictSSL,
         // agent: keepaliveAgent,
-        time: true,
-        resolveWithFullResponse: true,
     };
-    return request(options).then((resp) => {
-        log(JSON.stringify(resp.timings));
-        return resp.body;
-    }, (err) => {
-        log(err);
-    });
+    return request(options);
 }
 
 export async function predict(text: string, ext: string, remainingText: string, lastQueryUUID: number, fileID: string) {
@@ -62,7 +55,7 @@ export async function predict(text: string, ext: string, remainingText: string, 
             ext,
             uuid: Preference.uuid,
             fileid: fileID,
-            project: proj.name,
+            project: proj ? proj.name : "_scratch",
             remaining_text: maskedRemainingText,
             queryUUID: lastQueryUUID,
             offset,
