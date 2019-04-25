@@ -10,7 +10,7 @@ import { LangUtil } from "./lang/langUtil";
 import log from "./logger";
 import Preference from "./Preference";
 
-function localize(key: string) {
+export function localize(key: string) {
     const messages = {
         "mspythonExtension.install": {
             "en": "AiXCoder: Microsoft Python extension is not installed or enabled. Please install Microsoft Python extension for the best experience.",
@@ -35,6 +35,18 @@ function localize(key: string) {
         "redhatjavaExtension.install": {
             "en": "AiXCoder: Language Support for Java(TM) by Red Hat is not installed or enabled. Please installLanguage Support for Java(TM) by Red Hat for the best experience.",
             "zh-cn": "AiXCoder: Language Support for Java(TM) by Red Hat 插件没有安装或启用。请安装 Language Support for Java(TM) by Red Hat 插件以获得最佳体验。",
+        },
+        "newVersion": {
+            "en": "A new aiXcoder version is available: %d, update now?",
+            "zh-cn": "发现一个新的aiXcoder版本：%d，现在更新？",
+        },
+        "download": {
+            "en": "Update",
+            "zh-cn": "更新",
+        },
+        "ignoreThisVersion": {
+            "en": "Ignore this version",
+            "zh-cn": "忽略这个版本",
         },
     };
     return messages[key][vscode.env.language] || messages[key].en;
@@ -264,7 +276,8 @@ function activatePython(context: vscode.ExtensionContext) {
                         mspythonExtension.activate().then(() => {
                             resolve(loadLanguageServerExtension(localPort));
                         }, (reason) => {
-                            log("AiX: ms-python.python activate failed reason: " + reason);
+                            log("AiX: ms-python.python activate failed reason:");
+                            log(reason);
                             vscode.window.showErrorMessage(localize("mspythonExtension.activate.fail") + reason);
                         });
                     }
@@ -345,7 +358,8 @@ function activateJava(context: vscode.ExtensionContext) {
                 try {
                     await vscode.commands.executeCommand("java.execute.workspaceCommand", "com.aixcoder.jdtls.extension.enable", false);
                 } catch (reason) {
-                    log("AiX: com.aixcoder.jdtls.extension.enable command  failed reason: " + reason);
+                    log("AiX: com.aixcoder.jdtls.extension.enable command  failed reason:");
+                    log(reason);
                 }
                 log("AiX: com.aixcoder.jdtls.extension.enable command success");
             } else {
@@ -416,6 +430,7 @@ function activateJava(context: vscode.ExtensionContext) {
 export function activate(context: vscode.ExtensionContext) {
     log("AiX: aiXcoder activating");
     Preference.init(context);
+    API.checkUpdate();
     activatePython(context);
     activateJava(context);
     log("AiX: aiXcoder activated");
