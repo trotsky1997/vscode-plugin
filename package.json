@@ -2,7 +2,7 @@
     "name": "aixcoder",
     "displayName": "aiXcoder",
     "description": "aiXcoder code suggestion",
-    "version": "0.0.2",
+    "version": "0.0.5",
     "publisher": "nnthink",
     "repository": {
         "url": "https://github.com/felixhao28/vscode-plugin"
@@ -16,7 +16,9 @@
     ],
     "activationEvents": [
         "onLanguage:python",
-        "onLanguage:java"
+        "onLanguage:java",
+        "onLanguage:c",
+        "onLanguage:cpp"
     ],
     "main": "./dist/extension",
     "contributes": {

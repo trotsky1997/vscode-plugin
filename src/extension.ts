@@ -2,6 +2,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as net from "net";
+import * as path from "path";
 import * as portfinder from "portfinder";
 import * as vscode from "vscode";
 import * as API from "./API";
@@ -33,8 +34,12 @@ export function localize(key: string) {
             "zh-cn": "AiXCoder: Language Support for Java(TM) by Red Hat 启动失败，原因：",
         },
         "redhatjavaExtension.install": {
-            "en": "AiXCoder: Language Support for Java(TM) by Red Hat is not installed or enabled. Please installLanguage Support for Java(TM) by Red Hat for the best experience.",
+            "en": "AiXCoder: Language Support for Java(TM) by Red Hat is not installed or enabled. Please install Language Support for Java(TM) by Red Hat for the best experience.",
             "zh-cn": "AiXCoder: Language Support for Java(TM) by Red Hat 插件没有安装或启用。请安装 Language Support for Java(TM) by Red Hat 插件以获得最佳体验。",
+        },
+        "mscpptoolsExtension.install": {
+            "en": "AiXCoder: C/C++ Extension is not installed or enabled. Please install C/C++ Extension for the best experience.",
+            "zh-cn": "AiXCoder: C/C++ 插件没有安装或启用。请安装 C/C++ 插件以获得最佳体验。",
         },
         "newVersion": {
             "en": "A new aiXcoder version is available: %d, update now?",
@@ -104,13 +109,16 @@ function formatResData(results: any, langUtil: LangUtil): vscode.CompletionItem[
     const r: vscode.CompletionItem[] = [];
     for (const result of results.data) {
         if (result.tokens.length > 1) {
+            if (result.tokens.length === 2 && result.tokens[1] === "(" && result.tokens[0].match(/[a-zA-Z0-9_$]+/)) {
+                continue;
+            }
             const mergedTokens = [result.current + result.tokens[0], ...result.tokens.slice(1)];
             let title = langUtil.render(mergedTokens, 0);
             let rendered = title.replace(/(?=\$\{[^}]+\})/g, "\\");
             if (result.r_completion && result.r_completion.length > 0) {
                 // tslint:disable-next-line: no-invalid-template-strings
                 rendered += "${0}" + result.r_completion.join("");
-                title += "" + result.r_completion.join("");
+                title += "..." + result.r_completion.join("");
             }
             r.push({
                 label: "⭐" + title,
@@ -129,9 +137,9 @@ function formatSortData(results: SortResult | null) {
     const r: vscode.CompletionItem[] = [];
     for (let i = 0; i < results.list.length; i++) {
         const single = results.list[i];
-        if (single.prob < 0.1) {
-            break;
-        }
+        // if (single.prob < 0.1) {
+        //     break;
+        // }
         if (single.word.match(/^<.+>$/)) {
             continue;
         }
@@ -146,10 +154,11 @@ function formatSortData(results: SortResult | null) {
     return r;
 }
 
-async function fetchResults(document, position) {
-    const _s = Date.now();
-    const { text, remainingText, offsetID } = getReqText(document, position);
-    const { body, queryUUID } = fetch("python(Python)", text, remainingText, document.fileName);
+async function fetchResults2(text: string, remainingText: string, fileName: string, ext: string, lang: string): Promise<{
+    longResults: vscode.CompletionItem[],
+    sortResults: SortResult,
+}> {
+    const { body, queryUUID } = fetch(ext, text, remainingText, fileName);
 
     let fetchBody = await body;
     log(fetchBody);
@@ -157,7 +166,7 @@ async function fetchResults(document, position) {
         fetchBody = "{data:[]}";
     }
     const predictResults = fetchBody && typeof fetchBody === "string" ? JSON.parse(fetchBody) : fetchBody;
-    const strLabels = formatResData(predictResults, getInstance("python"));
+    const strLabels = formatResData(predictResults, getInstance(lang));
     // log("predict result:");
     // log(strLabels);
     const results = {
@@ -166,10 +175,20 @@ async function fetchResults(document, position) {
     };
     // log("mina result:");
     results.list = results.list.map(([prob, word]) => ({ prob, word }));
-    log("< fetch took " + (Date.now() - _s) + "ms");
     return {
         longResults: strLabels,
         sortResults: results,
+    };
+}
+
+async function fetchResults(document: vscode.TextDocument, position: vscode.Position, ext: string, lang: string) {
+    const _s = Date.now();
+    const { text, remainingText, offsetID } = getReqText(document, position);
+    const { longResults, sortResults } = await fetchResults2(text, remainingText, document.fileName, ext, lang);
+    log("< fetch took " + (Date.now() - _s) + "ms");
+    return {
+        longResults,
+        sortResults,
         offsetID,
     };
 }
@@ -204,7 +223,10 @@ function activatePython(context: vscode.ExtensionContext) {
                     } catch (e) {
                         log("AiX: assembly load failed reason:");
                         log(e);
-                        vscode.window.showErrorMessage(localize("assembly.load.fail") + e);
+                        const select = await vscode.window.showErrorMessage(localize("assembly.load.fail") + e, localize("reload"));
+                        if (select === localize("reload")) {
+                            vscode.commands.executeCommand("workbench.action.reloadWindow");
+                        }
                         mspythonExtension = undefined;
                     }
                 } else {
@@ -297,7 +319,7 @@ function activatePython(context: vscode.ExtensionContext) {
             await _activate();
             // log("=====================");
             try {
-                const { longResults, sortResults, offsetID } = await fetchResults(document, position);
+                const { longResults, sortResults, offsetID } = await fetchResults(document, position, "python(Python)", "python");
 
                 if (mspythonExtension) {
                     // log("AiX: resolve " + offsetID + " " + extension[offsetID]);
@@ -327,8 +349,8 @@ function activatePython(context: vscode.ExtensionContext) {
         },
     };
     const triggerCharacters = [".", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "="];
-    // context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "python", scheme: "file" }, provider, ...triggerCharacters));
-    context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "python" }, provider, ...triggerCharacters));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "python", scheme: "file" }, provider, ...triggerCharacters));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "python", scheme: "untitled" }, provider, ...triggerCharacters));
 }
 
 function activateJava(context: vscode.ExtensionContext) {
@@ -379,7 +401,7 @@ function activateJava(context: vscode.ExtensionContext) {
             await _activate();
             // log("=====================");
             try {
-                const { longResults, sortResults } = await fetchResults(document, position);
+                const { longResults, sortResults } = await fetchResults(document, position, "java(Java)", "java");
 
                 if (redhatjavaExtension) {
                     const l: vscode.CompletionItem[] = await vscode.commands.executeCommand("java.execute.workspaceCommand", "com.aixcoder.jdtls.extension.completion", {
@@ -418,22 +440,181 @@ function activateJava(context: vscode.ExtensionContext) {
         },
     };
     const triggerCharacters = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "="];
-    if (msintellicode) {
+    if (!msintellicode) {
         triggerCharacters.push(".");
     }
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "java", scheme: "file" }, provider, ...triggerCharacters));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "java", scheme: "untitled" }, provider, ...triggerCharacters));
 }
 
+function activateCPP(context: vscode.ExtensionContext) {
+    const _m = require("module");
+    const msintellicode = vscode.extensions.getExtension("visualstudioexptteam.vscodeintellicode");
+    const mscpp = vscode.extensions.getExtension("ms-vscode.cpptools");
+    const activated = false;
+    const sortResultAwaiters = {};
+    let clients;
+    async function _activate() {
+        if (activated) {
+            return;
+        }
+        if (mscpp) {
+            if (!mscpp.isActive) {
+                await mscpp.activate();
+            }
+            const lsext = _m._cache[path.join(mscpp.extensionPath, "out", "src", "LanguageServer", "extension.js")];
+            clients = lsext.exports.getClients();
+        } else {
+            vscode.window.showInformationMessage(localize("mscpptoolsExtension.install"), localize("action.install")).then((selection) => {
+                if (selection === localize("action.install")) {
+                    vscode.commands.executeCommand("vscode.open", vscode.Uri.parse("vscode:extension/ms-vscode.cpptools"));
+                }
+            });
+        }
+    }
+
+    function getHookedProvideCompletionItems(oldProvideCompletionItems) {
+        return async (document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext, provideCompletionItems) => {
+            const resultP = oldProvideCompletionItems(document, position, token, context, provideCompletionItems);
+            if (resultP) {
+                const offsetID = getReqText(document, position).text;
+                const l = await resultP;
+                // console.log("!!!!!!!!!!");
+                // console.log(l.items.length + " items");
+                // console.log(">>>>>>>>>>");
+                let sortResults;
+                if (sortResultAwaiters[offsetID] == null) {
+                    // console.log("client sortResultAwaiters[" + offsetID + "] == null");
+                    sortResults = await new Promise((resolve, reject) => {
+                        const canceller = setTimeout(() => {
+                            console.log("client timeout");
+                            reject("time out");
+                            delete sortResultAwaiters[offsetID];
+                        }, 5000);
+                        sortResultAwaiters[offsetID] = (_) => {
+                            clearTimeout(canceller);
+                            resolve(_);
+                        };
+                    });
+                } else {
+                    // console.log("client sortResultAwaiters[" + offsetID + "] == promise");
+                    sortResults = await sortResultAwaiters[offsetID];
+                }
+                delete sortResultAwaiters[offsetID];
+                // console.log("client sortResults.length = " + sortResults.list.length);
+                const our = [];
+                for (let i = 0; i < sortResults.list.length; i++) {
+                    const single: SingleWordCompletion = sortResults.list[i];
+                    for (const systemCompletion of l.items) {
+                        if (systemCompletion.sortText == null) {
+                            systemCompletion.sortText = systemCompletion.filterText;
+                        }
+                        if (systemCompletion.insertText === single.word) {
+                            // systemCompletion.label = "⭐" + systemCompletion.label;
+                            systemCompletion.label =  systemCompletion.label + "⭐";
+                            systemCompletion.sortText = "0." + i;
+                            our.push(systemCompletion);
+                            break;
+                        }
+                    }
+                }
+                console.log(our);
+                // l.items = our;
+                return l;
+            }
+            return null;
+        };
+    }
+
+    const provider = {
+        async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
+            await _activate();
+            // log("=====================");
+            try {
+                const { text, remainingText } = getReqText(document, position);
+                const offsetID = text;
+
+                if (mscpp) {
+                    // if (!clients.ActiveClient.languageClient) {
+                    //     await clients.ActiveClient.pendingTask;
+                    // }
+                    const resolver: (_: SortResult) => void = await new Promise((r, j) => {
+                        if (sortResultAwaiters[offsetID] == null) {
+                            // console.log("master sortResultAwaiters[" + offsetID + "] == null");
+                            const p = new Promise((resolve, reject) => {
+                                const canceller = setTimeout(() => {
+                                    // console.log("master timeout, reject");
+                                    reject("time out");
+                                    delete sortResultAwaiters[offsetID];
+                                }, 5000);
+                                r((_) => {
+                                    clearTimeout(canceller);
+                                    resolve(_);
+                                    // setTimeout(() => {
+                                    //     if (sortResultAwaiters[offsetID] === p) {
+                                    //         console.log("master timeout, clear");
+                                    //         sortResultAwaiters[offsetID] = null;
+                                    //     }
+                                    // }, 5000);
+                                });
+                            });
+                            sortResultAwaiters[offsetID] = p;
+                        } else {
+                            // console.log("master sortResultAwaiters[" + offsetID + "] == resolver == " + JSON.stringify(sortResultAwaiters[offsetID]));
+                            r(sortResultAwaiters[offsetID]);
+                        }
+                    });
+                    // console.log("1 resolver = " + (typeof resolver) + " : " + JSON.stringify(resolver));
+                    const client = clients.ActiveClient.languageClient;
+                    const oldProvideCompletionItems = client.clientOptions.middleware.provideCompletionItem;
+                    if (!oldProvideCompletionItems.aixhooked) {
+                        client.clientOptions.middleware.provideCompletionItem = getHookedProvideCompletionItems(oldProvideCompletionItems);
+                        client.clientOptions.middleware.provideCompletionItem.aixhooked = true;
+                        delete sortResultAwaiters[offsetID]; // it won't work first time
+                    }
+                    const { longResults, sortResults } = await fetchResults2(text, remainingText, document.fileName, "python(Python)", "python");
+                    // console.log("master resolve(sortResults[" + sortResults.list.length + "])");
+                    // console.log("2 resolver = " + (typeof resolver) + " : " + JSON.stringify(resolver));
+                    if (typeof resolver === "function") {
+                        resolver(sortResults);
+                    }
+                    return longResults;
+                } else {
+                    const { longResults, sortResults } = await fetchResults2(text, remainingText, document.fileName, "python(Python)", "python");
+                    const sortLabels = formatSortData(sortResults);
+                    longResults.push(...sortLabels);
+                    return longResults;
+                }
+                // log("provideCompletionItems ends");
+            } catch (e) {
+                log(e);
+            }
+        },
+        resolveCompletionItem(): vscode.ProviderResult<vscode.CompletionItem> {
+            return null;
+        },
+    };
+    const triggerCharacters = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "="];
+    if (!msintellicode) {
+        triggerCharacters.push(".");
+    }
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "c", scheme: "file" }, provider, ...triggerCharacters));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "c", scheme: "untitled" }, provider, ...triggerCharacters));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "cpp", scheme: "file" }, provider, ...triggerCharacters));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "cpp", scheme: "untitled" }, provider, ...triggerCharacters));
+}
+
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
     log("AiX: aiXcoder activating");
     Preference.init(context);
     API.checkUpdate();
     activatePython(context);
     activateJava(context);
+    activateCPP(context);
     log("AiX: aiXcoder activated");
+    return {};
 }
 
 // this method is called when your extension is deactivated
