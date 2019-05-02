@@ -30,6 +30,11 @@
                     "type": "string",
                     "default": "https://api.aixcoder.com/",
                     "description": "Specifies the endpoint for code suggestion server."
+                },
+                "aiXcoder.enableTelemetry": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Send anonoymous usage data and errors to aiXcoder telemetry service."
                 }
             }
         },

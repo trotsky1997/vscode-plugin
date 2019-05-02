@@ -1,7 +1,7 @@
 import * as crypto from "crypto";
 import * as request from "request-promise";
 import * as vscode from "vscode";
-import { localize } from "./extension";
+import { localize, myVersion } from "./extension";
 import log from "./logger";
 import Preference from "./Preference";
 import CodeStore from "./utils/CodeStore";
@@ -14,11 +14,11 @@ function md5Hash(s: string) {
 // const HttpsAgent = require("agentkeepalive").HttpsAgent;
 
 // const keepaliveAgent = new HttpsAgent();
-function myRequest(options: request.OptionsWithUrl) {
+function myRequest(options: request.OptionsWithUrl, endpoint?: string) {
     const proxyUrl: string = vscode.workspace.getConfiguration().get("http.proxy");
     const proxyAuth: string = vscode.workspace.getConfiguration().get("http.proxyAuthorization");
     const proxyStrictSSL: boolean = vscode.workspace.getConfiguration().get("http.proxyStrictSSL");
-    let endpoint: string = vscode.workspace.getConfiguration().get("aiXcoder.endpoint");
+    endpoint = endpoint || vscode.workspace.getConfiguration().get("aiXcoder.endpoint");
     let host = proxyUrl || endpoint.substring(endpoint.indexOf("://") + 3);
     if (host.indexOf("/") >= 0) {
         host = host.substr(0, host.indexOf("/"));
@@ -64,6 +64,7 @@ export async function predict(text: string, ext: string, remainingText: string, 
             sort: 1,
             prob_th_ngram: 1,
             prob_th_ngram_t: 1,
+            version: myVersion,
         },
         timeout: 2000,
     });
@@ -94,8 +95,11 @@ function compareVersion(v1: any, v2: any) {
 
 export async function checkUpdate() {
     try {
-        const updateURL = "https://www.aixcoder.com/download/installtool/aixcoderinstaller_aixcoder.json";
-        const versionJson = await request(updateURL);
+        const updateURL = "download/installtool/aixcoderinstaller_aixcoder.json";
+        const versionJson = await myRequest({
+            method: "get",
+            url: updateURL,
+        }, "https://www.aixcoder.com");
         let newVersions = JSON.parse(versionJson);
         newVersions = process.platform === "win32" ? newVersions.win : newVersions.mac;
         const ignoredVersion = Preference.context.globalState.get("aiXcoder.ignoredUpdateVersion");
@@ -103,7 +107,6 @@ export async function checkUpdate() {
         if (ignoredVersion === v) {
             return;
         }
-        const myVersion = vscode.extensions.getExtension("nnthink.aixcoder").packageJSON.version;
         if (compareVersion(myVersion, v) < 0) {
             log("New aiXCoder version is available: " + v);
             const select = await vscode.window.showInformationMessage(localize("newVersion") + v, localize("download"), localize("ignoreThisVersion"));
@@ -115,6 +118,18 @@ export async function checkUpdate() {
         } else {
             log("AiXCoder is up to date");
         }
+    } catch (e) {
+        log(e);
+    }
+}
+
+export async function sendTelemetry(type: string, subtype: string) {
+    try {
+        const updateURL = `/user/predict/${type}?uuid=${Preference.uuid}&subtype=${subtype}`;
+        await myRequest({
+            method: "get",
+            url: updateURL,
+        });
     } catch (e) {
         log(e);
     }

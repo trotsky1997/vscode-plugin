@@ -12,6 +12,7 @@ using Microsoft.Python.Core.Logging;
 using Microsoft.Python.Core.Text;
 using Microsoft.Python.LanguageServer.Completion;
 using Microsoft.Python.LanguageServer.Extensibility;
+using Microsoft.Python.LanguageServer.Protocol;
 using Newtonsoft.Json;
 
 namespace AiXCoder.PythonTools
@@ -126,6 +127,12 @@ namespace AiXCoder.PythonTools
                 item.filterText = item.insertText;
             item.label = "⭐" + item.label;
             item.sortText = "0." + rank;
+            item.command = new Command()
+            {
+                title = "AiXTelemetry",
+                command = "aiXcoder.sendTelemetry",
+                arguments = new string[] { "use", "secondary" }
+            };
             return item;
         }
 
