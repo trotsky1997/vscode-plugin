@@ -123,14 +123,36 @@ export async function checkUpdate() {
     }
 }
 
-export async function sendTelemetry(type: string, subtype: string) {
-    try {
-        const updateURL = `/user/predict/${type}?uuid=${Preference.uuid}&subtype=${subtype}`;
-        await myRequest({
-            method: "get",
-            url: updateURL,
-        });
-    } catch (e) {
-        log(e);
+export async function sendTelemetry(type: string, subtype?: string) {
+    const telemetry = vscode.workspace.getConfiguration().get("aiXcoder.enableTelemetry");
+    if (telemetry) {
+        console.log("send telemetry: " + type + "/" + subtype);
+        try {
+            let updateURL = `/user/predict/${type}?uuid=${Preference.uuid}`;
+            if (subtype) {
+                updateURL += `&subtype=${subtype}`;
+            }
+            await myRequest({
+                method: "get",
+                url: updateURL,
+            });
+        } catch (e) {
+            log(e);
+        }
+    }
+}
+
+export async function sendErrorTelemetry(msg: string) {
+    const telemetry = vscode.workspace.getConfiguration().get("aiXcoder.enableTelemetry");
+    if (telemetry) {
+        try {
+            const updateURL = `/user/predict/err?uuid=${Preference.uuid}&client=vscode&msg=${encodeURIComponent(msg)}`;
+            await myRequest({
+                method: "get",
+                url: updateURL,
+            });
+        } catch (e) {
+            log(e);
+        }
     }
 }

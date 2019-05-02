@@ -1,9 +1,12 @@
 import * as vscode from "vscode";
+import * as API from "./API";
 
 class Logger {
 
     static get Instance() {
-        Logger.singleton || (Logger.singleton = new Logger());
+        if (!Logger.singleton) {
+            Logger.singleton = new Logger();
+        }
         return Logger.singleton;
     }
     public static singleton: Logger;
@@ -18,6 +21,7 @@ class Logger {
     public log(s: string | Error) {
         if (s instanceof Error) {
             s = this.formatErrorForLogging(s);
+            API.sendErrorTelemetry(s);
         }
         this.channel.appendLine(s);
     }
@@ -25,9 +29,21 @@ class Logger {
     public formatErrorForLogging(e) {
         let t = "";
         if ("string" === typeof e) { t = e; } else {
-            e.message && (t = `Error Message: ${e.message}`), e.name && -1 === e.message.indexOf(e.name) && (t += `, (${e.name})`);
+            if (e.message) {
+                t = `Error Message: ${e.message}`;
+            }
+            if (e.name && -1 === e.message.indexOf(e.name)) {
+                t += `, (${e.name})`;
+            }
             const a = e.innerException;
-            a && (a.message || a.name) && (a.message && (t += `, Inner Error Message: ${a.message}`), a.name && -1 === a.message.indexOf(a.name) && (t += `, (${a.name})`));
+            if (a) {
+                if (a.message) {
+                    t += `, Inner Error Message: ${a.message}`;
+                }
+                if (a.name && -1 === a.message.indexOf(a.name)) {
+                    t += `, (${a.name})`;
+                }
+            }
         }
         return t;
     }

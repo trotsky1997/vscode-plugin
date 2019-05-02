@@ -90,7 +90,7 @@ function fetch(ext: string, text: string, remainingText: string, fileID: string)
                 lastPromise = null;
             }
         });
-        return { body: lastPromise, queryUUID };
+        return { body: lastPromise, queryUUID, fetchTime: lastFetchTime };
     }
 }
 
@@ -106,9 +106,16 @@ function getReqText(document: vscode.TextDocument, position: vscode.Position) {
     };
 }
 
+class AiXCompletionItem extends vscode.CompletionItem {
+    public aixPrimary?: boolean;
+    constructor(label: string, kind?: vscode.CompletionItemKind) {
+        super(label, kind);
+    }
+}
+
 // 处理返回的值，最终变成放入提示框的内容
-function formatResData(results: any, langUtil: LangUtil): vscode.CompletionItem[] {
-    const r: vscode.CompletionItem[] = [];
+function formatResData(results: any, langUtil: LangUtil): AiXCompletionItem[] {
+    const r: AiXCompletionItem[] = [];
     const command: vscode.Command = {
         title: "AiXTelemetry",
         command: "aiXcoder.sendTelemetry",
@@ -134,6 +141,7 @@ function formatResData(results: any, langUtil: LangUtil): vscode.CompletionItem[
                 kind: vscode.CompletionItemKind.Snippet,
                 sortText: String.fromCharCode(0),
                 command,
+                aixPrimary: true,
             });
         }
     }
@@ -169,10 +177,11 @@ function formatSortData(results: SortResult | null) {
 }
 
 async function fetchResults2(text: string, remainingText: string, fileName: string, ext: string, lang: string): Promise<{
-    longResults: vscode.CompletionItem[],
+    longResults: AiXCompletionItem[],
     sortResults: SortResult,
+    fetchTime: number,
 }> {
-    const { body, queryUUID } = fetch(ext, text, remainingText, fileName);
+    const { body, queryUUID, fetchTime } = fetch(ext, text, remainingText, fileName);
 
     let fetchBody = await body;
     log(fetchBody);
@@ -192,19 +201,29 @@ async function fetchResults2(text: string, remainingText: string, fileName: stri
     return {
         longResults: strLabels,
         sortResults: results,
+        fetchTime,
     };
 }
 
 async function fetchResults(document: vscode.TextDocument, position: vscode.Position, ext: string, lang: string) {
     const _s = Date.now();
     const { text, remainingText, offsetID } = getReqText(document, position);
-    const { longResults, sortResults } = await fetchResults2(text, remainingText, document.fileName, ext, lang);
+    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, ext, lang);
     log("< fetch took " + (Date.now() - _s) + "ms");
     return {
         longResults,
         sortResults,
         offsetID,
+        fetchTime,
     };
+}
+
+function sendPredictTelemetry(fetchTime: number, longResults: AiXCompletionItem[]) {
+    if (fetchTime === lastFetchTime && longResults.length > 0 && longResults[0].aixPrimary) {
+        API.sendTelemetry("show");
+    } else {
+        API.sendTelemetry("nul");
+    }
 }
 
 const onDeactivateHandlers = [];
@@ -333,7 +352,7 @@ function activatePython(context: vscode.ExtensionContext) {
             await _activate();
             // log("=====================");
             try {
-                const { longResults, sortResults, offsetID } = await fetchResults(document, position, "python(Python)", "python");
+                const { longResults, sortResults, offsetID, fetchTime } = await fetchResults(document, position, "python(Python)", "python");
 
                 if (mspythonExtension) {
                     // log("AiX: resolve " + offsetID + " " + extension[offsetID]);
@@ -352,6 +371,7 @@ function activatePython(context: vscode.ExtensionContext) {
                     const sortLabels = formatSortData(sortResults);
                     longResults.push(...sortLabels);
                 }
+                sendPredictTelemetry(fetchTime, longResults);
                 // log("provideCompletionItems ends");
                 return longResults;
             } catch (e) {
@@ -415,7 +435,7 @@ function activateJava(context: vscode.ExtensionContext) {
             await _activate();
             // log("=====================");
             try {
-                const { longResults, sortResults } = await fetchResults(document, position, "java(Java)", "java");
+                const { longResults, sortResults, fetchTime } = await fetchResults(document, position, "java(Java)", "java");
 
                 if (redhatjavaExtension) {
                     const l: vscode.CompletionItem[] = await vscode.commands.executeCommand("java.execute.workspaceCommand", "com.aixcoder.jdtls.extension.completion", {
@@ -449,6 +469,7 @@ function activateJava(context: vscode.ExtensionContext) {
                     const sortLabels = formatSortData(sortResults);
                     longResults.push(...sortLabels);
                 }
+                sendPredictTelemetry(fetchTime, longResults);
                 // log("provideCompletionItems ends");
                 return longResults;
             } catch (e) {
@@ -598,17 +619,19 @@ function activateCPP(context: vscode.ExtensionContext) {
                         client.clientOptions.middleware.provideCompletionItem.aixhooked = true;
                         delete sortResultAwaiters[offsetID]; // it won't work first time
                     }
-                    const { longResults, sortResults } = await fetchResults2(text, remainingText, document.fileName, "python(Python)", "cpp");
+                    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, "python(Python)", "cpp");
                     // console.log("master resolve(sortResults[" + sortResults.list.length + "])");
                     // console.log("2 resolver = " + (typeof resolver) + " : " + JSON.stringify(resolver));
                     if (typeof resolver === "function") {
                         resolver(sortResults);
                     }
+                    sendPredictTelemetry(fetchTime, longResults);
                     return longResults;
                 } else {
-                    const { longResults, sortResults } = await fetchResults2(text, remainingText, document.fileName, "python(Python)", "cpp");
+                    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, "python(Python)", "cpp");
                     const sortLabels = formatSortData(sortResults);
                     longResults.push(...sortLabels);
+                    sendPredictTelemetry(fetchTime, longResults);
                     return longResults;
                 }
                 // log("provideCompletionItems ends");
@@ -637,11 +660,7 @@ export async function activate(context: vscode.ExtensionContext) {
     Preference.init(context);
     API.checkUpdate();
     context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.sendTelemetry", (type: string, subtype: string) => {
-        const telemetry = vscode.workspace.getConfiguration().get("aiXcoder.enableTelemetry");
-        if (telemetry) {
-            console.log("send telemetry: " + type + "/" + subtype);
-            API.sendTelemetry(type, subtype);
-        }
+        API.sendTelemetry(type, subtype);
     }));
     activatePython(context);
     activateJava(context);
