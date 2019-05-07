@@ -1,9 +1,11 @@
 "use strict";
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
+import * as fs from "fs";
 import * as net from "net";
 import * as path from "path";
 import * as portfinder from "portfinder";
+import * as util from "util";
 import * as vscode from "vscode";
 import * as API from "./API";
 import { getInstance } from "./lang/commons";
@@ -11,7 +13,7 @@ import { LangUtil } from "./lang/langUtil";
 import log from "./logger";
 import Preference from "./Preference";
 
-export function localize(key: string) {
+export function localize(key: string, ...params: any[]) {
     const messages = {
         "mspythonExtension.install": {
             "en": "AiXCoder: Microsoft Python extension is not installed or enabled. Please install Microsoft Python extension for the best experience.",
@@ -20,6 +22,10 @@ export function localize(key: string) {
         "assembly.load.fail": {
             "en": "AiXCoder: assembly load failed, reason: ",
             "zh-cn": "AiXCoder: 程序集加载失败，原因：",
+        },
+        "reload": {
+            "en": "Reload",
+            "zh-cn": "重新加载",
         },
         "mspythonExtension.activate.fail": {
             "en": "AiXCoder: Microsoft Python extension activate failed, reason: ",
@@ -42,8 +48,8 @@ export function localize(key: string) {
             "zh-cn": "AiXCoder: C/C++ 插件没有安装或启用。请安装 C/C++ 插件以获得最佳体验。",
         },
         "newVersion": {
-            "en": "A new aiXcoder version is available: %d, update now?",
-            "zh-cn": "发现一个新的aiXcoder版本：%d，现在更新？",
+            "en": "A new aiXcoder version is available: %s, update now?",
+            "zh-cn": "发现一个新的aiXcoder版本：%s，现在更新？",
         },
         "download": {
             "en": "Update",
@@ -53,11 +59,27 @@ export function localize(key: string) {
             "en": "Ignore this version",
             "zh-cn": "忽略这个版本",
         },
+        "aiXcoder.askedTelemetry": {
+            "en": "AiXCoder will send anonymous usage data to improve user experience. You can disable it in settings by turning off aiXcoder.enableTelemetry.",
+            "zh-cn": "AiXCoder会发送匿名使用数据以提升用户体验。您可以在设置中关闭aiXcoder.enableTelemetry项来停止此行为。",
+        },
+        "aiXcoder.askedTelemetryOpenSetting": {
+            "en": "Open Settings...",
+            "zh-cn": "打开设置...",
+        },
+        "aiXcoder.askedTelemetryOK": {
+            "en": "OK",
+            "zh-cn": "知道了",
+        },
+        "cpp.reload": {
+            "en": "AiXCoder requires a reload to integrate with C/C++ extension.",
+            "zh-cn": "AiXCoder需要重新加载以便与 C/C++ 插件集成。",
+        },
     };
-    return messages[key][vscode.env.language] || messages[key].en;
+    return messages[key] ? util.format(messages[key][vscode.env.language] || messages[key].en, ...params) : key;
 }
-
-export const myVersion = vscode.extensions.getExtension("nnthink.aixcoder").packageJSON.version;
+const myPackageJSON = vscode.extensions.getExtension("nnthink.aixcoder").packageJSON;
+export const myVersion = myPackageJSON.version;
 
 interface SingleWordCompletion {
     word: string;
@@ -113,8 +135,14 @@ class AiXCompletionItem extends vscode.CompletionItem {
     }
 }
 
+enum STAR_DISPLAY {
+    LEFT,
+    RIGHT,
+    NONE,
+}
+
 // 处理返回的值，最终变成放入提示框的内容
-function formatResData(results: any, langUtil: LangUtil): AiXCompletionItem[] {
+function formatResData(results: any, langUtil: LangUtil, starDisplay: STAR_DISPLAY = STAR_DISPLAY.LEFT): AiXCompletionItem[] {
     const r: AiXCompletionItem[] = [];
     const command: vscode.Command = {
         title: "AiXTelemetry",
@@ -135,7 +163,7 @@ function formatResData(results: any, langUtil: LangUtil): AiXCompletionItem[] {
                 title += "..." + result.r_completion.join("");
             }
             r.push({
-                label: "⭐" + title,
+                label: starDisplay === STAR_DISPLAY.LEFT ? "⭐" + title : (starDisplay === STAR_DISPLAY.RIGHT ? title + "⭐" : title),
                 filterText: title,
                 insertText: new vscode.SnippetString(rendered),
                 kind: vscode.CompletionItemKind.Snippet,
@@ -176,7 +204,7 @@ function formatSortData(results: SortResult | null) {
     return r;
 }
 
-async function fetchResults2(text: string, remainingText: string, fileName: string, ext: string, lang: string): Promise<{
+async function fetchResults2(text: string, remainingText: string, fileName: string, ext: string, lang: string, starDisplay: STAR_DISPLAY = STAR_DISPLAY.LEFT): Promise<{
     longResults: AiXCompletionItem[],
     sortResults: SortResult,
     fetchTime: number,
@@ -189,7 +217,7 @@ async function fetchResults2(text: string, remainingText: string, fileName: stri
         fetchBody = "{data:[]}";
     }
     const predictResults = fetchBody && typeof fetchBody === "string" ? JSON.parse(fetchBody) : fetchBody;
-    const strLabels = formatResData(predictResults, getInstance(lang));
+    const strLabels = formatResData(predictResults, getInstance(lang), starDisplay);
     // log("predict result:");
     // log(strLabels);
     const results = {
@@ -205,10 +233,10 @@ async function fetchResults2(text: string, remainingText: string, fileName: stri
     };
 }
 
-async function fetchResults(document: vscode.TextDocument, position: vscode.Position, ext: string, lang: string) {
+async function fetchResults(document: vscode.TextDocument, position: vscode.Position, ext: string, lang: string, starDisplay: STAR_DISPLAY = STAR_DISPLAY.LEFT) {
     const _s = Date.now();
     const { text, remainingText, offsetID } = getReqText(document, position);
-    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, ext, lang);
+    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, ext, lang, starDisplay);
     log("< fetch took " + (Date.now() - _s) + "ms");
     return {
         longResults,
@@ -219,10 +247,12 @@ async function fetchResults(document: vscode.TextDocument, position: vscode.Posi
 }
 
 function sendPredictTelemetry(fetchTime: number, longResults: AiXCompletionItem[]) {
-    if (fetchTime === lastFetchTime && longResults.length > 0 && longResults[0].aixPrimary) {
-        API.sendTelemetry("show");
-    } else {
-        API.sendTelemetry("nul");
+    if (fetchTime) {
+        if (fetchTime === lastFetchTime && longResults.length > 0 && longResults[0].aixPrimary) {
+            API.sendTelemetry("show");
+        } else {
+            API.sendTelemetry("nul");
+        }
     }
 }
 
@@ -488,29 +518,66 @@ function activateJava(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "java", scheme: "untitled" }, provider, ...triggerCharacters));
 }
 
-function activateCPP(context: vscode.ExtensionContext) {
-    const _m = require("module");
+async function activateCPP(context: vscode.ExtensionContext) {
+    // const _m = require("module");
     const msintellicode = vscode.extensions.getExtension("visualstudioexptteam.vscodeintellicode");
     const mscpp = vscode.extensions.getExtension("ms-vscode.cpptools");
     const activated = false;
     const sortResultAwaiters = {};
     let clients;
-    async function _activate() {
-        if (activated) {
-            return;
+    if (mscpp) {
+        let aixHooked = false;
+        let distjs: string;
+        if (mscpp.isActive) {
+            aixHooked = mscpp.exports.getApi().getClients != null;
+        } else {
+            const distjsPath = path.join(mscpp.extensionPath, "dist", "main.js");
+            distjs = await fs.promises.readFile(distjsPath, "utf-8");
+            aixHooked = distjs.startsWith("/**AiXHooked**/");
         }
+        if (!aixHooked) {
+            const distjsPath = path.join(mscpp.extensionPath, "dist", "main.js");
+            await fs.promises.copyFile(distjsPath, distjsPath + ".bak");
+            distjs = "/**AiXHooked**/" + distjs;
+            const cpptoolsSignature = "t.CppTools=class{";
+            const cpptoolsStart = distjs.indexOf(cpptoolsSignature) + cpptoolsSignature.length;
+            const languageServerUglyEnd = distjs.indexOf(".getClients()", cpptoolsStart);
+            let languageServerUglyStart = languageServerUglyEnd;
+            while (languageServerUglyStart > cpptoolsStart) {
+                languageServerUglyStart--;
+                if (!distjs[languageServerUglyStart].match(/[a-zA-Z]/)) {
+                    languageServerUglyStart++;
+                    break;
+                }
+            }
+            const languageServerUgly = distjs.substring(languageServerUglyStart, languageServerUglyEnd);
+            distjs = distjs.substring(0, cpptoolsStart) + `getClients(){return ${languageServerUgly}.getClients()}` + distjs.substring(cpptoolsStart);
+            await fs.promises.writeFile(distjsPath, distjs, "utf-8");
+            if (mscpp.isActive) {
+                const select = await vscode.window.showWarningMessage(localize("cpp.reload"), localize("reload"));
+                if (select === localize("reload")) {
+                    vscode.commands.executeCommand("workbench.action.reloadWindow");
+                }
+            }
+        }
+
         if (mscpp) {
             if (!mscpp.isActive) {
                 await mscpp.activate();
             }
-            const lsext = _m._cache[path.join(mscpp.extensionPath, "out", "src", "LanguageServer", "extension.js")];
-            clients = lsext.exports.getClients();
-        } else {
-            vscode.window.showInformationMessage(localize("mscpptoolsExtension.install"), localize("action.install")).then((selection) => {
-                if (selection === localize("action.install")) {
-                    vscode.commands.executeCommand("vscode.open", vscode.Uri.parse("vscode:extension/ms-vscode.cpptools"));
-                }
-            });
+            // const lsext = _m._cache[path.join(mscpp.extensionPath, "out", "src", "LanguageServer", "extension.js")];
+            clients = mscpp.exports.getApi().getClients();
+        }
+    } else {
+        vscode.window.showInformationMessage(localize("mscpptoolsExtension.install"), localize("action.install")).then((selection) => {
+            if (selection === localize("action.install")) {
+                vscode.commands.executeCommand("vscode.open", vscode.Uri.parse("vscode:extension/ms-vscode.cpptools"));
+            }
+        });
+    }
+    async function _activate() {
+        if (activated) {
+            return;
         }
     }
 
@@ -528,7 +595,7 @@ function activateCPP(context: vscode.ExtensionContext) {
                     // console.log("client sortResultAwaiters[" + offsetID + "] == null");
                     sortResults = await new Promise((resolve, reject) => {
                         const canceller = setTimeout(() => {
-                            console.log("client timeout");
+                            // console.log("client timeout");
                             reject("time out");
                             delete sortResultAwaiters[offsetID];
                         }, 5000);
@@ -615,11 +682,13 @@ function activateCPP(context: vscode.ExtensionContext) {
                     const client = clients.ActiveClient.languageClient;
                     const oldProvideCompletionItems = client.clientOptions.middleware.provideCompletionItem;
                     if (!oldProvideCompletionItems.aixhooked) {
+                        console.log("Hooking C++ extension...");
                         client.clientOptions.middleware.provideCompletionItem = getHookedProvideCompletionItems(oldProvideCompletionItems);
                         client.clientOptions.middleware.provideCompletionItem.aixhooked = true;
                         delete sortResultAwaiters[offsetID]; // it won't work first time
+                        console.log("C++ extension Hooked");
                     }
-                    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, "python(Python)", "cpp");
+                    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, "cplus(Cpp)", "cpp", STAR_DISPLAY.NONE);
                     // console.log("master resolve(sortResults[" + sortResults.list.length + "])");
                     // console.log("2 resolver = " + (typeof resolver) + " : " + JSON.stringify(resolver));
                     if (typeof resolver === "function") {
@@ -628,7 +697,7 @@ function activateCPP(context: vscode.ExtensionContext) {
                     sendPredictTelemetry(fetchTime, longResults);
                     return longResults;
                 } else {
-                    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, "python(Python)", "cpp");
+                    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, "cplus(Cpp)", "cpp", STAR_DISPLAY.LEFT);
                     const sortLabels = formatSortData(sortResults);
                     longResults.push(...sortLabels);
                     sendPredictTelemetry(fetchTime, longResults);
@@ -659,12 +728,21 @@ export async function activate(context: vscode.ExtensionContext) {
     log("AiX: aiXcoder activating");
     Preference.init(context);
     API.checkUpdate();
+    const askedTelemetry = context.globalState.get("aiXcoder.askedTelemetry");
+    if (!askedTelemetry) {
+        context.globalState.update("aiXcoder.askedTelemetry", true);
+        vscode.window.showInformationMessage(localize("aiXcoder.askedTelemetry"), localize("aiXcoder.askedTelemetryOK"), localize("aiXcoder.askedTelemetryOpenSetting")).then((selected) => {
+            if (selected === localize("aiXcoder.askedTelemetryOpenSetting")) {
+                vscode.commands.executeCommand("workbench.action.openSettings", `aiXcoder`);
+            }
+        });
+    }
     context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.sendTelemetry", (type: string, subtype: string) => {
         API.sendTelemetry(type, subtype);
     }));
-    activatePython(context);
-    activateJava(context);
-    activateCPP(context);
+    await activatePython(context);
+    await activateJava(context);
+    await activateCPP(context);
     log("AiX: aiXcoder activated");
     return {};
 }

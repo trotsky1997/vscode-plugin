@@ -109,7 +109,7 @@ export async function checkUpdate() {
         }
         if (compareVersion(myVersion, v) < 0) {
             log("New aiXCoder version is available: " + v);
-            const select = await vscode.window.showInformationMessage(localize("newVersion") + v, localize("download"), localize("ignoreThisVersion"));
+            const select = await vscode.window.showInformationMessage(localize("newVersion", v), localize("download"), localize("ignoreThisVersion"));
             if (select === localize("download")) {
                 await vscode.commands.executeCommand("vscode.open", vscode.Uri.parse("https://www.aixcoder.com/download/installtool"));
             } else if (select === localize("ignoreThisVersion")) {

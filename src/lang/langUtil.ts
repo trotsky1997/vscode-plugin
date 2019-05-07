@@ -35,6 +35,7 @@ export class LangUtil {
         const left = nextI === 0 ? "" : tokens[nextI - 1];
         const right = tokens[nextI];
         if (left === "" || right === "") { return false; }
+        if (right === ",") { return false; }
         if (left === "." || right === ".") { return false; }
         if (left === "<ENTER>" || right === "<ENTER>") { return false; }
         if (left === "(" || right === ")") { return false; }

@@ -3,3 +3,4 @@ node_modules
 aixcoder-*.vsix
 dist
 .vscode/ipch
+.vscode-test
