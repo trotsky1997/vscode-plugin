@@ -28,7 +28,7 @@
             "properties": {
                 "aiXcoder.endpoint": {
                     "type": "string",
-                    "default": "https://api.aixcoder.com/",
+                    "default": "",
                     "description": "Specifies the endpoint for code suggestion server."
                 },
                 "aiXcoder.model.java": {
@@ -48,7 +48,7 @@
                 },
                 "aiXcoder.enableTelemetry": {
                     "type": "boolean",
-                    "default": true,
+                    "default": false,
                     "description": "Send anonoymous usage data and errors to aiXcoder telemetry service."
                 }
             }
