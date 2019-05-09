@@ -75,6 +75,10 @@ export function localize(key: string, ...params: any[]) {
             "en": "AiXCoder requires a reload to integrate with C/C++ extension.",
             "zh-cn": "AiXCoder需要重新加载以便与 C/C++ 插件集成。",
         },
+        "cpp.fail": {
+            "en": "C/C++ Extension integration failed.",
+            "zh-cn": "C/C++ 插件集成失败。",
+        }
     };
     return messages[key] ? util.format(messages[key][vscode.env.language] || messages[key].en, ...params) : key;
 }
@@ -538,6 +542,7 @@ async function activateCPP(context: vscode.ExtensionContext) {
         if (!aixHooked) {
             const distjsPath = path.join(mscpp.extensionPath, "dist", "main.js");
             await fs.promises.copyFile(distjsPath, distjsPath + ".bak");
+            const oldSize = distjs.length;
             distjs = "/**AiXHooked**/" + distjs;
             const cpptoolsSignature = "t.CppTools=class{";
             const cpptoolsStart = distjs.indexOf(cpptoolsSignature) + cpptoolsSignature.length;
@@ -552,12 +557,16 @@ async function activateCPP(context: vscode.ExtensionContext) {
             }
             const languageServerUgly = distjs.substring(languageServerUglyStart, languageServerUglyEnd);
             distjs = distjs.substring(0, cpptoolsStart) + `getClients(){return ${languageServerUgly}.getClients()}` + distjs.substring(cpptoolsStart);
-            await fs.promises.writeFile(distjsPath, distjs, "utf-8");
-            if (mscpp.isActive) {
-                const select = await vscode.window.showWarningMessage(localize("cpp.reload"), localize("reload"));
-                if (select === localize("reload")) {
-                    vscode.commands.executeCommand("workbench.action.reloadWindow");
+            if (distjs.length > oldSize) {
+                await fs.promises.writeFile(distjsPath, distjs, "utf-8");   
+                if (mscpp.isActive) {
+                    const select = await vscode.window.showWarningMessage(localize("cpp.reload"), localize("reload"));
+                    if (select === localize("reload")) {
+                        vscode.commands.executeCommand("workbench.action.reloadWindow");
+                    }
                 }
+            } else {
+                await vscode.window.showWarningMessage(localize("cpp.fail"));
             }
         }
 
