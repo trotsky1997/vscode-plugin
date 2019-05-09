@@ -31,6 +31,21 @@
                     "default": "https://api.aixcoder.com/",
                     "description": "Specifies the endpoint for code suggestion server."
                 },
+                "aiXcoder.model.java": {
+                    "type": "string",
+                    "default": "java(Java)",
+                    "markdownDescription": "The model name to be used in Java. Default: `java(Java)`."
+                },
+                "aiXcoder.model.python": {
+                    "type": "string",
+                    "default": "python(Python)",
+                    "markdownDescription": "The model name to be used in Python. Default: `python(Python)`."
+                },
+                "aiXcoder.model.cpp": {
+                    "type": "string",
+                    "default": "cpp(Cpp)",
+                    "markdownDescription": "The model name to be used in C++/C. Default: `cpp(Cpp)`."
+                },
                 "aiXcoder.enableTelemetry": {
                     "type": "boolean",
                     "default": true,
@@ -38,6 +53,11 @@
                 }
             }
         },
+        "commands": [{
+            "command": "aixcoder.switchModel",
+            "title": "Switch Model",
+            "category": "aiXcoder"
+        }],
         "javaExtensions": [
             "dist/aixjdtls.jar"
         ]

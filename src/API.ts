@@ -156,3 +156,17 @@ export async function sendErrorTelemetry(msg: string) {
         }
     }
 }
+
+export async function getModels(): Promise<string[]> {
+    try {
+        const updateURL = `/getmodels`;
+        const models = await myRequest({
+            method: "get",
+            url: updateURL,
+        });
+        return JSON.parse(models);
+    } catch (e) {
+        log(e);
+    }
+    return [];
+}

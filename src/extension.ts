@@ -95,6 +95,10 @@ export function localize(key: string, ...params: any[]) {
             "en": "Disabled",
             "zh-cn": "已关闭",
         },
+        "model.switch": {
+            "en": "Model for %s has been switched to %s.",
+            "zh-cn": "%s 的模型已被切换到 %s。",
+        },
     };
     return messages[key] ? util.format(messages[key][vscode.env.language] || messages[key].en, ...params) : key;
 }
@@ -402,7 +406,8 @@ function activatePython(context: vscode.ExtensionContext) {
             await _activate();
             // log("=====================");
             try {
-                const { longResults, sortResults, offsetID, fetchTime } = await fetchResults(document, position, "python(Python)", "python");
+                const ext = vscode.workspace.getConfiguration().get("aiXcoder.model.python") as string;
+                const { longResults, sortResults, offsetID, fetchTime } = await fetchResults(document, position, ext, "python");
 
                 if (mspythonExtension) {
                     // log("AiX: resolve " + offsetID + " " + extension[offsetID]);
@@ -485,7 +490,8 @@ function activateJava(context: vscode.ExtensionContext) {
             await _activate();
             // log("=====================");
             try {
-                const { longResults, sortResults, fetchTime } = await fetchResults(document, position, "java(Java)", "java");
+                const ext = vscode.workspace.getConfiguration().get("aiXcoder.model.java") as string;
+                const { longResults, sortResults, fetchTime } = await fetchResults(document, position, ext, "java");
 
                 if (redhatjavaExtension) {
                     const l: vscode.CompletionItem[] = await vscode.commands.executeCommand("java.execute.workspaceCommand", "com.aixcoder.jdtls.extension.completion", {
@@ -668,6 +674,7 @@ async function activateCPP(context: vscode.ExtensionContext) {
     const provider = {
         async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
             await _activate();
+            const ext = vscode.workspace.getConfiguration().get("aiXcoder.model.python") as string;
             // log("=====================");
             try {
                 const { text, remainingText } = getReqText(document, position);
@@ -713,7 +720,7 @@ async function activateCPP(context: vscode.ExtensionContext) {
                         delete sortResultAwaiters[offsetID]; // it won't work first time
                         console.log("C++ extension Hooked");
                     }
-                    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, "cplus(Cpp)", "cpp", STAR_DISPLAY.NONE);
+                    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, ext, "cpp", STAR_DISPLAY.NONE);
                     // console.log("master resolve(sortResults[" + sortResults.list.length + "])");
                     // console.log("2 resolver = " + (typeof resolver) + " : " + JSON.stringify(resolver));
                     if (typeof resolver === "function") {
@@ -722,7 +729,7 @@ async function activateCPP(context: vscode.ExtensionContext) {
                     sendPredictTelemetry(fetchTime, longResults);
                     return longResults;
                 } else {
-                    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, "cplus(Cpp)", "cpp", STAR_DISPLAY.LEFT);
+                    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, ext, "cpp", STAR_DISPLAY.LEFT);
                     const sortLabels = formatSortData(sortResults);
                     longResults.push(...sortLabels);
                     sendPredictTelemetry(fetchTime, longResults);
@@ -745,6 +752,10 @@ async function activateCPP(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "c", scheme: "untitled" }, provider, ...triggerCharacters));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "cpp", scheme: "file" }, provider, ...triggerCharacters));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "cpp", scheme: "untitled" }, provider, ...triggerCharacters));
+}
+
+interface ModelQuickPickItem extends vscode.QuickPickItem {
+    lang: string;
 }
 
 // this method is called when your extension is activated
@@ -777,6 +788,37 @@ export async function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.sendTelemetry", (type: string, subtype: string) => {
         API.sendTelemetry(type, subtype);
     }));
+
+    const commandHandler = async () => {
+        const langs = { cpp: "C++/C", python: "Python", java: "Java" };
+        const selectedLang = await vscode.window.showQuickPick((async () => {
+            const displays: ModelQuickPickItem[] = [];
+            for (const lang of Object.keys(langs)) {
+                const configKey = "aiXcoder.model." + lang;
+                const configValue = vscode.workspace.getConfiguration().get(configKey);
+                displays.push({
+                    label: `${langs[lang]}: ${configValue}`,
+                    description: `aiXcoder model used for ${langs[lang]}`,
+                    lang,
+                });
+            }
+            return displays;
+        })());
+
+        if (selectedLang) {
+            const selectedModel = await vscode.window.showQuickPick((async () => {
+                const models = await API.getModels();
+                const filtered = models.filter((model) => model.toLowerCase().endsWith(`(${selectedLang.lang})`));
+                return filtered;
+            })());
+
+            vscode.workspace.getConfiguration().update("aiXcoder.model." + selectedLang.lang, selectedModel);
+            vscode.window.showInformationMessage(util.format(localize("model.switch"), langs[selectedLang.lang], selectedModel));
+        }
+    };
+
+    context.subscriptions.push(vscode.commands.registerCommand("aixcoder.switchModel", commandHandler));
+
     await activatePython(context);
     await activateJava(context);
     await activateCPP(context);
