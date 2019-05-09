@@ -60,8 +60,8 @@ export function localize(key: string, ...params: any[]) {
             "zh-cn": "忽略这个版本",
         },
         "aiXcoder.askedTelemetry": {
-            "en": "AiXCoder will send anonymous usage data to improve user experience. You can disable it in settings by turning off aiXcoder.enableTelemetry.",
-            "zh-cn": "AiXCoder会发送匿名使用数据以提升用户体验。您可以在设置中关闭aiXcoder.enableTelemetry项来停止此行为。",
+            "en": "AiXCoder will send anonymous usage data to improve user experience. You can disable it in settings by turning off aiXcoder.enableTelemetry. (Current: %s)",
+            "zh-cn": "AiXCoder会发送匿名使用数据以提升用户体验。您可以在设置中关闭aiXcoder.enableTelemetry项来停止此行为。(当前：%s)",
         },
         "openSetting": {
             "en": "Open Settings...",
@@ -70,6 +70,10 @@ export function localize(key: string, ...params: any[]) {
         "aiXcoder.askedTelemetryOK": {
             "en": "OK",
             "zh-cn": "知道了",
+        },
+        "aiXcoder.askedTelemetryNo": {
+            "en": "Don't send my usage data",
+            "zh-cn": "不要发送我的使用数据",
         },
         "cpp.reload": {
             "en": "AiXCoder requires a reload to integrate with C/C++ extension.",
@@ -82,6 +86,14 @@ export function localize(key: string, ...params: any[]) {
         "aiXcoder.endpoint.empty": {
             "en": "AiXCoder server endpoint is not set.",
             "zh-cn": "AiXCoder服务器端口未设置。",
+        },
+        "enabled": {
+            "en": "Enabled",
+            "zh-cn": "已启用",
+        },
+        "disabled": {
+            "en": "Disabled",
+            "zh-cn": "已关闭",
         },
     };
     return messages[key] ? util.format(messages[key][vscode.env.language] || messages[key].en, ...params) : key;
@@ -754,9 +766,11 @@ export async function activate(context: vscode.ExtensionContext) {
     const askedTelemetry = context.globalState.get("aiXcoder.askedTelemetry");
     if (!askedTelemetry) {
         context.globalState.update("aiXcoder.askedTelemetry", true);
-        vscode.window.showInformationMessage(localize("aiXcoder.askedTelemetry"), localize("aiXcoder.askedTelemetryOK"), localize("openSetting")).then((selected) => {
-            if (selected === localize("openSetting")) {
-                vscode.commands.executeCommand("workbench.action.openSettings", `aiXcoder`);
+        const enableTelemetry = vscode.workspace.getConfiguration().get("aiXcoder.enableTelemetry");
+        const enableTelemetryMsg = enableTelemetry ? localize("enabled") : localize("disabled");
+        vscode.window.showInformationMessage(util.format(localize("aiXcoder.askedTelemetry"), enableTelemetryMsg), localize("aiXcoder.askedTelemetryOK"), localize("aiXcoder.askedTelemetryNo")).then((selected) => {
+            if (selected === localize("aiXcoder.askedTelemetryNo")) {
+                vscode.workspace.getConfiguration().update("aiXcoder.enableTelemetry", false);
             }
         });
     }
