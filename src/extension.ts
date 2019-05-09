@@ -63,7 +63,7 @@ export function localize(key: string, ...params: any[]) {
             "en": "AiXCoder will send anonymous usage data to improve user experience. You can disable it in settings by turning off aiXcoder.enableTelemetry.",
             "zh-cn": "AiXCoder会发送匿名使用数据以提升用户体验。您可以在设置中关闭aiXcoder.enableTelemetry项来停止此行为。",
         },
-        "aiXcoder.askedTelemetryOpenSetting": {
+        "openSetting": {
             "en": "Open Settings...",
             "zh-cn": "打开设置...",
         },
@@ -78,7 +78,11 @@ export function localize(key: string, ...params: any[]) {
         "cpp.fail": {
             "en": "C/C++ Extension integration failed.",
             "zh-cn": "C/C++ 插件集成失败。",
-        }
+        },
+        "aiXcoder.endpoint.empty": {
+            "en": "AiXCoder server endpoint is not set.",
+            "zh-cn": "AiXCoder服务器端口未设置。",
+        },
     };
     return messages[key] ? util.format(messages[key][vscode.env.language] || messages[key].en, ...params) : key;
 }
@@ -558,7 +562,7 @@ async function activateCPP(context: vscode.ExtensionContext) {
             const languageServerUgly = distjs.substring(languageServerUglyStart, languageServerUglyEnd);
             distjs = distjs.substring(0, cpptoolsStart) + `getClients(){return ${languageServerUgly}.getClients()}` + distjs.substring(cpptoolsStart);
             if (distjs.length > oldSize) {
-                await fs.promises.writeFile(distjsPath, distjs, "utf-8");   
+                await fs.promises.writeFile(distjsPath, distjs, "utf-8");
                 if (mscpp.isActive) {
                     const select = await vscode.window.showWarningMessage(localize("cpp.reload"), localize("reload"));
                     if (select === localize("reload")) {
@@ -735,13 +739,23 @@ async function activateCPP(context: vscode.ExtensionContext) {
 // your extension is activated the very first time the command is executed
 export async function activate(context: vscode.ExtensionContext) {
     log("AiX: aiXcoder activating");
+
+    const endpoint = vscode.workspace.getConfiguration().get("aiXcoder.endpoint");
+    if (!endpoint) {
+        vscode.window.showWarningMessage(localize("aiXcoder.endpoint.empty"), localize("openSetting")).then((selected) => {
+            if (selected === localize("openSetting")) {
+                vscode.commands.executeCommand("workbench.action.openSettings", `aiXcoder`);
+            }
+        });
+    }
+
     Preference.init(context);
     API.checkUpdate();
     const askedTelemetry = context.globalState.get("aiXcoder.askedTelemetry");
     if (!askedTelemetry) {
         context.globalState.update("aiXcoder.askedTelemetry", true);
-        vscode.window.showInformationMessage(localize("aiXcoder.askedTelemetry"), localize("aiXcoder.askedTelemetryOK"), localize("aiXcoder.askedTelemetryOpenSetting")).then((selected) => {
-            if (selected === localize("aiXcoder.askedTelemetryOpenSetting")) {
+        vscode.window.showInformationMessage(localize("aiXcoder.askedTelemetry"), localize("aiXcoder.askedTelemetryOK"), localize("openSetting")).then((selected) => {
+            if (selected === localize("openSetting")) {
                 vscode.commands.executeCommand("workbench.action.openSettings", `aiXcoder`);
             }
         });
