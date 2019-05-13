@@ -206,9 +206,6 @@ function formatSortData(results: SortResult | null) {
     };
     for (let i = 0; i < results.list.length; i++) {
         const single = results.list[i];
-        // if (single.prob < 0.1) {
-        //     break;
-        // }
         if (single.word.match(/^<.+>$/)) {
             continue;
         }
@@ -612,15 +609,10 @@ async function activateCPP(context: vscode.ExtensionContext) {
             if (resultP) {
                 const offsetID = getReqText(document, position).text;
                 const l: vscode.CompletionList = await resultP;
-                // console.log("!!!!!!!!!!");
-                // console.log(l.items.length + " items");
-                // console.log(">>>>>>>>>>");
                 let sortResults;
                 if (sortResultAwaiters[offsetID] == null) {
-                    // console.log("client sortResultAwaiters[" + offsetID + "] == null");
                     sortResults = await new Promise((resolve, reject) => {
                         const canceller = setTimeout(() => {
-                            // console.log("client timeout");
                             reject("time out");
                             delete sortResultAwaiters[offsetID];
                         }, 5000);
@@ -630,11 +622,9 @@ async function activateCPP(context: vscode.ExtensionContext) {
                         };
                     });
                 } else {
-                    // console.log("client sortResultAwaiters[" + offsetID + "] == promise");
                     sortResults = await sortResultAwaiters[offsetID];
                 }
                 delete sortResultAwaiters[offsetID];
-                // console.log("client sortResults.length = " + sortResults.list.length);
                 const our = [];
                 const telemetryCommand: vscode.Command = {
                     title: "AiXTelemetry",
@@ -657,8 +647,7 @@ async function activateCPP(context: vscode.ExtensionContext) {
                         }
                     }
                 }
-                console.log(our);
-                // l.items = our;
+                log(our);
                 return l;
             }
             return null;
@@ -672,63 +661,50 @@ async function activateCPP(context: vscode.ExtensionContext) {
             try {
                 const { text, remainingText } = getReqText(document, position);
                 const offsetID = text;
-
+                let r = null;
                 if (mscpp) {
-                    // if (!clients.ActiveClient.languageClient) {
-                    //     await clients.ActiveClient.pendingTask;
-                    // }
                     const resolver: (_: SortResult) => void = await new Promise((r, j) => {
                         if (sortResultAwaiters[offsetID] == null) {
-                            // console.log("master sortResultAwaiters[" + offsetID + "] == null");
                             const p = new Promise((resolve, reject) => {
                                 const canceller = setTimeout(() => {
-                                    // console.log("master timeout, reject");
+                                    log("master timeout, reject");
                                     reject("time out");
                                     delete sortResultAwaiters[offsetID];
                                 }, 5000);
                                 r((_) => {
                                     clearTimeout(canceller);
                                     resolve(_);
-                                    // setTimeout(() => {
-                                    //     if (sortResultAwaiters[offsetID] === p) {
-                                    //         console.log("master timeout, clear");
-                                    //         sortResultAwaiters[offsetID] = null;
-                                    //     }
-                                    // }, 5000);
                                 });
                             });
                             sortResultAwaiters[offsetID] = p;
                         } else {
-                            // console.log("master sortResultAwaiters[" + offsetID + "] == resolver == " + JSON.stringify(sortResultAwaiters[offsetID]));
                             r(sortResultAwaiters[offsetID]);
                         }
                     });
-                    // console.log("1 resolver = " + (typeof resolver) + " : " + JSON.stringify(resolver));
                     const client = clients.ActiveClient.languageClient;
                     const oldProvideCompletionItems = client.clientOptions.middleware.provideCompletionItem;
                     if (!oldProvideCompletionItems.aixhooked) {
-                        console.log("Hooking C++ extension...");
+                        log("Hooking C++ extension...");
                         client.clientOptions.middleware.provideCompletionItem = getHookedProvideCompletionItems(oldProvideCompletionItems);
                         client.clientOptions.middleware.provideCompletionItem.aixhooked = true;
                         delete sortResultAwaiters[offsetID]; // it won't work first time
-                        console.log("C++ extension Hooked");
+                        log("C++ extension Hooked");
                     }
                     const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, "cpp(Cpp)", "cpp", STAR_DISPLAY.NONE);
-                    // console.log("master resolve(sortResults[" + sortResults.list.length + "])");
-                    // console.log("2 resolver = " + (typeof resolver) + " : " + JSON.stringify(resolver));
                     if (typeof resolver === "function") {
                         resolver(sortResults);
                     }
                     sendPredictTelemetry(fetchTime, longResults);
-                    return longResults;
+                    r = longResults;
                 } else {
                     const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, "cpp(Cpp)", "cpp", STAR_DISPLAY.LEFT);
                     const sortLabels = formatSortData(sortResults);
                     longResults.push(...sortLabels);
                     sendPredictTelemetry(fetchTime, longResults);
-                    return longResults;
+                    r = longResults;
                 }
-                // log("provideCompletionItems ends");
+                log("provideCompletionItems ends");
+                return r;
             } catch (e) {
                 log(e);
             }
