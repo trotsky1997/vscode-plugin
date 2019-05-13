@@ -15,3 +15,4 @@ tslint.json
 webpack.config.js
 packing
 pack.bat
+*.vsix

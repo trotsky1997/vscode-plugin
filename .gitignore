@@ -1,6 +1,6 @@
 out
 node_modules
-aixcoder-*.vsix
+*.vsix
 dist
 .vscode/ipch
 .vscode-test
