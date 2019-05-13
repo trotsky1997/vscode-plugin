@@ -713,7 +713,7 @@ async function activateCPP(context: vscode.ExtensionContext) {
                         delete sortResultAwaiters[offsetID]; // it won't work first time
                         console.log("C++ extension Hooked");
                     }
-                    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, "cplus(Cpp)", "cpp", STAR_DISPLAY.NONE);
+                    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, "cpp(Cpp)", "cpp", STAR_DISPLAY.NONE);
                     // console.log("master resolve(sortResults[" + sortResults.list.length + "])");
                     // console.log("2 resolver = " + (typeof resolver) + " : " + JSON.stringify(resolver));
                     if (typeof resolver === "function") {
@@ -722,7 +722,7 @@ async function activateCPP(context: vscode.ExtensionContext) {
                     sendPredictTelemetry(fetchTime, longResults);
                     return longResults;
                 } else {
-                    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, "cplus(Cpp)", "cpp", STAR_DISPLAY.LEFT);
+                    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, "cpp(Cpp)", "cpp", STAR_DISPLAY.LEFT);
                     const sortLabels = formatSortData(sortResults);
                     longResults.push(...sortLabels);
                     sendPredictTelemetry(fetchTime, longResults);
