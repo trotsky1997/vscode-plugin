@@ -40,15 +40,16 @@ function myRequest(options: request.OptionsWithUrl, endpoint?: string) {
     return request(options);
 }
 
-export async function predict(text: string, ext: string, remainingText: string, lastQueryUUID: number, fileID: string) {
+export async function predict(text: string, ext: string, remainingText: string, lastQueryUUID: number, fileID: string, retry = true) {
     const maskedText = await DataMasking.mask(text, ext);
     const maskedRemainingText = await DataMasking.mask(remainingText, ext);
     const u = vscode.window.activeTextEditor.document.uri;
     const proj = vscode.workspace.getWorkspaceFolder(u);
+    const projName = proj ? proj.name : "_scratch";
     const offset = CodeStore.getInstance().getDiffPosition(fileID, maskedText);
     const md5 = md5Hash(maskedText);
 
-    return myRequest({
+    const resp = await myRequest({
         method: "post",
         url: "predict",
         form: {
@@ -56,7 +57,7 @@ export async function predict(text: string, ext: string, remainingText: string, 
             ext,
             uuid: Preference.uuid,
             fileid: fileID,
-            project: proj ? proj.name : "_scratch",
+            project: projName,
             remaining_text: maskedRemainingText,
             queryUUID: lastQueryUUID,
             offset,
@@ -68,6 +69,13 @@ export async function predict(text: string, ext: string, remainingText: string, 
         },
         timeout: 2000,
     });
+    if (retry && resp && resp.indexOf("err:Conflict") >= 0) {
+        CodeStore.getInstance().invalidateFile(projName, fileID);
+        return predict(text, ext, remainingText, lastQueryUUID, fileID, false);
+    } else {
+        CodeStore.getInstance().saveLastSent(projName, fileID, maskedText);
+    }
+    return resp;
 }
 
 export function getTrivialLiterals(ext: string) {
