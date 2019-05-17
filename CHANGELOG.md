@@ -6,6 +6,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 - Configurations to turn off telemetry.
 - A warning will show up if aixcoder.endpoint is empty.
 - Java: Add brackets when using method type completions.
+- Java: Rank completions with the same value adjancent to each other.
 
 ### Changed
 - A minor change to reduce network traffic.

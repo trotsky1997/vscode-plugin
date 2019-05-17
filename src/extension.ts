@@ -504,10 +504,13 @@ function activateJava(context: vscode.ExtensionContext) {
                                 systemCompletion.sortText = systemCompletion.filterText;
                             }
                             let insertText = systemCompletion.insertText;
+                            if (insertText == null) {
+                                insertText = systemCompletion.label;
+                            }
                             if (typeof (insertText) !== "string") {
                                 insertText = insertText.value;
                             }
-                            if (insertText.startsWith(single.word) && !systemCompletion.label.startsWith("⭐")) {
+                            if (insertText.match("^" + single.word + "\\b") && !systemCompletion.label.startsWith("⭐")) {
                                 systemCompletion.label = "⭐" + systemCompletion.label;
                                 systemCompletion.sortText = "0." + i;
                                 systemCompletion.command = telemetryCommand;
