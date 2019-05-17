@@ -15,6 +15,8 @@ export class JavaLangUtil extends LangUtil {
         if (right === ";") { return false; }
         if (!left.match(ID_REGEX) && !right.match(ID_REGEX)) { return false; }
         if (right === "<" || right === ">") { return left.charAt(0).toLowerCase() === left.charAt(0); }
+        if (left === "++" || right === "++") { return false; }
+        if (left === "--" || right === "--") { return false; }
         if (left === "<" || left === ">") {
             left = nextI < 2 ? "A" : tokens[nextI - 2];
             return left.charAt(0).toLowerCase() === left.charAt(0);

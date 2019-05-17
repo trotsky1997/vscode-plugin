@@ -14,6 +14,8 @@ export class CppLangUtil extends LangUtil {
         if (right === "[") { return false; }
         if (left.match(ID_REGEX) && right === "(") { return false; }
         if (right === ";") { return false; }
+        if (left === "++" || right === "++") { return false; }
+        if (left === "--" || right === "--") { return false; }
         if (left !== "<str>" && right !== "<str>" && !left.match(ID_REGEX) && !right.match(ID_REGEX)) {
             return false;
         }
