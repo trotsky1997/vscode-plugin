@@ -160,7 +160,7 @@ export async function sendErrorTelemetry(msg: string) {
                 url: updateURL,
             });
         } catch (e) {
-            log(e);
+            log(e, false);
         }
     }
 }

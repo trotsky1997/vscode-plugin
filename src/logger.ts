@@ -18,10 +18,12 @@ class Logger {
     /**
      * log
      */
-    public log(s: string | Error) {
+    public log(s: string | Error, sendTelemetry= true) {
         if (s instanceof Error) {
             s = this.formatErrorForLogging(s);
-            API.sendErrorTelemetry(s);
+            if (sendTelemetry) {
+                API.sendErrorTelemetry(s);
+            }
         }
         this.channel.appendLine(s);
     }
