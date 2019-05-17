@@ -503,11 +503,17 @@ function activateJava(context: vscode.ExtensionContext) {
                             if (systemCompletion.sortText == null) {
                                 systemCompletion.sortText = systemCompletion.filterText;
                             }
-                            if (systemCompletion.insertText === single.word) {
+                            let insertText = systemCompletion.insertText;
+                            if (typeof (insertText) !== "string") {
+                                insertText = insertText.value;
+                            }
+                            if (insertText.startsWith(single.word) && !systemCompletion.label.startsWith("⭐")) {
                                 systemCompletion.label = "⭐" + systemCompletion.label;
                                 systemCompletion.sortText = "0." + i;
                                 systemCompletion.command = telemetryCommand;
-                                break;
+                                if (systemCompletion.kind === vscode.CompletionItemKind.Function && insertText.indexOf("(") === -1) {
+                                    systemCompletion.insertText = new vscode.SnippetString(insertText).appendText("(").appendTabstop().appendText(")");
+                                }
                             }
                         }
                     }
