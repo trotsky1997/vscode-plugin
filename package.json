@@ -35,6 +35,11 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Send anonoymous usage data and errors to aiXcoder telemetry service."
+                },
+                "aiXcoder.additionalParameters": {
+                    "type": "string",
+                    "default": "",
+                    "description": "(Only for advanced usages) URL encoded params."
                 }
             }
         },

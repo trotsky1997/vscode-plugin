@@ -7,6 +7,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 - A warning will show up if aixcoder.endpoint is empty.
 - Java: Add brackets when using method type completions.
 - Java: Rank completions with the same value adjancent to each other.
+- A new configuration to supply additional parameters for advanced usages.
 
 ### Changed
 - A minor change to reduce network traffic.

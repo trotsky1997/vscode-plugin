@@ -1,6 +1,21 @@
 import * as uuidv4 from "uuid/v4";
 import * as vscode from "vscode";
 
+function getParamsFromUrl(url: string) {
+    url = decodeURI(url);
+    const eachParamsArr = url.split("&");
+    const obj = {};
+    if (eachParamsArr && eachParamsArr.length) {
+        eachParamsArr.map((param) => {
+            const keyValuePair = param.split("=");
+            const key = keyValuePair[0];
+            const value = keyValuePair[1];
+            obj[key] = value;
+        });
+    }
+    return obj;
+}
+
 export default class Preference {
     public static uuid: string;
     public static context: vscode.ExtensionContext;
@@ -11,5 +26,25 @@ export default class Preference {
             Preference.uuid = "vscode-" + uuidv4();
             context.globalState.update("aiXcoder.uuid", Preference.uuid);
         }
+    }
+
+    public static getParams() {
+        const paramsString = vscode.workspace.getConfiguration().get("aiXcoder.additionalParameters") as string;
+        const params = getParamsFromUrl(paramsString);
+        return params;
+    }
+
+    public static getRequestParams() {
+        const params = Preference.getParams() as any;
+        if (params.controllerMode) {
+            delete params.controllerMode;
+            params.prob_th_rnn = 0;
+            params.prob_th_rnn_t = 0;
+        }
+        return params;
+    }
+
+    public static getParam(key: string) {
+        return Preference.getParams()[key];
     }
 }

@@ -173,8 +173,9 @@ function formatResData(results: any, langUtil: LangUtil, starDisplay: STAR_DISPL
         command: "aiXcoder.sendTelemetry",
         arguments: ["use", "primary"],
     };
+    const minCompletionTokensCount = Preference.getParam("controllerMode") ? 0 : 1;
     for (const result of results.data) {
-        if (result.tokens.length > 1) {
+        if (result.tokens.length > minCompletionTokensCount) {
             if (result.tokens.length === 2 && result.tokens[1] === "(" && result.tokens[0].match(/[a-zA-Z0-9_$]+/)) {
                 continue;
             }

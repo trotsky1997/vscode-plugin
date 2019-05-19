@@ -66,6 +66,7 @@ export async function predict(text: string, ext: string, remainingText: string, 
             prob_th_ngram: 1,
             prob_th_ngram_t: 1,
             version: myVersion,
+            ...Preference.getRequestParams(),
         },
         timeout: 2000,
     });
