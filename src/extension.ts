@@ -13,6 +13,10 @@ import { LangUtil } from "./lang/langUtil";
 import log from "./logger";
 import Preference from "./Preference";
 
+function escapeRegExp(s: string) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
+}
+
 export function localize(key: string, ...params: any[]) {
     const messages = {
         "mspythonExtension.install": {
@@ -510,7 +514,7 @@ function activateJava(context: vscode.ExtensionContext) {
                             if (typeof (insertText) !== "string") {
                                 insertText = insertText.value;
                             }
-                            if (insertText.match("^" + single.word + "\\b") && !systemCompletion.label.startsWith("⭐")) {
+                            if (insertText.match("^" + escapeRegExp(single.word) + "\\b") && !systemCompletion.label.startsWith("⭐")) {
                                 systemCompletion.label = "⭐" + systemCompletion.label;
                                 systemCompletion.sortText = "0." + i;
                                 systemCompletion.command = telemetryCommand;
