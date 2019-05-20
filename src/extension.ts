@@ -238,21 +238,37 @@ async function fetchResults2(text: string, remainingText: string, fileName: stri
     if (fetchBody == null) {
         fetchBody = "{data:[]}";
     }
-    const predictResults = fetchBody && typeof fetchBody === "string" ? JSON.parse(fetchBody) : fetchBody;
-    const strLabels = formatResData(predictResults, getInstance(lang), starDisplay);
-    // log("predict result:");
-    // log(strLabels);
-    const results = {
-        queryUUID: queryUUID.toString(),
-        list: predictResults.data.length > 0 ? predictResults.data[0].sort || [] : [],
-    };
-    // log("mina result:");
-    results.list = results.list.map(([prob, word]) => ({ prob, word }));
-    return {
-        longResults: strLabels,
-        sortResults: results,
-        fetchTime,
-    };
+    try {
+        const predictResults = fetchBody && typeof fetchBody === "string" ? JSON.parse(fetchBody) : fetchBody;
+        const strLabels = formatResData(predictResults, getInstance(lang), starDisplay);
+        // log("predict result:");
+        // log(strLabels);
+        const results = {
+            queryUUID: queryUUID.toString(),
+            list: predictResults.data.length > 0 ? predictResults.data[0].sort || [] : [],
+        };
+        // log("mina result:");
+        results.list = results.list.map(([prob, word]) => ({ prob, word }));
+        return {
+            longResults: strLabels,
+            sortResults: results,
+            fetchTime,
+        };
+    } catch (e) {
+        if (!(e instanceof Error)) {
+            e = new Error(e);
+        }
+        e.message += "\ndetail: " + fetchBody;
+        log(e);
+        return {
+            longResults: [],
+            sortResults: {
+                queryUUID: queryUUID.toString(),
+                list: [],
+            },
+            fetchTime,
+        };
+    }
 }
 
 async function fetchResults(document: vscode.TextDocument, position: vscode.Position, ext: string, lang: string, starDisplay: STAR_DISPLAY = STAR_DISPLAY.LEFT) {
