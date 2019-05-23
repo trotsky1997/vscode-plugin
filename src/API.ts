@@ -49,34 +49,41 @@ export async function predict(text: string, ext: string, remainingText: string, 
     const offset = CodeStore.getInstance().getDiffPosition(fileID, maskedText);
     const md5 = md5Hash(maskedText);
 
-    const resp = await myRequest({
-        method: "post",
-        url: "predict",
-        form: {
-            text: maskedText,    // 这个是输入的内容，暂时先用p来代替
-            ext,
-            uuid: Preference.uuid,
-            fileid: fileID,
-            project: projName,
-            remaining_text: maskedRemainingText,
-            queryUUID: lastQueryUUID,
-            offset,
-            md5,
-            sort: 1,
-            prob_th_ngram: 1,
-            prob_th_ngram_t: 1,
-            version: myVersion,
-            ...Preference.getRequestParams(),
-        },
-        timeout: 2000,
-    });
-    if (retry && resp && resp.indexOf("err:Conflict") >= 0) {
-        CodeStore.getInstance().invalidateFile(projName, fileID);
-        return predict(text, ext, remainingText, lastQueryUUID, fileID, false);
-    } else {
-        CodeStore.getInstance().saveLastSent(projName, fileID, maskedText);
+    try {
+        const resp = await myRequest({
+            method: "post",
+            url: "predict",
+            form: {
+                text: maskedText.substring(offset),    // 这个是输入的内容，暂时先用p来代替
+                ext,
+                uuid: Preference.uuid,
+                fileid: fileID,
+                project: projName,
+                remaining_text: maskedRemainingText,
+                queryUUID: lastQueryUUID,
+                offset,
+                md5,
+                sort: 1,
+                prob_th_ngram: 1,
+                prob_th_ngram_t: 1,
+                version: myVersion,
+                ...Preference.getRequestParams(),
+            },
+            timeout: 2000,
+        });
+        if (retry && resp && resp.indexOf("err:Conflict") >= 0) {
+            console.log("conflict");
+            CodeStore.getInstance().invalidateFile(projName, fileID);
+            return predict(text, ext, remainingText, lastQueryUUID, fileID, false);
+        } else {
+            console.log("resp=" + resp);
+            CodeStore.getInstance().saveLastSent(projName, fileID, maskedText);
+        }
+        return resp;
+    } catch (e) {
+        log(e);
     }
-    return resp;
+    return null;
 }
 
 export function getTrivialLiterals(ext: string) {
