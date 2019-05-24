@@ -13,6 +13,10 @@ import { LangUtil } from "./lang/langUtil";
 import log from "./logger";
 import Preference from "./Preference";
 
+function escapeRegExp(s: string) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
+}
+
 export function localize(key: string, ...params: any[]) {
     const messages = {
         "mspythonExtension.install": {
@@ -173,8 +177,9 @@ function formatResData(results: any, langUtil: LangUtil, starDisplay: STAR_DISPL
         command: "aiXcoder.sendTelemetry",
         arguments: ["use", "primary"],
     };
+    const minCompletionTokensCount = Preference.getParam("controllerMode") ? 0 : 1;
     for (const result of results.data) {
-        if (result.tokens.length > 1) {
+        if (result.tokens.length > minCompletionTokensCount) {
             if (result.tokens.length === 2 && result.tokens[1] === "(" && result.tokens[0].match(/[a-zA-Z0-9_$]+/)) {
                 continue;
             }
@@ -210,9 +215,6 @@ function formatSortData(results: SortResult | null) {
     };
     for (let i = 0; i < results.list.length; i++) {
         const single = results.list[i];
-        // if (single.prob < 0.1) {
-        //     break;
-        // }
         if (single.word.match(/^<.+>$/)) {
             continue;
         }
@@ -228,39 +230,63 @@ function formatSortData(results: SortResult | null) {
     return r;
 }
 
-async function fetchResults2(text: string, remainingText: string, fileName: string, ext: string, lang: string, starDisplay: STAR_DISPLAY = STAR_DISPLAY.LEFT): Promise<{
+async function fetchResults2(text: string, remainingText: string, fileName: string, ext: string, lang: string, document: vscode.TextDocument, starDisplay: STAR_DISPLAY = STAR_DISPLAY.LEFT): Promise<{
     longResults: AiXCompletionItem[],
     sortResults: SortResult,
     fetchTime: number,
 }> {
-    const { body, queryUUID, fetchTime } = fetch(ext, text, remainingText, fileName);
-
-    let fetchBody = await body;
-    log(fetchBody);
+    let fetchBody: string = null;
+    let queryUUID: number;
+    let fetchTime: number;
+    if (Preference.shouldTrigger(lastModifedTime, document)) {
+        const fetched = fetch(ext, text, remainingText, fileName);
+        fetchBody = await fetched.body;
+        queryUUID = fetched.queryUUID;
+        fetchTime = fetched.fetchTime;
+        log(fetchBody);
+    }
     if (fetchBody == null) {
         fetchBody = "{data:[]}";
+        queryUUID = 0;
+        fetchTime = 0;
     }
-    const predictResults = fetchBody && typeof fetchBody === "string" ? JSON.parse(fetchBody) : fetchBody;
-    const strLabels = formatResData(predictResults, getInstance(lang), starDisplay);
-    // log("predict result:");
-    // log(strLabels);
-    const results = {
-        queryUUID: queryUUID.toString(),
-        list: predictResults.data.length > 0 ? predictResults.data[0].sort || [] : [],
-    };
-    // log("mina result:");
-    results.list = results.list.map(([prob, word]) => ({ prob, word }));
-    return {
-        longResults: strLabels,
-        sortResults: results,
-        fetchTime,
-    };
+    try {
+        const predictResults = fetchBody && typeof fetchBody === "string" ? JSON.parse(fetchBody) : fetchBody;
+        const strLabels = formatResData(predictResults, getInstance(lang), starDisplay);
+        // log("predict result:");
+        // log(strLabels);
+        const results = {
+            queryUUID: queryUUID.toString(),
+            list: predictResults.data.length > 0 ? predictResults.data[0].sort || [] : [],
+        };
+        // log("mina result:");
+        results.list = results.list.map(([prob, word]) => ({ prob, word }));
+        return {
+            longResults: strLabels,
+            sortResults: results,
+            fetchTime,
+        };
+    } catch (e) {
+        if (!(e instanceof Error)) {
+            e = new Error(e);
+        }
+        e.message += "\ndetail: " + fetchBody;
+        log(e);
+        return {
+            longResults: [],
+            sortResults: {
+                queryUUID: queryUUID.toString(),
+                list: [],
+            },
+            fetchTime,
+        };
+    }
 }
 
 async function fetchResults(document: vscode.TextDocument, position: vscode.Position, ext: string, lang: string, starDisplay: STAR_DISPLAY = STAR_DISPLAY.LEFT) {
     const _s = Date.now();
     const { text, remainingText, offsetID } = getReqText(document, position);
-    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, ext, lang, starDisplay);
+    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, ext, lang, document, starDisplay);
     log("< fetch took " + (Date.now() - _s) + "ms");
     return {
         longResults,
@@ -321,7 +347,7 @@ function activatePython(context: vscode.ExtensionContext) {
                     mspythonExtension = undefined;
                 }
             }
-            const server = net.createServer(function(s) {
+            const server = net.createServer(function (s) {
                 log("AiX: python language server socket server connected");
                 s.on("data", (data) => {
                     const offset = data.readInt32LE(0);
@@ -491,16 +517,17 @@ function activateJava(context: vscode.ExtensionContext) {
             // log("=====================");
             try {
                 const ext = vscode.workspace.getConfiguration().get("aiXcoder.model.java") as string;
-                const { longResults, sortResults, fetchTime } = await fetchResults(document, position, ext, "java");
-
                 if (redhatjavaExtension) {
-                    const l: vscode.CompletionItem[] = await vscode.commands.executeCommand("java.execute.workspaceCommand", "com.aixcoder.jdtls.extension.completion", {
+                    const fetchPromise = fetchResults(document, position, ext, "java");
+                    const redhatPromise = vscode.commands.executeCommand("java.execute.workspaceCommand", "com.aixcoder.jdtls.extension.completion", {
                         textDocument: {
                             uri: document.uri.toString(),
                         },
                         position,
                         context,
                     });
+                    const { longResults, sortResults, fetchTime } = await fetchPromise;
+                    const l = await redhatPromise as vscode.CompletionItem[];
                     const telemetryCommand: vscode.Command = {
                         title: "AiXTelemetry",
                         command: "aiXcoder.sendTelemetry",
@@ -512,22 +539,34 @@ function activateJava(context: vscode.ExtensionContext) {
                             if (systemCompletion.sortText == null) {
                                 systemCompletion.sortText = systemCompletion.filterText;
                             }
-                            if (systemCompletion.insertText === single.word) {
+                            let insertText = systemCompletion.insertText;
+                            if (insertText == null) {
+                                insertText = systemCompletion.label;
+                            }
+                            if (typeof (insertText) !== "string") {
+                                insertText = insertText.value;
+                            }
+                            if (insertText.match("^" + escapeRegExp(single.word) + "\\b") && !systemCompletion.label.startsWith("⭐")) {
                                 systemCompletion.label = "⭐" + systemCompletion.label;
                                 systemCompletion.sortText = "0." + i;
                                 systemCompletion.command = telemetryCommand;
-                                break;
+                                if (systemCompletion.kind === vscode.CompletionItemKind.Function && insertText.indexOf("(") === -1) {
+                                    systemCompletion.insertText = new vscode.SnippetString(insertText).appendText("(").appendTabstop().appendText(")");
+                                }
                             }
                         }
                     }
                     longResults.push(...l);
+                    sendPredictTelemetry(fetchTime, longResults);
+                    return longResults;
                 } else {
+                    const { longResults, sortResults, fetchTime } = await fetchResults(document, position, ext, "java");
                     const sortLabels = formatSortData(sortResults);
                     longResults.push(...sortLabels);
+                    sendPredictTelemetry(fetchTime, longResults);
+                    return longResults;
                 }
-                sendPredictTelemetry(fetchTime, longResults);
                 // log("provideCompletionItems ends");
-                return longResults;
             } catch (e) {
                 log(e);
             }
@@ -618,15 +657,10 @@ async function activateCPP(context: vscode.ExtensionContext) {
             if (resultP) {
                 const offsetID = getReqText(document, position).text;
                 const l: vscode.CompletionList = await resultP;
-                // console.log("!!!!!!!!!!");
-                // console.log(l.items.length + " items");
-                // console.log(">>>>>>>>>>");
                 let sortResults;
                 if (sortResultAwaiters[offsetID] == null) {
-                    // console.log("client sortResultAwaiters[" + offsetID + "] == null");
                     sortResults = await new Promise((resolve, reject) => {
                         const canceller = setTimeout(() => {
-                            // console.log("client timeout");
                             reject("time out");
                             delete sortResultAwaiters[offsetID];
                         }, 5000);
@@ -636,11 +670,9 @@ async function activateCPP(context: vscode.ExtensionContext) {
                         };
                     });
                 } else {
-                    // console.log("client sortResultAwaiters[" + offsetID + "] == promise");
                     sortResults = await sortResultAwaiters[offsetID];
                 }
                 delete sortResultAwaiters[offsetID];
-                // console.log("client sortResults.length = " + sortResults.list.length);
                 const our = [];
                 const telemetryCommand: vscode.Command = {
                     title: "AiXTelemetry",
@@ -663,8 +695,7 @@ async function activateCPP(context: vscode.ExtensionContext) {
                         }
                     }
                 }
-                console.log(our);
-                // l.items = our;
+                log(our);
                 return l;
             }
             return null;
@@ -679,63 +710,50 @@ async function activateCPP(context: vscode.ExtensionContext) {
             try {
                 const { text, remainingText } = getReqText(document, position);
                 const offsetID = text;
-
+                let r = null;
                 if (mscpp) {
-                    // if (!clients.ActiveClient.languageClient) {
-                    //     await clients.ActiveClient.pendingTask;
-                    // }
                     const resolver: (_: SortResult) => void = await new Promise((r, j) => {
                         if (sortResultAwaiters[offsetID] == null) {
-                            // console.log("master sortResultAwaiters[" + offsetID + "] == null");
                             const p = new Promise((resolve, reject) => {
                                 const canceller = setTimeout(() => {
-                                    // console.log("master timeout, reject");
+                                    log("master timeout, reject");
                                     reject("time out");
                                     delete sortResultAwaiters[offsetID];
                                 }, 5000);
                                 r((_) => {
                                     clearTimeout(canceller);
                                     resolve(_);
-                                    // setTimeout(() => {
-                                    //     if (sortResultAwaiters[offsetID] === p) {
-                                    //         console.log("master timeout, clear");
-                                    //         sortResultAwaiters[offsetID] = null;
-                                    //     }
-                                    // }, 5000);
                                 });
                             });
                             sortResultAwaiters[offsetID] = p;
                         } else {
-                            // console.log("master sortResultAwaiters[" + offsetID + "] == resolver == " + JSON.stringify(sortResultAwaiters[offsetID]));
                             r(sortResultAwaiters[offsetID]);
                         }
                     });
-                    // console.log("1 resolver = " + (typeof resolver) + " : " + JSON.stringify(resolver));
                     const client = clients.ActiveClient.languageClient;
                     const oldProvideCompletionItems = client.clientOptions.middleware.provideCompletionItem;
                     if (!oldProvideCompletionItems.aixhooked) {
-                        console.log("Hooking C++ extension...");
+                        log("Hooking C++ extension...");
                         client.clientOptions.middleware.provideCompletionItem = getHookedProvideCompletionItems(oldProvideCompletionItems);
                         client.clientOptions.middleware.provideCompletionItem.aixhooked = true;
                         delete sortResultAwaiters[offsetID]; // it won't work first time
-                        console.log("C++ extension Hooked");
+                        log("C++ extension Hooked");
                     }
-                    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, ext, "cpp", STAR_DISPLAY.NONE);
-                    // console.log("master resolve(sortResults[" + sortResults.list.length + "])");
-                    // console.log("2 resolver = " + (typeof resolver) + " : " + JSON.stringify(resolver));
+                    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, ext, "cpp", document, STAR_DISPLAY.NONE);
                     if (typeof resolver === "function") {
                         resolver(sortResults);
                     }
                     sendPredictTelemetry(fetchTime, longResults);
-                    return longResults;
+                    r = longResults;
                 } else {
-                    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, ext, "cpp", STAR_DISPLAY.LEFT);
+                    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, ext, "cpp", document, STAR_DISPLAY.LEFT);
                     const sortLabels = formatSortData(sortResults);
                     longResults.push(...sortLabels);
                     sendPredictTelemetry(fetchTime, longResults);
-                    return longResults;
+                    r = longResults;
                 }
-                // log("provideCompletionItems ends");
+                log("provideCompletionItems ends");
+                return r;
             } catch (e) {
                 log(e);
             }
@@ -757,6 +775,7 @@ async function activateCPP(context: vscode.ExtensionContext) {
 interface ModelQuickPickItem extends vscode.QuickPickItem {
     lang: string;
 }
+const lastModifedTime: { [uri: string]: number } = {};
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -785,6 +804,16 @@ export async function activate(context: vscode.ExtensionContext) {
             }
         });
     }
+    context.subscriptions.push(vscode.workspace.onDidOpenTextDocument((document) => {
+        if (document.uri.scheme === "file" || document.uri.scheme === "untitled") {
+            lastModifedTime[document.uri.toJSON()] = Date.now();
+        }
+    }));
+    context.subscriptions.push(vscode.workspace.onDidChangeTextDocument((event) => {
+        if (event.document.uri.scheme === "file" || event.document.uri.scheme === "untitled") {
+            lastModifedTime[event.document.uri.toJSON()] = Date.now();
+        }
+    }));
     context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.sendTelemetry", (type: string, subtype: string) => {
         API.sendTelemetry(type, subtype);
     }));

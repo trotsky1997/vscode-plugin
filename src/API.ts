@@ -40,34 +40,50 @@ function myRequest(options: request.OptionsWithUrl, endpoint?: string) {
     return request(options);
 }
 
-export async function predict(text: string, ext: string, remainingText: string, lastQueryUUID: number, fileID: string) {
+export async function predict(text: string, ext: string, remainingText: string, lastQueryUUID: number, fileID: string, retry = true) {
     const maskedText = await DataMasking.mask(text, ext);
     const maskedRemainingText = await DataMasking.mask(remainingText, ext);
     const u = vscode.window.activeTextEditor.document.uri;
     const proj = vscode.workspace.getWorkspaceFolder(u);
+    const projName = proj ? proj.name : "_scratch";
     const offset = CodeStore.getInstance().getDiffPosition(fileID, maskedText);
     const md5 = md5Hash(maskedText);
 
-    return myRequest({
-        method: "post",
-        url: "predict",
-        form: {
-            text: maskedText,    // 这个是输入的内容，暂时先用p来代替
-            ext,
-            uuid: Preference.uuid,
-            fileid: fileID,
-            project: proj ? proj.name : "_scratch",
-            remaining_text: maskedRemainingText,
-            queryUUID: lastQueryUUID,
-            offset,
-            md5,
-            sort: 1,
-            prob_th_ngram: 1,
-            prob_th_ngram_t: 1,
-            version: myVersion,
-        },
-        timeout: 2000,
-    });
+    try {
+        const resp = await myRequest({
+            method: "post",
+            url: "predict",
+            form: {
+                text: maskedText.substring(offset),    // 这个是输入的内容，暂时先用p来代替
+                ext,
+                uuid: Preference.uuid,
+                fileid: fileID,
+                project: projName,
+                remaining_text: maskedRemainingText,
+                queryUUID: lastQueryUUID,
+                offset,
+                md5,
+                sort: 1,
+                prob_th_ngram: 1,
+                prob_th_ngram_t: 1,
+                version: myVersion,
+                ...Preference.getRequestParams(),
+            },
+            timeout: 2000,
+        });
+        if (retry && resp && resp.indexOf("err:Conflict") >= 0) {
+            console.log("conflict");
+            CodeStore.getInstance().invalidateFile(projName, fileID);
+            return predict(text, ext, remainingText, lastQueryUUID, fileID, false);
+        } else {
+            console.log("resp=" + resp);
+            CodeStore.getInstance().saveLastSent(projName, fileID, maskedText);
+        }
+        return resp;
+    } catch (e) {
+        log(e);
+    }
+    return null;
 }
 
 export function getTrivialLiterals(ext: string) {
@@ -152,7 +168,7 @@ export async function sendErrorTelemetry(msg: string) {
                 url: updateURL,
             });
         } catch (e) {
-            log(e);
+            log(e, false);
         }
     }
 }

@@ -2,7 +2,7 @@
     "name": "aixcoder",
     "displayName": "aiXcoder",
     "description": "aiXcoder code suggestion",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "publisher": "nnthink",
     "repository": {
         "url": "https://github.com/felixhao28/vscode-plugin"
@@ -50,6 +50,16 @@
                     "type": "boolean",
                     "default": false,
                     "description": "Send anonoymous usage data and errors to aiXcoder telemetry service."
+                },
+                "aiXcoder.additionalParameters": {
+                    "type": "string",
+                    "default": "",
+                    "description": "(Only for advanced usages) URL encoded params."
+                },
+                "aiXcoder.alwaysTrigger": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "If set to true, aiXcoder suggestions are always triggered as you type. Otherwise, it only triggers explictly with e.g. `Ctrl+Space`."
                 }
             }
         },
