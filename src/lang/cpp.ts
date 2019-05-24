@@ -2,8 +2,42 @@ import { ID_REGEX, LangUtil } from "./langUtil";
 
 export class CppLangUtil extends LangUtil {
 
+    public genericTypeRegex = /^([a-zA-Z0-9_$]+|<|>|,|\[\])$/;
+
+    public isGenericTypeBracket(tokens: string[], i: number): boolean {
+        if (tokens[i] === "<") {
+            let level = 1;
+            for (; level > 0 && i < tokens.length; i++) {
+                if (tokens[i].length === 0) {
+                    continue;
+                }
+                if (tokens[i] === ">") {
+                    level--;
+                } else if (!tokens[i].match(this.genericTypeRegex)) {
+                    break;
+                }
+            }
+            return level === 0;
+        } else if (tokens[i] === ">") {
+            let level = 1;
+            for (; level > 0 && i >= 0; i--) {
+                if (tokens[i].length === 0) {
+                    continue;
+                }
+                if (tokens[i] === "<") {
+                    level--;
+                } else if (!tokens[i].match(this.genericTypeRegex)) {
+                    break;
+                }
+            }
+            return level === 0;
+        } else {
+            return false;
+        }
+    }
+
     public hasSpaceBetween(tokens: string[], nextI: number): boolean {
-        let left = nextI === 0 ? "" : tokens[nextI - 1];
+        const left = nextI === 0 ? "" : tokens[nextI - 1];
         const right = tokens[nextI];
         if (left === "" || right === "") { return false; }
         if (left === "::" || right === "::") { return false; }
@@ -20,11 +54,10 @@ export class CppLangUtil extends LangUtil {
             return false;
         }
         if (right === "<" || right === ">") {
-            return false;
+            return !this.isGenericTypeBracket(tokens, nextI);
         }
         if (left === "<" || left === ">") {
-            left = nextI < 2 ? "A" : tokens[nextI - 2];
-            return false;
+            return !this.isGenericTypeBracket(tokens, nextI - 1);
         }
         return true;
     }

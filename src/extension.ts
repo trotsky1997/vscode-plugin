@@ -343,7 +343,7 @@ function activatePython(context: vscode.ExtensionContext) {
                     mspythonExtension = undefined;
                 }
             }
-            const server = net.createServer(function(s) {
+            const server = net.createServer(function (s) {
                 log("AiX: python language server socket server connected");
                 s.on("data", (data) => {
                     const offset = data.readInt32LE(0);
@@ -511,16 +511,17 @@ function activateJava(context: vscode.ExtensionContext) {
             await _activate();
             // log("=====================");
             try {
-                const { longResults, sortResults, fetchTime } = await fetchResults(document, position, "java(Java)", "java");
-
                 if (redhatjavaExtension) {
-                    const l: vscode.CompletionItem[] = await vscode.commands.executeCommand("java.execute.workspaceCommand", "com.aixcoder.jdtls.extension.completion", {
+                    const fetchPromise = fetchResults(document, position, "java(Java)", "java");
+                    const redhatPromise = vscode.commands.executeCommand("java.execute.workspaceCommand", "com.aixcoder.jdtls.extension.completion", {
                         textDocument: {
                             uri: document.uri.toString(),
                         },
                         position,
                         context,
                     });
+                    const { longResults, sortResults, fetchTime } = await fetchPromise;
+                    const l = await redhatPromise as vscode.CompletionItem[];
                     const telemetryCommand: vscode.Command = {
                         title: "AiXTelemetry",
                         command: "aiXcoder.sendTelemetry",
@@ -550,13 +551,16 @@ function activateJava(context: vscode.ExtensionContext) {
                         }
                     }
                     longResults.push(...l);
+                    sendPredictTelemetry(fetchTime, longResults);
+                    return longResults;
                 } else {
+                    const { longResults, sortResults, fetchTime } = await fetchResults(document, position, "java(Java)", "java");
                     const sortLabels = formatSortData(sortResults);
                     longResults.push(...sortLabels);
+                    sendPredictTelemetry(fetchTime, longResults);
+                    return longResults;
                 }
-                sendPredictTelemetry(fetchTime, longResults);
                 // log("provideCompletionItems ends");
-                return longResults;
             } catch (e) {
                 log(e);
             }
@@ -751,8 +755,7 @@ async function activateCPP(context: vscode.ExtensionContext) {
             return null;
         },
     };
-    // const triggerCharacters = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "="];
-    const triggerCharacters = [];
+    const triggerCharacters = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "="];
     if (!msintellicode) {
         triggerCharacters.push(".");
     }

@@ -8,6 +8,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 - Java: Add brackets when using method type completions.
 - Java: Rank completions with the same value adjancent to each other.
 - A new configuration to supply additional parameters for advanced usages.
+- A new configuration to config whether aiXcoder should always trigger or only on "Ctrl+Space".
 
 ### Changed
 - A minor change to reduce network traffic.
@@ -15,6 +16,8 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 ### Fixed
 - Fixed Java/C++ spacing issue around ++/-- operators.
 - Fixed an infinite recursion issue when reporting error with telemetry turned off.
+- Fixed an issue that slightly decreases the performance on Java.
+- Fixed spacing around "<" and ">" on Java/C++.
 
 ## [0.1.0] - 2019-05-07
 ### Added
