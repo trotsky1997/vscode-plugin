@@ -7,5 +7,5 @@ var date = new Date();
 function appendZeros(m) {
     return ('0' + m).slice(-2);
 }
-changelog = changelog.replace("%DATE%", `${date.getFullYear()}-${appendZeros(date.getMonth())}-${appendZeros(date.getDay())}`);
+changelog = changelog.replace("%DATE%", `${date.getFullYear()}-${appendZeros(date.getMonth() + 1)}-${appendZeros(date.getDate())}`);
 fs.writeFileSync(changelogPath, changelog, "utf-8");
