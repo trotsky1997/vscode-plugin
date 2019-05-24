@@ -1,7 +1,9 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
-## [0.1.1] - %DATE%
+## [0.1.2] - %DATE%
+
+## [0.1.1] - 2019-05-24
 ### Added
 - Configurations to turn off telemetry.
 - A warning will show up if aixcoder.endpoint is empty.
