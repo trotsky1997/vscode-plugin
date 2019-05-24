@@ -40,6 +40,11 @@
                     "type": "string",
                     "default": "",
                     "description": "(Only for advanced usages) URL encoded params."
+                },
+                "aiXcoder.alwaysTrigger": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "If set to true, aiXcoder suggestions are always triggered as you type. Otherwise, it only triggers explictly with e.g. `Ctrl+Space`."
                 }
             }
         },

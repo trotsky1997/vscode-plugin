@@ -226,17 +226,25 @@ function formatSortData(results: SortResult | null) {
     return r;
 }
 
-async function fetchResults2(text: string, remainingText: string, fileName: string, ext: string, lang: string, starDisplay: STAR_DISPLAY = STAR_DISPLAY.LEFT): Promise<{
+async function fetchResults2(text: string, remainingText: string, fileName: string, ext: string, lang: string, document: vscode.TextDocument, starDisplay: STAR_DISPLAY = STAR_DISPLAY.LEFT): Promise<{
     longResults: AiXCompletionItem[],
     sortResults: SortResult,
     fetchTime: number,
 }> {
-    const { body, queryUUID, fetchTime } = fetch(ext, text, remainingText, fileName);
-
-    let fetchBody = await body;
-    log(fetchBody);
+    let fetchBody: string = null;
+    let queryUUID: number;
+    let fetchTime: number;
+    if (Preference.shouldTrigger(lastModifedTime, document)) {
+        const fetched = fetch(ext, text, remainingText, fileName);
+        fetchBody = await fetched.body;
+        queryUUID = fetched.queryUUID;
+        fetchTime = fetched.fetchTime;
+        log(fetchBody);
+    }
     if (fetchBody == null) {
         fetchBody = "{data:[]}";
+        queryUUID = 0;
+        fetchTime = 0;
     }
     try {
         const predictResults = fetchBody && typeof fetchBody === "string" ? JSON.parse(fetchBody) : fetchBody;
@@ -274,7 +282,7 @@ async function fetchResults2(text: string, remainingText: string, fileName: stri
 async function fetchResults(document: vscode.TextDocument, position: vscode.Position, ext: string, lang: string, starDisplay: STAR_DISPLAY = STAR_DISPLAY.LEFT) {
     const _s = Date.now();
     const { text, remainingText, offsetID } = getReqText(document, position);
-    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, ext, lang, starDisplay);
+    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, ext, lang, document, starDisplay);
     log("< fetch took " + (Date.now() - _s) + "ms");
     return {
         longResults,
@@ -720,14 +728,14 @@ async function activateCPP(context: vscode.ExtensionContext) {
                         delete sortResultAwaiters[offsetID]; // it won't work first time
                         log("C++ extension Hooked");
                     }
-                    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, "cpp(Cpp)", "cpp", STAR_DISPLAY.NONE);
+                    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, "cpp(Cpp)", "cpp", document, STAR_DISPLAY.NONE);
                     if (typeof resolver === "function") {
                         resolver(sortResults);
                     }
                     sendPredictTelemetry(fetchTime, longResults);
                     r = longResults;
                 } else {
-                    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, "cpp(Cpp)", "cpp", STAR_DISPLAY.LEFT);
+                    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, "cpp(Cpp)", "cpp", document, STAR_DISPLAY.LEFT);
                     const sortLabels = formatSortData(sortResults);
                     longResults.push(...sortLabels);
                     sendPredictTelemetry(fetchTime, longResults);
@@ -743,7 +751,8 @@ async function activateCPP(context: vscode.ExtensionContext) {
             return null;
         },
     };
-    const triggerCharacters = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "="];
+    // const triggerCharacters = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "="];
+    const triggerCharacters = [];
     if (!msintellicode) {
         triggerCharacters.push(".");
     }
@@ -752,6 +761,8 @@ async function activateCPP(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "cpp", scheme: "file" }, provider, ...triggerCharacters));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "cpp", scheme: "untitled" }, provider, ...triggerCharacters));
 }
+
+const lastModifedTime: { [uri: string]: number } = {};
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -780,6 +791,16 @@ export async function activate(context: vscode.ExtensionContext) {
             }
         });
     }
+    context.subscriptions.push(vscode.workspace.onDidOpenTextDocument((document) => {
+        if (document.uri.scheme === "file" || document.uri.scheme === "untitled") {
+            lastModifedTime[document.uri.toJSON()] = Date.now();
+        }
+    }));
+    context.subscriptions.push(vscode.workspace.onDidChangeTextDocument((event) => {
+        if (event.document.uri.scheme === "file" || event.document.uri.scheme === "untitled") {
+            lastModifedTime[event.document.uri.toJSON()] = Date.now();
+        }
+    }));
     context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.sendTelemetry", (type: string, subtype: string) => {
         API.sendTelemetry(type, subtype);
     }));

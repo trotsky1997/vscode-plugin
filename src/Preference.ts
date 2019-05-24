@@ -47,4 +47,15 @@ export default class Preference {
     public static getParam(key: string) {
         return Preference.getParams()[key];
     }
+
+    public static shouldTrigger(lastModifedTime: { [uri: string]: number }, document: vscode.TextDocument) {
+        if (!vscode.workspace.getConfiguration().get("aiXcoder.alwaysTrigger")) {
+            const last = lastModifedTime[document.uri.toJSON()] || 0;
+            if (Date.now() - last < 100) {
+                // triggered by key type
+                return false;
+            }
+        }
+        return true;
+    }
 }
