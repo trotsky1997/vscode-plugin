@@ -242,12 +242,15 @@ async function fetchResults2(text: string, remainingText: string, fileName: stri
         log(fetchBody);
     }
     if (fetchBody == null) {
-        fetchBody = "{data:[]}";
+        fetchBody = "{\"data\":[]}";
         queryUUID = 0;
         fetchTime = 0;
     }
     try {
-        const predictResults = fetchBody && typeof fetchBody === "string" ? JSON.parse(fetchBody) : fetchBody;
+        let predictResults = fetchBody && typeof fetchBody === "string" ? JSON.parse(fetchBody) : fetchBody;
+        if (predictResults.data == null) {
+            predictResults = { data: predictResults };
+        }
         const strLabels = formatResData(predictResults, getInstance(lang), starDisplay);
         // log("predict result:");
         // log(strLabels);
