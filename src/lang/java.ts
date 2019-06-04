@@ -1,3 +1,4 @@
+import * as vscode from "vscode";
 import { Rescue } from "../extension";
 import logger from "../logger";
 import { ID_REGEX, LangUtil } from "./langUtil";
@@ -88,15 +89,56 @@ export class JavaLangUtil extends LangUtil {
         return stringBuilder;
     }
 
-    public rescue(rescues: Rescue[]) {
-        for (const rescue of rescues) {
-            switch (rescue.type) {
-                case "import":
-
-                    break;
-                default:
-                    logger.warn(`Unknown rescue type ${rescue.type} with value=${rescue.value}`);
-                    break;
+    public rescue(document: vscode.TextDocument, rescues: Rescue[]) {
+        const editor = vscode.window.activeTextEditor;
+        let imports: Array<[string, number]> | null = null;
+        let importStart = 0;
+        function prepareImports() {
+            imports = [];
+            for (let i = 0; i < document.lineCount; i++) {
+                const line = document.lineAt(i);
+                if (importStart === 0 && line.text.match(/^\s*package\s.*$/)) {
+                    importStart = i;
+                    continue;
+                }
+                const m = line.text.match(/^\s*import\s+(.*)$/);
+                if (m) {
+                    imports.push([m[1], i]);
+                }
+            }
+        }
+        function rescueImport(rescue: Rescue) {
+            if (imports === null) {
+                prepareImports();
+            }
+            let prevImport: [string, number] = ["", importStart];
+            for (const importContent of imports) {
+                const compareResult = importContent[0].localeCompare(rescue.value);
+                if (compareResult > 0) {
+                    // stop here
+                    editor.edit((editBuilder) => {
+                        editBuilder.insert(new vscode.Position(prevImport[1], 0), `import ${rescue.value};\n`);
+                    });
+                    return;
+                }
+                prevImport = importContent;
+            }
+            editor.edit((editBuilder) => {
+                editBuilder.insert(new vscode.Position(prevImport[1], 0), `import ${rescue.value};\n`);
+            });
+        }
+        if (editor) {
+            for (const rescue of rescues) {
+                switch (rescue.type) {
+                    case "import":
+                        if (vscode.workspace.getConfiguration().get("aiXcoder.autoImport")) {
+                            rescueImport(rescue);
+                        }
+                        break;
+                    default:
+                        logger.warn(`Unknown rescue type ${rescue.type} with value=${rescue.value}`);
+                        break;
+                }
             }
         }
     }

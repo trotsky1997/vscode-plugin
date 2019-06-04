@@ -45,6 +45,11 @@
                     "type": "boolean",
                     "default": true,
                     "description": "If set to true, aiXcoder suggestions are always triggered as you type. Otherwise, it only triggers explictly with e.g. `Ctrl+Space`."
+                },
+                "aiXcoder.autoImport": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Automatically import missing packages in completions."
                 }
             }
         },

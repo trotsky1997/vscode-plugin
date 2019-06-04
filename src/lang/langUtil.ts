@@ -1,3 +1,5 @@
+import * as vscode from "vscode";
+
 import { Rescue } from "../extension";
 
 export const ID_REGEX = /^[a-zA-Z_][a-zA-Z_0-9]*$/;
@@ -56,6 +58,6 @@ export class LangUtil {
     /**
      * apply rescues
      */
-    public rescue(rescues: Rescue[]) {
+    public rescue(document: vscode.TextDocument, rescues: Rescue[]) {
     }
 }
