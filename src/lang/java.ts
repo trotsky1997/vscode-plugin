@@ -67,11 +67,11 @@ export class JavaLangUtil extends LangUtil {
         for (let i = 0; i < s.length; i++) {
             const c = s.charAt(i);
             stringBuilder += (c);
-            if (c === '"') {
+            if (c === '"' || c === "'") {
                 i++;
                 const strStart = i;
                 for (; i < s.length; i++) {
-                    if (s.charAt(i) === '"') {
+                    if (s.charAt(i) === c) {
                         break;
                     }
                     if (s.charAt(i) === "\\") {
@@ -80,30 +80,12 @@ export class JavaLangUtil extends LangUtil {
                 }
                 const strContent = s.substring(strStart, i);
                 if (trivialLiterals.has(strContent)) {
-                    stringBuilder += (strContent);
+                    stringBuilder += strContent;
                 }
-                stringBuilder += ("\"");
-
-            } else if (c === "'") {
-                i++;
-                const strStart = i;
-                for (; i < s.length; i++) {
-                    stringBuilder += (s.charAt(i));
-                    if (s.charAt(i) === "'") {
-                        break;
-                    }
-                    if (s.charAt(i) === "\\") {
-                        i++;
-                    }
-                }
-                const strContent = s.substring(strStart, i);
-                if (trivialLiterals.has(strContent)) {
-                    stringBuilder += (strContent);
-                }
-                stringBuilder += ("'");
+                stringBuilder += c;
             }
         }
-        return stringBuilder.toString();
+        return stringBuilder;
     }
 
     public rescue(rescues: Rescue[]) {

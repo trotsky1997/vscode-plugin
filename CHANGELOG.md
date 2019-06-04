@@ -2,6 +2,14 @@
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
 ## [0.1.2] - %DATE%
+### Added
+
+### Changed
+- Use new telemetry API.
+
+### Fixed
+- Fixed sending wrong content because of chars.
+- Fixed handling of Python docs.
 
 ## [0.1.1] - 2019-05-24
 ### Added

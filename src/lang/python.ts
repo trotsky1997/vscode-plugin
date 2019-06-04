@@ -8,14 +8,25 @@ export class PythonLangUtil extends LangUtil {
     }
 
     public skipString(i: number, s: string, trivialLiterals: Set<string>, stringBuilder: string, char: string) {
+        const c = s.charAt(i);
+        const pythonDoc = c === s.charAt(i + 1) && c === s.charAt(i + 2);
+        if (pythonDoc) {
+            i += 2;
+        }
         i++;
         const strStart = i;
         for (; i < s.length; i++) {
-            if (s.charAt(i) === char) {
-                break;
-            }
-            if (s.charAt(i) === "\\") {
-                i++;
+            if (pythonDoc) {
+                if (s.startsWith(c + c + c, i)) {
+                    break;
+                }
+            } else {
+                if (s.charAt(i) === char) {
+                    break;
+                }
+                if (s.charAt(i) === "\\") {
+                    i++;
+                }
             }
         }
         const strContent = s.substring(strStart, i);
