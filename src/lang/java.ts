@@ -1,3 +1,5 @@
+import { Rescue } from "../extension";
+import logger from "../logger";
 import { ID_REGEX, LangUtil } from "./langUtil";
 
 export class JavaLangUtil extends LangUtil {
@@ -102,5 +104,18 @@ export class JavaLangUtil extends LangUtil {
             }
         }
         return stringBuilder.toString();
+    }
+
+    public rescue(rescues: Rescue[]) {
+        for (const rescue of rescues) {
+            switch (rescue.type) {
+                case "import":
+
+                    break;
+                default:
+                    logger.warn(`Unknown rescue type ${rescue.type} with value=${rescue.value}`);
+                    break;
+            }
+        }
     }
 }

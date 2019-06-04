@@ -105,9 +105,15 @@ export function localize(key: string, ...params: any[]) {
 const myPackageJSON = vscode.extensions.getExtension("nnthink.aixcoder").packageJSON;
 export const myVersion = myPackageJSON.version;
 
+export interface Rescue {
+    type: string;
+    value: string;
+}
+
 interface SingleWordCompletion {
     word: string;
     prob: number;
+    rescue?: Rescue;
 }
 
 interface SortResult {
@@ -166,12 +172,12 @@ enum STAR_DISPLAY {
 }
 
 // 处理返回的值，最终变成放入提示框的内容
-function formatResData(results: any, langUtil: LangUtil, starDisplay: STAR_DISPLAY = STAR_DISPLAY.LEFT): AiXCompletionItem[] {
+function formatResData(results: any, langUtil: LangUtil, document: vscode.TextDocument, starDisplay: STAR_DISPLAY = STAR_DISPLAY.LEFT): AiXCompletionItem[] {
     const r: AiXCompletionItem[] = [];
     const command: vscode.Command = {
         title: "AiXTelemetry",
-        command: "aiXcoder.sendTelemetry",
-        arguments: ["use", "primary"],
+        command: "aiXcoder.insert",
+        arguments: ["use", "primary", langUtil, document],
     };
     const minCompletionTokensCount = Preference.getParam("controllerMode") ? 0 : 1;
     for (const result of results.data) {
@@ -193,7 +199,7 @@ function formatResData(results: any, langUtil: LangUtil, starDisplay: STAR_DISPL
                 insertText: new vscode.SnippetString(rendered),
                 kind: vscode.CompletionItemKind.Snippet,
                 sortText: String.fromCharCode(0),
-                command,
+                command: {...command, arguments: command.arguments.concat([result.rescue])},
                 aixPrimary: true,
             });
         }
@@ -201,13 +207,13 @@ function formatResData(results: any, langUtil: LangUtil, starDisplay: STAR_DISPL
     return r;
 }
 
-function formatSortData(results: SortResult | null) {
+function formatSortData(results: SortResult | null, langUtil: LangUtil, document: vscode.TextDocument) {
     if (results == null) { return []; }
     const r: vscode.CompletionItem[] = [];
     const command: vscode.Command = {
         title: "AiXTelemetry",
-        command: "aiXcoder.sendTelemetry",
-        arguments: ["use", "secondary"],
+        command: "aiXcoder.insert",
+        arguments: ["use", "secondary", langUtil, document],
     };
     for (let i = 0; i < results.list.length; i++) {
         const single = results.list[i];
@@ -220,7 +226,7 @@ function formatSortData(results: SortResult | null) {
             insertText: single.word,
             kind: vscode.CompletionItemKind.Variable,
             sortText: String.fromCharCode(0) + String.fromCharCode(i),
-            command,
+            command: {...command, arguments: command.arguments.concat([langUtil, single.rescue])},
         });
     }
     return r;
@@ -251,7 +257,7 @@ async function fetchResults2(text: string, remainingText: string, fileName: stri
         if (predictResults.data == null) {
             predictResults = { data: predictResults };
         }
-        const strLabels = formatResData(predictResults, getInstance(lang), starDisplay);
+        const strLabels = formatResData(predictResults, getInstance(lang), document, starDisplay);
         // log("predict result:");
         // log(strLabels);
         const results = {
@@ -447,7 +453,7 @@ function activatePython(context: vscode.ExtensionContext) {
                         delete sortResultAwaiters[offsetID];
                     }
                 } else {
-                    const sortLabels = formatSortData(sortResults);
+                    const sortLabels = formatSortData(sortResults, getInstance("python"), document);
                     longResults.push(...sortLabels);
                 }
                 sendPredictTelemetry(fetchTime, longResults);
@@ -527,7 +533,7 @@ function activateJava(context: vscode.ExtensionContext) {
                     const l = await redhatPromise as vscode.CompletionItem[];
                     const telemetryCommand: vscode.Command = {
                         title: "AiXTelemetry",
-                        command: "aiXcoder.sendTelemetry",
+                        command: "aiXcoder.insert",
                         arguments: ["use", "secondary"],
                     };
                     for (let i = 0; i < sortResults.list.length; i++) {
@@ -558,7 +564,7 @@ function activateJava(context: vscode.ExtensionContext) {
                     return longResults;
                 } else {
                     const { longResults, sortResults, fetchTime } = await fetchResults(document, position, "java(Java)", "java");
-                    const sortLabels = formatSortData(sortResults);
+                    const sortLabels = formatSortData(sortResults, getInstance("java"), document);
                     longResults.push(...sortLabels);
                     sendPredictTelemetry(fetchTime, longResults);
                     return longResults;
@@ -673,7 +679,7 @@ async function activateCPP(context: vscode.ExtensionContext) {
                 const our = [];
                 const telemetryCommand: vscode.Command = {
                     title: "AiXTelemetry",
-                    command: "aiXcoder.sendTelemetry",
+                    command: "aiXcoder.insert",
                     arguments: ["use", "secondary"],
                 };
                 for (let i = 0; i < sortResults.list.length; i++) {
@@ -743,7 +749,7 @@ async function activateCPP(context: vscode.ExtensionContext) {
                     r = longResults;
                 } else {
                     const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, "cpp(Cpp)", "cpp", document, STAR_DISPLAY.LEFT);
-                    const sortLabels = formatSortData(sortResults);
+                    const sortLabels = formatSortData(sortResults, getInstance("cpp"), document);
                     longResults.push(...sortLabels);
                     sendPredictTelemetry(fetchTime, longResults);
                     r = longResults;
@@ -807,7 +813,8 @@ export async function activate(context: vscode.ExtensionContext) {
             lastModifedTime[event.document.uri.toJSON()] = Date.now();
         }
     }));
-    context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.sendTelemetry", (type: string, subtype: string) => {
+    context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.insert", (type: string, subtype: string, document: vscode.TextDocument, rescue?: Rescue) => {
+
         API.sendTelemetry(type, subtype);
     }));
     await activatePython(context);
