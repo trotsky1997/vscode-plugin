@@ -11,6 +11,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 ### Fixed
 - Fixed sending wrong content because of chars.
 - Fixed handling of Python docs.
+- Fixed a bug that breaks sorting completions with mspython extension installed.
 
 ## [0.1.1] - 2019-05-24
 ### Added

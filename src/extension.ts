@@ -350,7 +350,7 @@ function activatePython(context: vscode.ExtensionContext) {
         if (mspythonExtension) {
             log("AiX: ms-python.python detected");
             async function loadLanguageServerExtension(port) {
-                const assemblyPath = __dirname + "/AiXForMSPython.dll";
+                const assemblyPath = context.asAbsolutePath("dist/AiXForMSPython.dll");
                 const l = vscode.commands.executeCommand("python._loadLanguageServerExtension", {
                     assembly: assemblyPath,
                     typeName: "AiXCoder.PythonTools.LanguageServerExtensionProvider",
@@ -360,7 +360,7 @@ function activatePython(context: vscode.ExtensionContext) {
                     // log("AiX: command issued");
                     try {
                         await l;
-                        log("AiX: python language server assembly loaded");
+                        log("AiX: python language server assembly loaded: " + assemblyPath);
                     } catch (e) {
                         log("AiX: assembly load failed reason:");
                         log(e);
