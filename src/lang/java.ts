@@ -97,7 +97,7 @@ export class JavaLangUtil extends LangUtil {
             imports = [];
             for (let i = 0; i < document.lineCount; i++) {
                 const line = document.lineAt(i);
-                if (importStart === 0 && line.text.match(/^\s*package\s.*$/)) {
+                if (importStart === -1 && line.text.match(/^\s*package\s.*$/)) {
                     importStart = i;
                     continue;
                 }
