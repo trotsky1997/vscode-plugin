@@ -561,6 +561,7 @@ function activateJava(context: vscode.ExtensionContext) {
                     };
                     for (let i = 0; i < sortResults.list.length; i++) {
                         const single: SingleWordCompletion = sortResults.list[i];
+                        let found = false;
                         for (const systemCompletion of l) {
                             if (systemCompletion.sortText == null) {
                                 systemCompletion.sortText = systemCompletion.filterText;
@@ -579,7 +580,17 @@ function activateJava(context: vscode.ExtensionContext) {
                                 if (systemCompletion.kind === vscode.CompletionItemKind.Function && insertText.indexOf("(") === -1) {
                                     systemCompletion.insertText = new vscode.SnippetString(insertText).appendText("(").appendTabstop().appendText(")");
                                 }
+                                found = true;
                             }
+                        }
+                        if (!found && single.options && single.options.forced) {
+                            l.push({
+                                label: "⭐" + single.word,
+                                insertText: single.word,
+                                sortText: "0." + i,
+                                command: { ...telemetryCommand, arguments: telemetryCommand.arguments.concat([single]) },
+                                kind: vscode.CompletionItemKind.Variable,
+                            });
                         }
                     }
                     longResults.push(...l);
@@ -699,7 +710,6 @@ async function activateCPP(context: vscode.ExtensionContext) {
                     sortResults = await sortResultAwaiters[offsetID];
                 }
                 delete sortResultAwaiters[offsetID];
-                const our = [];
                 const telemetryCommand: vscode.Command = {
                     title: "AiXTelemetry",
                     command: "aiXcoder.insert",
@@ -707,6 +717,7 @@ async function activateCPP(context: vscode.ExtensionContext) {
                 };
                 for (let i = 0; i < sortResults.list.length; i++) {
                     const single: SingleWordCompletion = sortResults.list[i];
+                    let found = false;
                     for (const systemCompletion of l.items) {
                         if (systemCompletion.sortText == null) {
                             systemCompletion.sortText = systemCompletion.filterText;
@@ -716,12 +727,19 @@ async function activateCPP(context: vscode.ExtensionContext) {
                             systemCompletion.label = systemCompletion.label + "⭐";
                             systemCompletion.sortText = "0." + i;
                             systemCompletion.command = { ...telemetryCommand, arguments: telemetryCommand.arguments.concat([single]) };
-                            our.push(systemCompletion);
-                            break;
+                            found = true;
                         }
                     }
+                    if (!found && single.options && single.options.forced) {
+                        l.items.push({
+                            label: single.word + "⭐",
+                            insertText: single.word,
+                            sortText: "0." + i,
+                            command: { ...telemetryCommand, arguments: telemetryCommand.arguments.concat([single]) },
+                            kind: vscode.CompletionItemKind.Variable,
+                        });
+                    }
                 }
-                log(our);
                 return l;
             }
             return null;
@@ -838,6 +856,9 @@ export async function activate(context: vscode.ExtensionContext) {
     }));
     context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.insert", (type: string, subtype: string, langUtil: LangUtil, document: vscode.TextDocument, single: SinglePredictResult | SingleWordCompletion) => {
         API.sendTelemetry(type, subtype);
+        if (typeof langUtil === "string") {
+            langUtil = getInstance(langUtil);
+        }
         if ((single as SinglePredictResult).rescues) {
             langUtil.rescue(document, (single as SinglePredictResult).rescues);
         } else if ((single as SingleWordCompletion).options && (single as SingleWordCompletion).options.rescues) {

@@ -144,7 +144,7 @@ export class JavaLangUtil extends LangUtil {
                             break;
                     }
                 }
-            };
+            });
         }
     }
 }
