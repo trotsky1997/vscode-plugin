@@ -109,9 +109,35 @@ export function localize(key: string, ...params: any[]) {
 const myPackageJSON = vscode.extensions.getExtension("nnthink.aixcoder").packageJSON;
 export const myVersion = myPackageJSON.version;
 
+export interface Rescue {
+    type: string;
+    value: string;
+}
+
+export interface CompletionOptions {
+    rescues?: Rescue[];
+    forced?: boolean;
+}
+
+interface PredictResult {
+    data: SinglePredictResult[];
+}
+
+interface SinglePredictResult {
+    tokens: string[];
+    prob?: number;
+    current?: string;
+    rescues?: Rescue[];
+    r_completion?: string[];
+    familiarity?: number;
+    type?: "rnn" | "ngram";
+    sort?: Array<[number, string, CompletionOptions?]>;
+}
+
 interface SingleWordCompletion {
     word: string;
     prob: number;
+    options?: CompletionOptions;
 }
 
 interface SortResult {
@@ -170,12 +196,12 @@ enum STAR_DISPLAY {
 }
 
 // 处理返回的值，最终变成放入提示框的内容
-function formatResData(results: any, langUtil: LangUtil, starDisplay: STAR_DISPLAY = STAR_DISPLAY.LEFT): AiXCompletionItem[] {
+function formatResData(results: PredictResult, langUtil: LangUtil, document: vscode.TextDocument, starDisplay: STAR_DISPLAY = STAR_DISPLAY.LEFT): AiXCompletionItem[] {
     const r: AiXCompletionItem[] = [];
     const command: vscode.Command = {
         title: "AiXTelemetry",
-        command: "aiXcoder.sendTelemetry",
-        arguments: ["use", "primary"],
+        command: "aiXcoder.insert",
+        arguments: ["use", "primary", langUtil, document],
     };
     const minCompletionTokensCount = Preference.getParam("controllerMode") ? 0 : 1;
     for (const result of results.data) {
@@ -197,7 +223,7 @@ function formatResData(results: any, langUtil: LangUtil, starDisplay: STAR_DISPL
                 insertText: new vscode.SnippetString(rendered),
                 kind: vscode.CompletionItemKind.Snippet,
                 sortText: String.fromCharCode(0),
-                command,
+                command: { ...command, arguments: command.arguments.concat([result]) },
                 aixPrimary: true,
             });
         }
@@ -205,13 +231,13 @@ function formatResData(results: any, langUtil: LangUtil, starDisplay: STAR_DISPL
     return r;
 }
 
-function formatSortData(results: SortResult | null) {
+function formatSortData(results: SortResult | null, langUtil: LangUtil, document: vscode.TextDocument) {
     if (results == null) { return []; }
     const r: vscode.CompletionItem[] = [];
     const command: vscode.Command = {
         title: "AiXTelemetry",
-        command: "aiXcoder.sendTelemetry",
-        arguments: ["use", "secondary"],
+        command: "aiXcoder.insert",
+        arguments: ["use", "secondary", langUtil, document],
     };
     for (let i = 0; i < results.list.length; i++) {
         const single = results.list[i];
@@ -224,7 +250,7 @@ function formatSortData(results: SortResult | null) {
             insertText: single.word,
             kind: vscode.CompletionItemKind.Variable,
             sortText: String.fromCharCode(0) + String.fromCharCode(i),
-            command,
+            command: { ...command, arguments: command.arguments.concat([single]) },
         });
     }
     return r;
@@ -246,13 +272,16 @@ async function fetchResults2(text: string, remainingText: string, fileName: stri
         log(fetchBody);
     }
     if (fetchBody == null) {
-        fetchBody = "{data:[]}";
+        fetchBody = "{\"data\":[]}";
         queryUUID = 0;
         fetchTime = 0;
     }
     try {
-        const predictResults = fetchBody && typeof fetchBody === "string" ? JSON.parse(fetchBody) : fetchBody;
-        const strLabels = formatResData(predictResults, getInstance(lang), starDisplay);
+        let predictResults: PredictResult = fetchBody && typeof fetchBody === "string" ? JSON.parse(fetchBody) : fetchBody;
+        if (predictResults.data == null) {
+            predictResults = { data: predictResults as any };
+        }
+        const strLabels = formatResData(predictResults, getInstance(lang), document, starDisplay);
         // log("predict result:");
         // log(strLabels);
         const results = {
@@ -260,10 +289,13 @@ async function fetchResults2(text: string, remainingText: string, fileName: stri
             list: predictResults.data.length > 0 ? predictResults.data[0].sort || [] : [],
         };
         // log("mina result:");
-        results.list = results.list.map(([prob, word]) => ({ prob, word }));
+        const mappedResults = {
+            ...results,
+            list: results.list.map(([prob, word, options]) => ({ prob, word, options })),
+        };
         return {
             longResults: strLabels,
-            sortResults: results,
+            sortResults: mappedResults,
             fetchTime,
         };
     } catch (e) {
@@ -322,7 +354,7 @@ function activatePython(context: vscode.ExtensionContext) {
         if (mspythonExtension) {
             log("AiX: ms-python.python detected");
             async function loadLanguageServerExtension(port) {
-                const assemblyPath = __dirname + "/AiXForMSPython.dll";
+                const assemblyPath = context.asAbsolutePath("dist/AiXForMSPython.dll");
                 const l = vscode.commands.executeCommand("python._loadLanguageServerExtension", {
                     assembly: assemblyPath,
                     typeName: "AiXCoder.PythonTools.LanguageServerExtensionProvider",
@@ -332,7 +364,7 @@ function activatePython(context: vscode.ExtensionContext) {
                     // log("AiX: command issued");
                     try {
                         await l;
-                        log("AiX: python language server assembly loaded");
+                        log("AiX: python language server assembly loaded: " + assemblyPath);
                     } catch (e) {
                         log("AiX: assembly load failed reason:");
                         log(e);
@@ -449,7 +481,7 @@ function activatePython(context: vscode.ExtensionContext) {
                         delete sortResultAwaiters[offsetID];
                     }
                 } else {
-                    const sortLabels = formatSortData(sortResults);
+                    const sortLabels = formatSortData(sortResults, getInstance("python"), document);
                     longResults.push(...sortLabels);
                 }
                 sendPredictTelemetry(fetchTime, longResults);
@@ -530,11 +562,12 @@ function activateJava(context: vscode.ExtensionContext) {
                     const l = await redhatPromise as vscode.CompletionItem[];
                     const telemetryCommand: vscode.Command = {
                         title: "AiXTelemetry",
-                        command: "aiXcoder.sendTelemetry",
-                        arguments: ["use", "secondary"],
+                        command: "aiXcoder.insert",
+                        arguments: ["use", "secondary", getInstance("java"), document],
                     };
                     for (let i = 0; i < sortResults.list.length; i++) {
                         const single: SingleWordCompletion = sortResults.list[i];
+                        let found = false;
                         for (const systemCompletion of l) {
                             if (systemCompletion.sortText == null) {
                                 systemCompletion.sortText = systemCompletion.filterText;
@@ -549,11 +582,21 @@ function activateJava(context: vscode.ExtensionContext) {
                             if (insertText.match("^" + escapeRegExp(single.word) + "\\b") && !systemCompletion.label.startsWith("⭐")) {
                                 systemCompletion.label = "⭐" + systemCompletion.label;
                                 systemCompletion.sortText = "0." + i;
-                                systemCompletion.command = telemetryCommand;
+                                systemCompletion.command = { ...telemetryCommand, arguments: telemetryCommand.arguments.concat([single]) };
                                 if (systemCompletion.kind === vscode.CompletionItemKind.Function && insertText.indexOf("(") === -1) {
                                     systemCompletion.insertText = new vscode.SnippetString(insertText).appendText("(").appendTabstop().appendText(")");
                                 }
+                                found = true;
                             }
+                        }
+                        if (!found && single.options && single.options.forced) {
+                            l.push({
+                                label: "⭐" + single.word,
+                                insertText: single.word,
+                                sortText: "0." + i,
+                                command: { ...telemetryCommand, arguments: telemetryCommand.arguments.concat([single]) },
+                                kind: vscode.CompletionItemKind.Variable,
+                            });
                         }
                     }
                     longResults.push(...l);
@@ -561,7 +604,7 @@ function activateJava(context: vscode.ExtensionContext) {
                     return longResults;
                 } else {
                     const { longResults, sortResults, fetchTime } = await fetchResults(document, position, ext, "java");
-                    const sortLabels = formatSortData(sortResults);
+                    const sortLabels = formatSortData(sortResults, getInstance("java"), document);
                     longResults.push(...sortLabels);
                     sendPredictTelemetry(fetchTime, longResults);
                     return longResults;
@@ -673,14 +716,14 @@ async function activateCPP(context: vscode.ExtensionContext) {
                     sortResults = await sortResultAwaiters[offsetID];
                 }
                 delete sortResultAwaiters[offsetID];
-                const our = [];
                 const telemetryCommand: vscode.Command = {
                     title: "AiXTelemetry",
-                    command: "aiXcoder.sendTelemetry",
-                    arguments: ["use", "secondary"],
+                    command: "aiXcoder.insert",
+                    arguments: ["use", "secondary", getInstance("cpp"), document],
                 };
                 for (let i = 0; i < sortResults.list.length; i++) {
                     const single: SingleWordCompletion = sortResults.list[i];
+                    let found = false;
                     for (const systemCompletion of l.items) {
                         if (systemCompletion.sortText == null) {
                             systemCompletion.sortText = systemCompletion.filterText;
@@ -689,13 +732,20 @@ async function activateCPP(context: vscode.ExtensionContext) {
                             // systemCompletion.label = "⭐" + systemCompletion.label;
                             systemCompletion.label = systemCompletion.label + "⭐";
                             systemCompletion.sortText = "0." + i;
-                            systemCompletion.command = telemetryCommand;
-                            our.push(systemCompletion);
-                            break;
+                            systemCompletion.command = { ...telemetryCommand, arguments: telemetryCommand.arguments.concat([single]) };
+                            found = true;
                         }
                     }
+                    if (!found && single.options && single.options.forced) {
+                        l.items.push({
+                            label: single.word + "⭐",
+                            insertText: single.word,
+                            sortText: "0." + i,
+                            command: { ...telemetryCommand, arguments: telemetryCommand.arguments.concat([single]) },
+                            kind: vscode.CompletionItemKind.Variable,
+                        });
+                    }
                 }
-                log(our);
                 return l;
             }
             return null;
@@ -747,7 +797,7 @@ async function activateCPP(context: vscode.ExtensionContext) {
                     r = longResults;
                 } else {
                     const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, ext, "cpp", document, STAR_DISPLAY.LEFT);
-                    const sortLabels = formatSortData(sortResults);
+                    const sortLabels = formatSortData(sortResults, getInstance("cpp"), document);
                     longResults.push(...sortLabels);
                     sendPredictTelemetry(fetchTime, longResults);
                     r = longResults;
@@ -814,8 +864,16 @@ export async function activate(context: vscode.ExtensionContext) {
             lastModifedTime[event.document.uri.toJSON()] = Date.now();
         }
     }));
-    context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.sendTelemetry", (type: string, subtype: string) => {
+    context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.insert", (type: string, subtype: string, langUtil: LangUtil, document: vscode.TextDocument, single: SinglePredictResult | SingleWordCompletion) => {
         API.sendTelemetry(type, subtype);
+        if (typeof langUtil === "string") {
+            langUtil = getInstance(langUtil);
+        }
+        if ((single as SinglePredictResult).rescues) {
+            langUtil.rescue(document, (single as SinglePredictResult).rescues);
+        } else if ((single as SingleWordCompletion).options && (single as SingleWordCompletion).options.rescues) {
+            langUtil.rescue(document, (single as SingleWordCompletion).options.rescues);
+        }
     }));
 
     const commandHandler = async () => {

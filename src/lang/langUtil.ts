@@ -1,3 +1,7 @@
+import * as vscode from "vscode";
+
+import { Rescue } from "../extension";
+
 export const ID_REGEX = /^[a-zA-Z_][a-zA-Z_0-9]*$/;
 
 export class LangUtil {
@@ -48,6 +52,12 @@ export class LangUtil {
     }
 
     public datamask(s: string, trivialLiterals: Set<string>): string {
-        throw new Error("Not implemented");
+        return s;
+    }
+
+    /**
+     * apply rescues
+     */
+    public rescue(document: vscode.TextDocument, rescues: Rescue[]) {
     }
 }

@@ -81,6 +81,10 @@ export async function predict(text: string, ext: string, remainingText: string, 
         }
         return resp;
     } catch (e) {
+        if (e.message && e.message.indexOf("409: Conflict") >= 0) {
+            CodeStore.getInstance().invalidateFile(projName, fileID);
+            return predict(text, ext, remainingText, lastQueryUUID, fileID, false);
+        }
         log(e);
     }
     return null;

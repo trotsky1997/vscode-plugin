@@ -7,22 +7,22 @@
 
   <ItemGroup>
     <Reference Include="Microsoft.Python.Analysis">
-      <HintPath>C:\Users\felix\.vscode\extensions\ms-python.python-2019.4.12954\languageServer.0.2.66\Microsoft.Python.Analysis.dll</HintPath>
+      <HintPath>C:\Users\felix\.vscode\extensions\ms-python.python-2019.5.18678\languageServer.0.2.87\Microsoft.Python.Analysis.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Python.Analysis.Core">
-      <HintPath>C:\Users\felix\.vscode\extensions\ms-python.python-2019.4.12954\languageServer.0.2.66\Microsoft.Python.Analysis.Core.dll</HintPath>
+      <HintPath>C:\Users\felix\.vscode\extensions\ms-python.python-2019.5.18678\languageServer.0.2.87\Microsoft.Python.Analysis.Core.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Python.Core">
-      <HintPath>C:\Users\felix\.vscode\extensions\ms-python.python-2019.4.12954\languageServer.0.2.66\Microsoft.Python.Core.dll</HintPath>
+      <HintPath>C:\Users\felix\.vscode\extensions\ms-python.python-2019.5.18678\languageServer.0.2.87\Microsoft.Python.Core.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Python.LanguageServer">
-      <HintPath>C:\Users\felix\.vscode\extensions\ms-python.python-2019.4.12954\languageServer.0.2.66\Microsoft.Python.LanguageServer.dll</HintPath>
+      <HintPath>C:\Users\felix\.vscode\extensions\ms-python.python-2019.5.18678\languageServer.0.2.87\Microsoft.Python.LanguageServer.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Python.Parsing">
-      <HintPath>C:\Users\felix\.vscode\extensions\ms-python.python-2019.4.12954\languageServer.0.2.66\Microsoft.Python.Parsing.dll</HintPath>
+      <HintPath>C:\Users\felix\.vscode\extensions\ms-python.python-2019.5.18678\languageServer.0.2.87\Microsoft.Python.Parsing.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">
-      <HintPath>C:\Users\felix\.vscode\extensions\ms-python.python-2019.4.12954\languageServer.0.2.66\Newtonsoft.Json.dll</HintPath>
+      <HintPath>C:\Users\felix\.vscode\extensions\ms-python.python-2019.5.18678\languageServer.0.2.87\Newtonsoft.Json.dll</HintPath>
     </Reference>
   </ItemGroup>
 

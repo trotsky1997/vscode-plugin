@@ -41,6 +41,9 @@ export default class Preference {
             params.prob_th_rnn = 0;
             params.prob_th_rnn_t = 0;
         }
+        if (vscode.workspace.getConfiguration().get("aiXcoder.sortOnly") as boolean) {
+            params.ngen = 1;
+        }
         return params;
     }
 

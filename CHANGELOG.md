@@ -1,7 +1,21 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
-## [0.1.1] - %DATE%
+## [0.1.2] - %DATE%
+### Added
+- Java: Automatically add missing class imports in completions.
+- New feature to suggest variable names during variable/parameter definition.
+- Added a configuration to turn off long results (sort only).
+
+### Changed
+- Use new telemetry API.
+
+### Fixed
+- Fixed sending wrong content because of chars.
+- Fixed handling of Python docs.
+- Fixed a bug that breaks sorting completions with mspython extension installed.
+
+## [0.1.1] - 2019-05-24
 ### Added
 - Configurations to turn off telemetry.
 - A warning will show up if aixcoder.endpoint is empty.

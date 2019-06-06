@@ -98,16 +98,40 @@ namespace AiXCoder.PythonTools
                 {
                     SortResult sortResult = JsonConvert.DeserializeObject<SortResult>(recvStr);
                     int rank = 0;
+                    var newItems = new List<CompletionItemEx>();
                     foreach (var sortCompletion in sortResult.list)
                     {
+                        bool found = false;
                         foreach (var completion in completions)
                         {
                             if (completion.insertText.Equals(sortCompletion.word))
                             {
-                                BuildPythiaCompletionItem(completion, rank++);
+                                BuildPythiaCompletionItem(completion, rank, sortCompletion);
+                                found = true;
                                 break;
                             }
                         }
+
+                        if (!found && sortCompletion.options != null && sortCompletion.options.forced)
+                        {
+                            newItems.Add(BuildPythiaCompletionItem(new CompletionItemEx
+                            {
+                                insertText = sortCompletion.word,
+                                label = sortCompletion.word,
+                            }, rank, sortCompletion));
+                            found = true;
+                        }
+
+                        if (found)
+                        {
+                            rank++;
+                        }
+                    }
+
+                    if (newItems.Count > 0)
+                    {
+                        Array.Resize(ref completions, completions.Length + newItems.Count);
+                        Array.Copy(newItems.ToArray(), completions, newItems.Count);
                     }
                 }
             }
@@ -121,7 +145,7 @@ namespace AiXCoder.PythonTools
             return Task.CompletedTask;
         }
 
-        private static CompletionItemEx BuildPythiaCompletionItem(CompletionItemEx item, int rank)
+        private static CompletionItemEx BuildPythiaCompletionItem(CompletionItemEx item, int rank, SingleWordCompletion sortCompletion)
         {
             if (string.IsNullOrEmpty(item.filterText))
                 item.filterText = item.insertText;
@@ -130,8 +154,8 @@ namespace AiXCoder.PythonTools
             item.command = new Command()
             {
                 title = "AiXTelemetry",
-                command = "aiXcoder.sendTelemetry",
-                arguments = new string[] { "use", "secondary" }
+                command = "aiXcoder.insert",
+                arguments = new object[] { "use", "secondary", "python", sortCompletion }
             };
             return item;
         }
