@@ -1,7 +1,14 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
-## [0.1.2] - %DATE%
+## [0.1.3] - %DATE%
+### Added
+
+### Changed
+
+### Fixed
+
+## [0.1.2] - 2019-06-06
 ### Added
 - Java: Automatically add missing class imports in completions.
 - New feature to suggest variable names during variable/parameter definition.
