@@ -50,6 +50,11 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Automatically import missing packages in completions."
+                },
+                "aiXcoder.sortOnly": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "No long completion, only sorts the completions (will decrease delay)"
                 }
             }
         },
