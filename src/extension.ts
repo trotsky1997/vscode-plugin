@@ -755,7 +755,7 @@ async function activateCPP(context: vscode.ExtensionContext) {
     const provider = {
         async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
             await _activate();
-            const ext = vscode.workspace.getConfiguration().get("aiXcoder.model.python") as string;
+            const ext = vscode.workspace.getConfiguration().get("aiXcoder.model.cpp") as string;
             // log("=====================");
             try {
                 const { text, remainingText } = getReqText(document, position);
