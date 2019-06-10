@@ -7,6 +7,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 ### Changed
 
 ### Fixed
+- Cpp: fixed an issue for enterprise users to select C++ models.
 
 ## [0.1.2] - 2019-06-06
 ### Added
