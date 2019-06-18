@@ -54,7 +54,14 @@
                 "aiXcoder.sortOnly": {
                     "type": "boolean",
                     "default": false,
-                    "description": "No long completion, only sorts the completions (will decrease delay)"
+                    "description": "No long completion, only sorts the completions (will decrease delay)."
+                },
+                "aiXcoder.longResultRank": {
+                    "type": "integer",
+                    "default": 1,
+                    "minimum": 1,
+                    "maximum": 5,
+                    "description": "The prefered rank of long completion result."
                 }
             }
         },

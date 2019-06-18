@@ -61,4 +61,9 @@ export default class Preference {
         }
         return true;
     }
+
+    public static getLongResultRankSortText() {
+        const rank = vscode.workspace.getConfiguration().get("aiXcoder.longResultRank") as number;
+        return "0." + (rank - 1) + ".0";
+    }
 }

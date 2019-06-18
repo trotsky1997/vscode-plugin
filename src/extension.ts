@@ -218,7 +218,7 @@ function formatResData(results: PredictResult, langUtil: LangUtil, document: vsc
                 filterText: title,
                 insertText: new vscode.SnippetString(rendered),
                 kind: vscode.CompletionItemKind.Snippet,
-                sortText: String.fromCharCode(0),
+                sortText: Preference.getLongResultRankSortText(),
                 command: { ...command, arguments: command.arguments.concat([result]) },
                 aixPrimary: true,
             });
@@ -458,12 +458,11 @@ function activatePython(context: vscode.ExtensionContext) {
     const provider = {
         async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
             await _activate();
-            // log("=====================");
+            log("=====================");
             try {
                 const { longResults, sortResults, offsetID, fetchTime } = await fetchResults(document, position, "python(Python)", "python");
-
                 if (mspythonExtension) {
-                    // log("AiX: resolve " + offsetID + " " + extension[offsetID]);
+                    log("AiX: resolve " + offsetID + " " + sortResultAwaiters[offsetID]);
                     if (sortResultAwaiters[offsetID] !== "canceled") {
                         if (sortResultAwaiters[offsetID] == null) {
                             // LSE will go later
@@ -480,7 +479,7 @@ function activatePython(context: vscode.ExtensionContext) {
                     longResults.push(...sortLabels);
                 }
                 sendPredictTelemetry(fetchTime, longResults);
-                // log("provideCompletionItems ends");
+                log("provideCompletionItems ends");
                 return longResults;
             } catch (e) {
                 log(e);
@@ -559,8 +558,8 @@ function activateJava(context: vscode.ExtensionContext) {
                         command: "aiXcoder.insert",
                         arguments: ["use", "secondary", getInstance("java"), document],
                     };
-                    for (let i = 0; i < sortResults.list.length; i++) {
-                        const single: SingleWordCompletion = sortResults.list[i];
+                    let insertedRank = 1;
+                    for (const single of sortResults.list) {
                         let found = false;
                         for (const systemCompletion of l) {
                             if (systemCompletion.sortText == null) {
@@ -575,7 +574,7 @@ function activateJava(context: vscode.ExtensionContext) {
                             }
                             if (insertText.match("^" + escapeRegExp(single.word) + "\\b") && !systemCompletion.label.startsWith("⭐")) {
                                 systemCompletion.label = "⭐" + systemCompletion.label;
-                                systemCompletion.sortText = "0." + i;
+                                systemCompletion.sortText = "0." + insertedRank++;
                                 systemCompletion.command = { ...telemetryCommand, arguments: telemetryCommand.arguments.concat([single]) };
                                 if (systemCompletion.kind === vscode.CompletionItemKind.Function && insertText.indexOf("(") === -1) {
                                     systemCompletion.insertText = new vscode.SnippetString(insertText).appendText("(").appendTabstop().appendText(")");
@@ -587,7 +586,7 @@ function activateJava(context: vscode.ExtensionContext) {
                             l.push({
                                 label: "⭐" + single.word,
                                 insertText: single.word,
-                                sortText: "0." + i,
+                                sortText: "0." + insertedRank++,
                                 command: { ...telemetryCommand, arguments: telemetryCommand.arguments.concat([single]) },
                                 kind: vscode.CompletionItemKind.Variable,
                             });
@@ -621,7 +620,6 @@ function activateJava(context: vscode.ExtensionContext) {
 }
 
 async function activateCPP(context: vscode.ExtensionContext) {
-    // const _m = require("module");
     const msintellicode = vscode.extensions.getExtension("visualstudioexptteam.vscodeintellicode");
     const mscpp = vscode.extensions.getExtension("ms-vscode.cpptools");
     const activated = false;
@@ -672,7 +670,6 @@ async function activateCPP(context: vscode.ExtensionContext) {
             if (!mscpp.isActive) {
                 await mscpp.activate();
             }
-            // const lsext = _m._cache[path.join(mscpp.extensionPath, "out", "src", "LanguageServer", "extension.js")];
             clients = mscpp.exports.getApi().getClients();
         }
     } else {
