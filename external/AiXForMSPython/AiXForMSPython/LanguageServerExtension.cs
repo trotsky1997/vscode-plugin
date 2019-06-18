@@ -97,7 +97,7 @@ namespace AiXCoder.PythonTools
                 if (!string.IsNullOrEmpty(recvStr) && !recvStr.Equals("-"))
                 {
                     SortResult sortResult = JsonConvert.DeserializeObject<SortResult>(recvStr);
-                    int rank = 0;
+                    int rank = 1;
                     var newItems = new List<CompletionItemEx>();
                     foreach (var sortCompletion in sortResult.list)
                     {
