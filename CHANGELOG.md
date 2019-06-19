@@ -9,6 +9,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 
 ### Fixed
 - Cpp: fixed an issue for enterprise users to select C++ models.
+- Fix some spacing issues around comma and left parenthesis/bracket.
 
 ## [0.1.2] - 2019-06-06
 ### Added
