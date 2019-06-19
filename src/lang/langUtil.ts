@@ -44,9 +44,12 @@ export class LangUtil {
         if (left === "<ENTER>" || right === "<ENTER>") { return false; }
         if (left === "(" || right === ")") { return false; }
         if (left === "[" || right === "]") { return false; }
-        if (right === "[") { return false; }
-        if (left.match(ID_REGEX) && right === "(") { return false; }
+        if (left === ",") { return true; }
+        if (right === "(" || right === "[") {
+            return left.match(ID_REGEX) == null;
+        }
         if (right === ";") { return false; }
+        if (right === "{") { return true; }
         if (!left.match(ID_REGEX) && !right.match(ID_REGEX)) { return false; }
         return true;
     }
