@@ -6,6 +6,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 - Added a configuration to set the prefered position of long results.
 
 ### Changed
+- Delay C++ extension installation notice (until writing C++ code).
 
 ### Fixed
 - Cpp: fixed an issue for enterprise users to select C++ models.

@@ -235,8 +235,8 @@ function formatSortData(results: SortResult | null, langUtil: LangUtil, document
         command: "aiXcoder.insert",
         arguments: ["use", "secondary", langUtil, document],
     };
-    for (let i = 0; i < results.list.length; i++) {
-        const single = results.list[i];
+    let insertedRank = 1;
+    for (const single of results.list) {
         if (single.word.match(/^<.+>$/)) {
             continue;
         }
@@ -245,7 +245,7 @@ function formatSortData(results: SortResult | null, langUtil: LangUtil, document
             filterText: single.word,
             insertText: single.word,
             kind: vscode.CompletionItemKind.Variable,
-            sortText: String.fromCharCode(0) + String.fromCharCode(i),
+            sortText: "0." + insertedRank++,
             command: { ...command, arguments: command.arguments.concat([single]) },
         });
     }
@@ -375,7 +375,7 @@ function activatePython(context: vscode.ExtensionContext) {
                     mspythonExtension = undefined;
                 }
             }
-            const server = net.createServer(function (s) {
+            const server = net.createServer(function(s) {
                 log("AiX: python language server socket server connected");
                 s.on("data", (data) => {
                     const offset = data.readInt32LE(0);
@@ -672,16 +672,17 @@ async function activateCPP(context: vscode.ExtensionContext) {
             }
             clients = mscpp.exports.getApi().getClients();
         }
-    } else {
-        vscode.window.showInformationMessage(localize("mscpptoolsExtension.install"), localize("action.install")).then((selection) => {
-            if (selection === localize("action.install")) {
-                vscode.commands.executeCommand("vscode.open", vscode.Uri.parse("vscode:extension/ms-vscode.cpptools"));
-            }
-        });
     }
     async function _activate() {
         if (activated) {
             return;
+        }
+        if (!mscpp) {
+            vscode.window.showInformationMessage(localize("mscpptoolsExtension.install"), localize("action.install")).then((selection) => {
+                if (selection === localize("action.install")) {
+                    vscode.commands.executeCommand("vscode.open", vscode.Uri.parse("vscode:extension/ms-vscode.cpptools"));
+                }
+            });
         }
     }
 
@@ -823,7 +824,7 @@ export async function activate(context: vscode.ExtensionContext) {
     if (!endpoint) {
         vscode.window.showWarningMessage(localize("aiXcoder.endpoint.empty"), localize("openSetting")).then((selected) => {
             if (selected === localize("openSetting")) {
-                vscode.commands.executeCommand("workbench.action.openSettings", `aiXcoder`);
+                vscode.commands.executeCommand("workbench.action.openSettings", "aiXcoder: Endpoint");
             }
         });
     }
