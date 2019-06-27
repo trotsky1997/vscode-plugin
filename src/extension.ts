@@ -2,9 +2,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as fs from "fs";
-import * as net from "net";
 import * as path from "path";
-import * as portfinder from "portfinder";
 import * as util from "util";
 import * as vscode from "vscode";
 import * as API from "./API";
@@ -12,98 +10,126 @@ import { getInstance } from "./lang/commons";
 import { LangUtil } from "./lang/langUtil";
 import log from "./logger";
 import Preference from "./Preference";
+import { SafeStringUtil } from "./utils/SafeStringUtil";
 
 function escapeRegExp(s: string) {
     return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
 }
 
+const localizeMessages: { [key: string]: { en: string, "zh-cn": string } } = {
+    "mspythonExtension.install": {
+        "en": "AiXCoder: Microsoft Python extension is not installed or enabled. Please install Microsoft Python extension for the best experience.",
+        "zh-cn": "AiXCoder: Microsoft Python 插件没有安装或启用。请安装 Microsoft Python 插件以获得最佳体验。",
+    },
+    "assembly.load.fail": {
+        "en": "AiXCoder: assembly load failed, reason: ",
+        "zh-cn": "AiXCoder: 程序集加载失败，原因：",
+    },
+    "reload": {
+        "en": "Reload",
+        "zh-cn": "重新加载",
+    },
+    "mspythonExtension.activate.fail": {
+        "en": "AiXCoder: Microsoft Python extension activate failed, reason: ",
+        "zh-cn": "AiXCoder: Microsoft Python 插件启动失败，原因：",
+    },
+    "action.install": {
+        "en": "Install...",
+        "zh-cn": "安装...",
+    },
+    "redhatjavaExtension.activate.fail": {
+        "en": "AiXCoder: Language Support for Java(TM) by Red Hat activate failed, reason: ",
+        "zh-cn": "AiXCoder: Language Support for Java(TM) by Red Hat 启动失败，原因：",
+    },
+    "redhatjavaExtension.install": {
+        "en": "AiXCoder: Language Support for Java(TM) by Red Hat is not installed or enabled. Please install Language Support for Java(TM) by Red Hat for the best experience.",
+        "zh-cn": "AiXCoder: Language Support for Java(TM) by Red Hat 插件没有安装或启用。请安装 Language Support for Java(TM) by Red Hat 插件以获得最佳体验。",
+    },
+    "mscpptoolsExtension.install": {
+        "en": "AiXCoder: C/C++ Extension is not installed or enabled. Please install C/C++ Extension for the best experience.",
+        "zh-cn": "AiXCoder: C/C++ 插件没有安装或启用。请安装 C/C++ 插件以获得最佳体验。",
+    },
+    "newVersion": {
+        "en": "A new aiXcoder version is available: %s, update now?",
+        "zh-cn": "发现一个新的aiXcoder版本：%s，现在更新？",
+    },
+    "download": {
+        "en": "Update",
+        "zh-cn": "更新",
+    },
+    "ignoreThisVersion": {
+        "en": "Ignore this version",
+        "zh-cn": "忽略这个版本",
+    },
+    "aiXcoder.askedTelemetry": {
+        "en": "AiXCoder will send anonymous usage data to improve user experience. You can disable it in settings by turning off aiXcoder.enableTelemetry. (Current: %s)",
+        "zh-cn": "AiXCoder会发送匿名使用数据以提升用户体验。您可以在设置中关闭aiXcoder.enableTelemetry项来停止此行为。(当前：%s)",
+    },
+    "openSetting": {
+        "en": "Open Settings...",
+        "zh-cn": "打开设置...",
+    },
+    "aiXcoder.askedTelemetryOK": {
+        "en": "OK",
+        "zh-cn": "知道了",
+    },
+    "aiXcoder.askedTelemetryNo": {
+        "en": "Don't send my usage data",
+        "zh-cn": "不要发送我的使用数据",
+    },
+    "cpp.reload": {
+        "en": "AiXCoder requires a reload to integrate with C/C++ extension.",
+        "zh-cn": "AiXCoder需要重新加载以便与 C/C++ 插件集成。",
+    },
+    "cpp.fail": {
+        "en": "C/C++ Extension integration failed. Please ensure you have latest version of aiXcoder and C/C++ Extension installed.",
+        "zh-cn": "C/C++ 插件集成失败。请确保您安装了最新版本的aiXcoder插件以及C/C++插件。",
+    },
+    "aiXcoder.endpoint.empty": {
+        "en": "AiXCoder server endpoint is not set.",
+        "zh-cn": "AiXCoder服务器端口未设置。",
+    },
+    "enabled": {
+        "en": "Enabled",
+        "zh-cn": "已启用",
+    },
+    "disabled": {
+        "en": "Disabled",
+        "zh-cn": "已关闭",
+    },
+    "python.fail": {
+        "en": "Python Extension integration failed. Please ensure you have latest version of aiXcoder and Python Extension installed.",
+        "zh-cn": "Python 插件集成失败。请确保您安装了最新版本的aiXcoder插件以及Python插件。",
+    },
+    "python.reload": {
+        "en": "AiXCoder requires a reload to integrate with Python extension.",
+        "zh-cn": "AiXCoder需要重新加载以便与 Python 插件集成。",
+    },
+    "msintellicode.enabled": {
+        "en": "AiXCoder is in compability mode because MS IntelliCode Extension is installed. Results from aiXcoder will not be shown when IntelliCode results are avaialble.",
+        "zh-cn": "AiXCoder正处于兼容模式因为微软IntelliCode插件已被安装。在IntelliCode插件提供推荐结果时AiXCoder的推荐结果将被隐藏。",
+    },
+    "nevershowagain": {
+        "en": "Don't show again",
+        "zh-cn": "不再显示",
+    },
+};
 export function localize(key: string, ...params: any[]) {
-    const messages = {
-        "mspythonExtension.install": {
-            "en": "AiXCoder: Microsoft Python extension is not installed or enabled. Please install Microsoft Python extension for the best experience.",
-            "zh-cn": "AiXCoder: Microsoft Python 插件没有安装或启用。请安装 Microsoft Python 插件以获得最佳体验。",
-        },
-        "assembly.load.fail": {
-            "en": "AiXCoder: assembly load failed, reason: ",
-            "zh-cn": "AiXCoder: 程序集加载失败，原因：",
-        },
-        "reload": {
-            "en": "Reload",
-            "zh-cn": "重新加载",
-        },
-        "mspythonExtension.activate.fail": {
-            "en": "AiXCoder: Microsoft Python extension activate failed, reason: ",
-            "zh-cn": "AiXCoder: Microsoft Python 插件启动失败，原因：",
-        },
-        "action.install": {
-            "en": "Install...",
-            "zh-cn": "安装...",
-        },
-        "redhatjavaExtension.activate.fail": {
-            "en": "AiXCoder: Language Support for Java(TM) by Red Hat activate failed, reason: ",
-            "zh-cn": "AiXCoder: Language Support for Java(TM) by Red Hat 启动失败，原因：",
-        },
-        "redhatjavaExtension.install": {
-            "en": "AiXCoder: Language Support for Java(TM) by Red Hat is not installed or enabled. Please install Language Support for Java(TM) by Red Hat for the best experience.",
-            "zh-cn": "AiXCoder: Language Support for Java(TM) by Red Hat 插件没有安装或启用。请安装 Language Support for Java(TM) by Red Hat 插件以获得最佳体验。",
-        },
-        "mscpptoolsExtension.install": {
-            "en": "AiXCoder: C/C++ Extension is not installed or enabled. Please install C/C++ Extension for the best experience.",
-            "zh-cn": "AiXCoder: C/C++ 插件没有安装或启用。请安装 C/C++ 插件以获得最佳体验。",
-        },
-        "newVersion": {
-            "en": "A new aiXcoder version is available: %s, update now?",
-            "zh-cn": "发现一个新的aiXcoder版本：%s，现在更新？",
-        },
-        "download": {
-            "en": "Update",
-            "zh-cn": "更新",
-        },
-        "ignoreThisVersion": {
-            "en": "Ignore this version",
-            "zh-cn": "忽略这个版本",
-        },
-        "aiXcoder.askedTelemetry": {
-            "en": "AiXCoder will send anonymous usage data to improve user experience. You can disable it in settings by turning off aiXcoder.enableTelemetry. (Current: %s)",
-            "zh-cn": "AiXCoder会发送匿名使用数据以提升用户体验。您可以在设置中关闭aiXcoder.enableTelemetry项来停止此行为。(当前：%s)",
-        },
-        "openSetting": {
-            "en": "Open Settings...",
-            "zh-cn": "打开设置...",
-        },
-        "aiXcoder.askedTelemetryOK": {
-            "en": "OK",
-            "zh-cn": "知道了",
-        },
-        "aiXcoder.askedTelemetryNo": {
-            "en": "Don't send my usage data",
-            "zh-cn": "不要发送我的使用数据",
-        },
-        "cpp.reload": {
-            "en": "AiXCoder requires a reload to integrate with C/C++ extension.",
-            "zh-cn": "AiXCoder需要重新加载以便与 C/C++ 插件集成。",
-        },
-        "cpp.fail": {
-            "en": "C/C++ Extension integration failed.",
-            "zh-cn": "C/C++ 插件集成失败。",
-        },
-        "aiXcoder.endpoint.empty": {
-            "en": "AiXCoder server endpoint is not set.",
-            "zh-cn": "AiXCoder服务器端口未设置。",
-        },
-        "enabled": {
-            "en": "Enabled",
-            "zh-cn": "已启用",
-        },
-        "disabled": {
-            "en": "Disabled",
-            "zh-cn": "已关闭",
-        },
-    };
-    return messages[key] ? util.format(messages[key][vscode.env.language] || messages[key].en, ...params) : key;
+    return localizeMessages[key] ? util.format(localizeMessages[key][vscode.env.language] || localizeMessages[key].en, ...params) : key;
 }
 const myPackageJSON = vscode.extensions.getExtension("nnthink.aixcoder").packageJSON;
 export const myVersion = myPackageJSON.version;
+
+async function showInformationMessage(message: string, ...items: string[]): Promise<string | undefined> {
+    if (!Preference.context.globalState.get("hide:" + message)) {
+        const select = await vscode.window.showInformationMessage(localize(message), ...items.map(localize), localize("nevershowagain"));
+        if (select === localize("nevershowagain")) {
+            Preference.context.globalState.update("hide:" + message, true);
+            return;
+        }
+        return select;
+    }
+}
 
 export interface Rescue {
     type: string;
@@ -192,7 +218,7 @@ enum STAR_DISPLAY {
 }
 
 // 处理返回的值，最终变成放入提示框的内容
-function formatResData(results: PredictResult, langUtil: LangUtil, document: vscode.TextDocument, starDisplay: STAR_DISPLAY = STAR_DISPLAY.LEFT): AiXCompletionItem[] {
+function formatResData(results: PredictResult, langUtil: LangUtil, document: vscode.TextDocument, starDisplay = STAR_DISPLAY.LEFT): AiXCompletionItem[] {
     const r: AiXCompletionItem[] = [];
     const command: vscode.Command = {
         title: "AiXTelemetry",
@@ -252,7 +278,7 @@ function formatSortData(results: SortResult | null, langUtil: LangUtil, document
     return r;
 }
 
-async function fetchResults2(text: string, remainingText: string, fileName: string, ext: string, lang: string, document: vscode.TextDocument, starDisplay: STAR_DISPLAY = STAR_DISPLAY.LEFT): Promise<{
+async function fetchResults2(text: string, remainingText: string, fileName: string, ext: string, lang: string, document: vscode.TextDocument, starDisplay = STAR_DISPLAY.LEFT): Promise<{
     longResults: AiXCompletionItem[],
     sortResults: SortResult,
     fetchTime: number,
@@ -337,8 +363,17 @@ function sendPredictTelemetry(fetchTime: number, longResults: AiXCompletionItem[
 const onDeactivateHandlers = [];
 
 function activatePython(context: vscode.ExtensionContext) {
-    let mspythonExtension = vscode.extensions.getExtension("ms-python.python");
-    const sortResultAwaiters = {};
+    const mspythonExtension = vscode.extensions.getExtension("ms-python.python");
+    const sortResultAwaiters: {
+        [key: string]: any,
+        requesting: boolean,
+        incomingResult: Promise<SortResult>,
+        workingDocument: vscode.TextDocument,
+    } = {
+        requesting: false,
+        incomingResult: null,
+        workingDocument: null,
+    };
 
     let activated = false;
     async function _activate() {
@@ -349,103 +384,73 @@ function activatePython(context: vscode.ExtensionContext) {
 
         if (mspythonExtension) {
             log("AiX: ms-python.python detected");
-            async function loadLanguageServerExtension(port) {
-                const assemblyPath = context.asAbsolutePath("dist/AiXForMSPython.dll");
-                const l = vscode.commands.executeCommand("python._loadLanguageServerExtension", {
-                    assembly: assemblyPath,
-                    typeName: "AiXCoder.PythonTools.LanguageServerExtensionProvider",
-                    properties: { port, debug: false },
-                });
-                if (l) {
-                    // log("AiX: command issued");
-                    try {
-                        await l;
-                        log("AiX: python language server assembly loaded: " + assemblyPath);
-                    } catch (e) {
-                        log("AiX: assembly load failed reason:");
-                        log(e);
-                        const select = await vscode.window.showErrorMessage(localize("assembly.load.fail") + e, localize("reload"));
-                        if (select === localize("reload")) {
-                            vscode.commands.executeCommand("workbench.action.reloadWindow");
+
+            let aixHooked = false;
+            let distjs: string;
+            const aixHookedString = "/**AiXHooked-5**/";
+            const distjsPath = path.join(mspythonExtension.extensionPath, "out", "client", "extension.js");
+            distjs = await fs.promises.readFile(distjsPath, "utf-8");
+            aixHooked = distjs.startsWith(aixHookedString);
+            if (!aixHooked) {
+                log("Hooking ms-python.python");
+                try {
+                    // restore backup file
+                    await fs.promises.copyFile(distjsPath + ".bak", distjsPath);
+                    distjs = await fs.promises.readFile(distjsPath, "utf-8");
+                } catch (e) {
+                    // create backup file
+                    await fs.promises.copyFile(distjsPath, distjsPath + ".bak");
+                }
+                try {
+                    const oldSize = distjs.length;
+                    distjs = aixHookedString + distjs;
+                    // inject aixKooked
+                    distjs = distjs.replace(/(return \w+\.isTestExecution\(\)&&\(\w+.serviceContainer=\w+,\w+.serviceManager=\w+\)),(\w+)}/, "$1,$2.aixHooked=true,$2}");
+                    // inject ms engine
+                    const middlewareStart = SafeStringUtil.indexOf(distjs, "middleware:{provideCompletionItem:(");
+                    const middlewareParamEnd = SafeStringUtil.indexOf(distjs, ")", middlewareStart + "middleware:{provideCompletionItem:(".length);
+                    const middlewareLastParamStart = SafeStringUtil.lastIndexOf(distjs, ",", middlewareParamEnd) + 1;
+                    const nextUglyName = SafeStringUtil.substring(distjs, middlewareLastParamStart, middlewareParamEnd);
+                    const nextCallStart = SafeStringUtil.indexOf(distjs, `,${nextUglyName}(`, middlewareLastParamStart) + 1;
+                    const nextCallEnd = SafeStringUtil.indexOf(distjs, ")", nextCallStart) + 1;
+                    const nextCall = SafeStringUtil.substring(distjs, nextCallStart, nextCallEnd);
+                    const handleResultCode = (r: string) => `const api = require(\"vscode\").extensions.getExtension(\"ms-python.python\").exports;if(api.aixhook){await api.aixhook(${r});}`;
+                    distjs = SafeStringUtil.substring(distjs, 0, nextCallStart) + `new Promise(async (resolve, reject)=>{const rr=${nextCall};${handleResultCode("rr")}resolve(rr);})` + SafeStringUtil.substring(distjs, nextCallEnd);
+
+                    // inject jedi engine
+                    const pythonCompletionItemProviderSignature = "t.PythonCompletionItemProvider=l}";
+                    const pythonCompletionItemProviderEnd = SafeStringUtil.indexOf(distjs, pythonCompletionItemProviderSignature);
+                    const provideCompletionItemsStart = SafeStringUtil.lastIndexOf(distjs, "async provideCompletionItems(", pythonCompletionItemProviderEnd);
+                    const provideCompletionItemsEnd = SafeStringUtil.indexOf(distjs, "return r}", provideCompletionItemsStart);
+                    distjs = SafeStringUtil.substring(distjs, 0, provideCompletionItemsEnd) + handleResultCode("r") + SafeStringUtil.substring(distjs, provideCompletionItemsEnd);
+                    if (distjs.length > oldSize) {
+                        await fs.promises.writeFile(distjsPath, distjs, "utf-8");
+                        if (mspythonExtension.isActive) {
+                            const select = await vscode.window.showWarningMessage(localize("python.reload"), localize("reload"));
+                            if (select === localize("reload")) {
+                                vscode.commands.executeCommand("workbench.action.reloadWindow");
+                            }
                         }
-                        mspythonExtension = undefined;
+                        log("ms-python.python hooked");
+                    } else {
+                        await vscode.window.showWarningMessage(localize("python.fail"));
                     }
-                } else {
-                    log("AiX: command failed");
-                    mspythonExtension = undefined;
+                } catch (e) {
+                    console.log(e);
+                    if (e instanceof SafeStringUtil.NotFoundError) {
+                        await vscode.window.showWarningMessage(localize("python.fail"));
+                    }
                 }
             }
-            const server = net.createServer(function(s) {
-                log("AiX: python language server socket server connected");
-                s.on("data", (data) => {
-                    const offset = data.readInt32LE(0);
-                    // log("AiX: socket server received " + offset);
-                    if (sortResultAwaiters[offset]) {
-                        if (sortResultAwaiters[offset].queryUUID) {
-                            // log("AiX: socket server send fast");
-                            s.write(JSON.stringify(sortResultAwaiters[offset]));
-                            delete sortResultAwaiters[offset];
-                        } else {
-                            sortResultAwaiters[offset](null);
-                        }
-                    } else {
-                        new Promise((resolve, reject) => {
-                            const cancelTask = setTimeout(() => {
-                                // log("AiX: socket server canceled");
-                                resolve(null);
-                            }, 1000 * 5);
-                            // log("sortResultAwaiters[" + offset + "] set");
-                            sortResultAwaiters[offset] = (sortResult4LSE) => {
-                                clearTimeout(cancelTask);
-                                resolve(sortResult4LSE);
-                            };
-                        }).then((sortResult4LSE) => {
-                            if (sortResult4LSE) {
-                                delete sortResultAwaiters[offset];
-                                // log("AiX: socket server send " + sortResult4LSE);
-                                s.write(JSON.stringify(sortResult4LSE));
-                            } else {
-                                sortResultAwaiters[offset] = "canceled";
-                                // log("AiX: socket server no result");
-                                s.write("-");
-                            }
-                        });
-                    }
-                });
-            });
 
-            server.on("close", () => {
-                log("AiX: python language server socket server closed.");
-            });
-
-            server.on("error", (e) => {
-                log(e);
-            });
-
-            return new Promise((resolve, reject) => {
-                portfinder.getPort({
-                    port: 20000,
-                }, (err, localPort) => {
-                    if (err) {
-                        log(err);
-                        reject(err);
-                        return;
-                    }
-                    server.listen(localPort, "localhost");
-                    log("AiX: python language server socket server listen on " + localPort);
-                    if (mspythonExtension.isActive) {
-                        resolve(loadLanguageServerExtension(localPort));
-                    } else {
-                        mspythonExtension.activate().then(() => {
-                            resolve(loadLanguageServerExtension(localPort));
-                        }, (reason) => {
-                            log("AiX: ms-python.python activate failed reason:");
-                            log(reason);
-                            vscode.window.showErrorMessage(localize("mspythonExtension.activate.fail") + reason);
-                        });
-                    }
-                });
-            });
+            mspythonExtension.exports.aixhook = async function (ll) {
+                ll = await ll;
+                if (ll.items) {
+                    ll = ll.items;
+                }
+                mergeSortResult(ll, await sortResultAwaiters.incomingResult, sortResultAwaiters.workingDocument, STAR_DISPLAY.LEFT);
+                return ll;
+            };
         } else {
             vscode.window.showInformationMessage(localize("mspythonExtension.install"), localize("action.install")).then((selection) => {
                 if (selection === localize("action.install")) {
@@ -460,7 +465,15 @@ function activatePython(context: vscode.ExtensionContext) {
             await _activate();
             log("=====================");
             try {
+                sortResultAwaiters.requesting = true;
+                sortResultAwaiters.workingDocument = document;
+                let incomingResultResolver = null;
+                sortResultAwaiters.incomingResult = new Promise((resolve, reject) => {
+                    incomingResultResolver = resolve;
+                });
                 const { longResults, sortResults, offsetID, fetchTime } = await fetchResults(document, position, "python(Python)", "python");
+                incomingResultResolver(sortResults);
+                sortResultAwaiters.requesting = false;
                 if (mspythonExtension) {
                     log("AiX: resolve " + offsetID + " " + sortResultAwaiters[offsetID]);
                     if (sortResultAwaiters[offsetID] !== "canceled") {
@@ -492,6 +505,50 @@ function activatePython(context: vscode.ExtensionContext) {
     const triggerCharacters = [".", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "="];
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "python", scheme: "file" }, provider, ...triggerCharacters));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "python", scheme: "untitled" }, provider, ...triggerCharacters));
+}
+
+function mergeSortResult(l: vscode.CompletionItem[], sortResults: SortResult, document: vscode.TextDocument, starDisplay = STAR_DISPLAY.LEFT) {
+    const telemetryCommand: vscode.Command = {
+        title: "AiXTelemetry",
+        command: "aiXcoder.insert",
+        arguments: ["use", "secondary", getInstance("java"), document],
+    };
+    let insertedRank = 1;
+    for (const single of sortResults.list) {
+        let found = false;
+        for (const systemCompletion of l) {
+            if (systemCompletion.sortText == null) {
+                systemCompletion.sortText = systemCompletion.filterText;
+            }
+            let insertText = systemCompletion.insertText;
+            if (insertText == null) {
+                insertText = systemCompletion.label;
+            }
+            if (typeof (insertText) !== "string") {
+                insertText = insertText.value;
+            }
+            if (insertText.match("^" + escapeRegExp(single.word) + "\\b") && !systemCompletion.label.startsWith("⭐")) {
+                systemCompletion.filterText = systemCompletion.filterText || systemCompletion.label;
+                systemCompletion.label = starDisplay === STAR_DISPLAY.LEFT ? "⭐" + systemCompletion.label : (starDisplay === STAR_DISPLAY.RIGHT ? systemCompletion.label + "⭐" : systemCompletion.label);
+                systemCompletion.sortText = "0." + insertedRank++;
+                systemCompletion.command = { ...telemetryCommand, arguments: telemetryCommand.arguments.concat([single]) };
+                if (systemCompletion.kind === vscode.CompletionItemKind.Function && insertText.indexOf("(") === -1) {
+                    systemCompletion.insertText = new vscode.SnippetString(insertText).appendText("(").appendTabstop().appendText(")");
+                }
+                found = true;
+            }
+        }
+        if (!found && single.options && single.options.forced) {
+            l.push({
+                label: starDisplay === STAR_DISPLAY.LEFT ? "⭐" + single.word : (starDisplay === STAR_DISPLAY.RIGHT ? single.word + "⭐" : single.word),
+                filterText: single.word,
+                insertText: single.word,
+                sortText: "0." + insertedRank++,
+                command: { ...telemetryCommand, arguments: telemetryCommand.arguments.concat([single]) },
+                kind: vscode.CompletionItemKind.Variable,
+            });
+        }
+    }
 }
 
 function activateJava(context: vscode.ExtensionContext) {
@@ -553,45 +610,7 @@ function activateJava(context: vscode.ExtensionContext) {
                     });
                     const { longResults, sortResults, fetchTime } = await fetchPromise;
                     const l = await redhatPromise as vscode.CompletionItem[];
-                    const telemetryCommand: vscode.Command = {
-                        title: "AiXTelemetry",
-                        command: "aiXcoder.insert",
-                        arguments: ["use", "secondary", getInstance("java"), document],
-                    };
-                    let insertedRank = 1;
-                    for (const single of sortResults.list) {
-                        let found = false;
-                        for (const systemCompletion of l) {
-                            if (systemCompletion.sortText == null) {
-                                systemCompletion.sortText = systemCompletion.filterText;
-                            }
-                            let insertText = systemCompletion.insertText;
-                            if (insertText == null) {
-                                insertText = systemCompletion.label;
-                            }
-                            if (typeof (insertText) !== "string") {
-                                insertText = insertText.value;
-                            }
-                            if (insertText.match("^" + escapeRegExp(single.word) + "\\b") && !systemCompletion.label.startsWith("⭐")) {
-                                systemCompletion.label = "⭐" + systemCompletion.label;
-                                systemCompletion.sortText = "0." + insertedRank++;
-                                systemCompletion.command = { ...telemetryCommand, arguments: telemetryCommand.arguments.concat([single]) };
-                                if (systemCompletion.kind === vscode.CompletionItemKind.Function && insertText.indexOf("(") === -1) {
-                                    systemCompletion.insertText = new vscode.SnippetString(insertText).appendText("(").appendTabstop().appendText(")");
-                                }
-                                found = true;
-                            }
-                        }
-                        if (!found && single.options && single.options.forced) {
-                            l.push({
-                                label: "⭐" + single.word,
-                                insertText: single.word,
-                                sortText: "0." + insertedRank++,
-                                command: { ...telemetryCommand, arguments: telemetryCommand.arguments.concat([single]) },
-                                kind: vscode.CompletionItemKind.Variable,
-                            });
-                        }
-                    }
+                    mergeSortResult(l, sortResults, document);
                     longResults.push(...l);
                     sendPredictTelemetry(fetchTime, longResults);
                     return longResults;
@@ -624,7 +643,7 @@ async function activateCPP(context: vscode.ExtensionContext) {
     const mscpp = vscode.extensions.getExtension("ms-vscode.cpptools");
     const activated = false;
     const sortResultAwaiters = {};
-    let clients;
+    let clients: any;
     if (mscpp) {
         let aixHooked = false;
         let distjs: string;
@@ -641,8 +660,8 @@ async function activateCPP(context: vscode.ExtensionContext) {
             const oldSize = distjs.length;
             distjs = "/**AiXHooked**/" + distjs;
             const cpptoolsSignature = "t.CppTools=class{";
-            const cpptoolsStart = distjs.indexOf(cpptoolsSignature) + cpptoolsSignature.length;
-            const languageServerUglyEnd = distjs.indexOf(".getClients()", cpptoolsStart);
+            const cpptoolsStart = SafeStringUtil.indexOf(distjs, cpptoolsSignature) + cpptoolsSignature.length;
+            const languageServerUglyEnd = SafeStringUtil.indexOf(distjs, ".getClients()", cpptoolsStart);
             let languageServerUglyStart = languageServerUglyEnd;
             while (languageServerUglyStart > cpptoolsStart) {
                 languageServerUglyStart--;
@@ -651,8 +670,8 @@ async function activateCPP(context: vscode.ExtensionContext) {
                     break;
                 }
             }
-            const languageServerUgly = distjs.substring(languageServerUglyStart, languageServerUglyEnd);
-            distjs = distjs.substring(0, cpptoolsStart) + `getClients(){return ${languageServerUgly}.getClients()}` + distjs.substring(cpptoolsStart);
+            const languageServerUgly = SafeStringUtil.substring(distjs, languageServerUglyStart, languageServerUglyEnd);
+            distjs = SafeStringUtil.substring(distjs, 0, cpptoolsStart) + `getClients(){return ${languageServerUgly}.getClients()}` + SafeStringUtil.substring(distjs, cpptoolsStart);
             if (distjs.length > oldSize) {
                 await fs.promises.writeFile(distjsPath, distjs, "utf-8");
                 if (mscpp.isActive) {
@@ -863,6 +882,11 @@ export async function activate(context: vscode.ExtensionContext) {
             langUtil.rescue(document, (single as SingleWordCompletion).options.rescues);
         }
     }));
+
+    const msintellicode = vscode.extensions.getExtension("visualstudioexptteam.vscodeintellicode");
+    if (msintellicode) {
+        vscode.window.showInformationMessage(localize("msintellicode.enabled"));
+    }
     await activatePython(context);
     await activateJava(context);
     await activateCPP(context);
