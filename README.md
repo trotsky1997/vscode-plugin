@@ -4,6 +4,12 @@ This is a beta version of aiXcoder plugin. This plugin shows auto-generated code
 
 WARNING: This is a beta version. Many features are currently under development.
 
+![writing tensorflow code with aiXcoder](https://github.com/aixcoder-plugin/vscode-plugin/raw/master/images/python_example.gif)
+
+![writing Java code with aiXcoder](https://github.com/aixcoder-plugin/vscode-plugin/raw/master/images/java_example.gif)
+
+![writing C++ code with aiXcoder](https://github.com/aixcoder-plugin/vscode-plugin/raw/master/images/cpp_example.gif)
+
 ## Features
 
 1. Make sure you have internet access.

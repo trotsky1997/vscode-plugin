@@ -117,6 +117,10 @@ const localizeMessages: { [key: string]: { en: string, "zh-cn": string } } = {
         "en": "Model for %s has been switched to %s.",
         "zh-cn": "%s 的模型已被切换到 %s。",
     },
+    "msgreset": {
+        "en": "All messages are reset. You will see previously disabled notifications.",
+        "zh-cn": "所有消息都被重置。您可以看到之前被禁用的提醒了。",
+    },
 };
 export function localize(key: string, ...params: any[]) {
     return localizeMessages[key] ? util.format(localizeMessages[key][vscode.env.language] || localizeMessages[key].en, ...params) : key;
@@ -458,7 +462,7 @@ function activatePython(context: vscode.ExtensionContext) {
                 return ll;
             };
         } else {
-            vscode.window.showInformationMessage(localize("mspythonExtension.install"), localize("action.install")).then((selection) => {
+            showInformationMessage("mspythonExtension.install", "action.install").then((selection) => {
                 if (selection === localize("action.install")) {
                     vscode.commands.executeCommand("vscode.open", vscode.Uri.parse("vscode:extension/ms-python.python"));
                 }
@@ -594,7 +598,7 @@ function activateJava(context: vscode.ExtensionContext) {
                 log("AiX: visualstudioexptteam.vscodeintellicode detected");
             }
         } else {
-            vscode.window.showInformationMessage(localize("redhatjavaExtension.install"), localize("action.install")).then((selection) => {
+            showInformationMessage("redhatjavaExtension.install", "action.install").then((selection) => {
                 if (selection === localize("action.install")) {
                     vscode.commands.executeCommand("vscode.open", vscode.Uri.parse("vscode:extension/redhat.java"));
                 }
@@ -684,7 +688,7 @@ async function activateCPP(context: vscode.ExtensionContext) {
             return;
         }
         if (!mscpp) {
-            vscode.window.showInformationMessage(localize("mscpptoolsExtension.install"), localize("action.install")).then((selection) => {
+            showInformationMessage("mscpptoolsExtension.install", "action.install").then((selection) => {
                 if (selection === localize("action.install")) {
                     vscode.commands.executeCommand("vscode.open", vscode.Uri.parse("vscode:extension/ms-vscode.cpptools"));
                 }
@@ -873,6 +877,12 @@ export async function activate(context: vscode.ExtensionContext) {
             langUtil.rescue(document, (single as SingleWordCompletion).options.rescues);
         }
     }));
+    context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.resetMessage", () => {
+        for (const message of Object.keys(localizeMessages)) {
+            Preference.context.globalState.update("hide:" + message, false);
+        }
+        showInformationMessage("msgreset");
+    }));
 
     const commandHandler = async () => {
         const langs = { cpp: "C++/C", python: "Python", java: "Java" };
@@ -906,7 +916,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
     const msintellicode = vscode.extensions.getExtension("visualstudioexptteam.vscodeintellicode");
     if (msintellicode) {
-        vscode.window.showInformationMessage(localize("msintellicode.enabled"));
+        showInformationMessage("msintellicode.enabled");
     }
     await activatePython(context);
     await activateJava(context);
