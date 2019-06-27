@@ -1,4 +1,4 @@
-import { LangUtil } from "./langUtil";
+import { ID_REGEX, LangUtil } from "./langUtil";
 
 export class PythonLangUtil extends LangUtil {
     constructor() {
@@ -49,5 +49,12 @@ export class PythonLangUtil extends LangUtil {
             }
         }
         return stringBuilder.toString();
+    }
+
+    public hasSpaceBetween(tokens: string[], nextI: number): boolean {
+        const left = nextI === 0 ? "" : tokens[nextI - 1];
+        const right = tokens[nextI];
+        if (right === ":") { return false; }
+        return super.hasSpaceBetween(tokens, nextI);
     }
 }

@@ -6,10 +6,14 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 - Added a configuration to set the prefered position of long results.
 
 ### Changed
+- Delay C++ extension installation notice (until writing C++ code).
 
 ### Fixed
 - Cpp: fixed an issue for enterprise users to select C++ models.
 - Fix some spacing issues around comma and left parenthesis/bracket.
+- Python: fixed an issue when sorting with Jedi engine.
+- Python: fixed an issue when displaying suggested new varaible names with MS engine.
+- Python: removed the space between try and comma.
 
 ## [0.1.2] - 2019-06-06
 ### Added
