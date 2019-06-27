@@ -446,6 +446,46 @@ function sendPredictTelemetry(fetchTime: number, longResults: AiXCompletionItem[
 
 const onDeactivateHandlers = [];
 
+async function JSHooker(aixHookedString: string, distjsPath: string, extension: vscode.Extension<any>, reloadMsg: string, failMsg: string, hookCallback: (distjs: string) => string) {
+    let aixHooked = false;
+    let distjs: string;
+    distjs = await fs.promises.readFile(distjsPath, "utf-8");
+    aixHooked = distjs.startsWith(aixHookedString);
+    if (!aixHooked) {
+        log(`Hooking ${distjsPath}`);
+        try {
+            // restore backup file
+            await fs.promises.copyFile(distjsPath + ".bak", distjsPath);
+            distjs = await fs.promises.readFile(distjsPath, "utf-8");
+        } catch (e) {
+            // create backup file
+            await fs.promises.copyFile(distjsPath, distjsPath + ".bak");
+        }
+        try {
+            const oldSize = distjs.length;
+            distjs = aixHookedString + distjs;
+            distjs = hookCallback(distjs);
+            if (distjs.length > oldSize) {
+                await fs.promises.writeFile(distjsPath, distjs, "utf-8");
+                if (extension.isActive) {
+                    const select = await vscode.window.showWarningMessage(localize(reloadMsg), localize("reload"));
+                    if (select === localize("reload")) {
+                        vscode.commands.executeCommand("workbench.action.reloadWindow");
+                    }
+                }
+                log(`${distjsPath} hooked`);
+            } else {
+                await vscode.window.showWarningMessage(localize(failMsg));
+            }
+        } catch (e) {
+            console.log(e);
+            if (e instanceof SafeStringUtil.NotFoundError) {
+                await vscode.window.showWarningMessage(localize(failMsg));
+            }
+        }
+    }
+}
+
 function activatePython(context: vscode.ExtensionContext) {
     const mspythonExtension = vscode.extensions.getExtension("ms-python.python");
     const sortResultAwaiters: {
@@ -468,65 +508,27 @@ function activatePython(context: vscode.ExtensionContext) {
 
         if (mspythonExtension) {
             log("AiX: ms-python.python detected");
-
-            let aixHooked = false;
-            let distjs: string;
-            const aixHookedString = "/**AiXHooked-5**/";
             const distjsPath = path.join(mspythonExtension.extensionPath, "out", "client", "extension.js");
-            distjs = await fs.promises.readFile(distjsPath, "utf-8");
-            aixHooked = distjs.startsWith(aixHookedString);
-            if (!aixHooked) {
-                log("Hooking ms-python.python");
-                try {
-                    // restore backup file
-                    await fs.promises.copyFile(distjsPath + ".bak", distjsPath);
-                    distjs = await fs.promises.readFile(distjsPath, "utf-8");
-                } catch (e) {
-                    // create backup file
-                    await fs.promises.copyFile(distjsPath, distjsPath + ".bak");
-                }
-                try {
-                    const oldSize = distjs.length;
-                    distjs = aixHookedString + distjs;
-                    // inject aixKooked
-                    distjs = distjs.replace(/(return \w+\.isTestExecution\(\)&&\(\w+.serviceContainer=\w+,\w+.serviceManager=\w+\)),(\w+)}/, "$1,$2.aixHooked=true,$2}");
-                    // inject ms engine
-                    const middlewareStart = SafeStringUtil.indexOf(distjs, "middleware:{provideCompletionItem:(");
-                    const middlewareParamEnd = SafeStringUtil.indexOf(distjs, ")", middlewareStart + "middleware:{provideCompletionItem:(".length);
-                    const middlewareLastParamStart = SafeStringUtil.lastIndexOf(distjs, ",", middlewareParamEnd) + 1;
-                    const nextUglyName = SafeStringUtil.substring(distjs, middlewareLastParamStart, middlewareParamEnd);
-                    const nextCallStart = SafeStringUtil.indexOf(distjs, `,${nextUglyName}(`, middlewareLastParamStart) + 1;
-                    const nextCallEnd = SafeStringUtil.indexOf(distjs, ")", nextCallStart) + 1;
-                    const nextCall = SafeStringUtil.substring(distjs, nextCallStart, nextCallEnd);
-                    const handleResultCode = (r: string) => `const api = require(\"vscode\").extensions.getExtension(\"ms-python.python\").exports;if(api.aixhook){await api.aixhook(${r});}`;
-                    distjs = SafeStringUtil.substring(distjs, 0, nextCallStart) + `new Promise(async (resolve, reject)=>{const rr=${nextCall};${handleResultCode("rr")}resolve(rr);})` + SafeStringUtil.substring(distjs, nextCallEnd);
+            await JSHooker("/**AiXHooked-5**/", distjsPath, mspythonExtension, "python.reload", "python.fail", (distjs) => {
+                // inject ms engine
+                const middlewareStart = SafeStringUtil.indexOf(distjs, "middleware:{provideCompletionItem:(");
+                const middlewareParamEnd = SafeStringUtil.indexOf(distjs, ")", middlewareStart + "middleware:{provideCompletionItem:(".length);
+                const middlewareLastParamStart = SafeStringUtil.lastIndexOf(distjs, ",", middlewareParamEnd) + 1;
+                const nextUglyName = SafeStringUtil.substring(distjs, middlewareLastParamStart, middlewareParamEnd);
+                const nextCallStart = SafeStringUtil.indexOf(distjs, `,${nextUglyName}(`, middlewareLastParamStart) + 1;
+                const nextCallEnd = SafeStringUtil.indexOf(distjs, ")", nextCallStart) + 1;
+                const nextCall = SafeStringUtil.substring(distjs, nextCallStart, nextCallEnd);
+                const handleResultCode = (r: string) => `const api = require(\"vscode\").extensions.getExtension(\"ms-python.python\").exports;if(api.aixhook){await api.aixhook(${r});}`;
+                distjs = SafeStringUtil.substring(distjs, 0, nextCallStart) + `new Promise(async (resolve, reject)=>{const rr=${nextCall};${handleResultCode("rr")}resolve(rr);})` + SafeStringUtil.substring(distjs, nextCallEnd);
 
-                    // inject jedi engine
-                    const pythonCompletionItemProviderSignature = "t.PythonCompletionItemProvider=l}";
-                    const pythonCompletionItemProviderEnd = SafeStringUtil.indexOf(distjs, pythonCompletionItemProviderSignature);
-                    const provideCompletionItemsStart = SafeStringUtil.lastIndexOf(distjs, "async provideCompletionItems(", pythonCompletionItemProviderEnd);
-                    const provideCompletionItemsEnd = SafeStringUtil.indexOf(distjs, "return r}", provideCompletionItemsStart);
-                    distjs = SafeStringUtil.substring(distjs, 0, provideCompletionItemsEnd) + handleResultCode("r") + SafeStringUtil.substring(distjs, provideCompletionItemsEnd);
-                    if (distjs.length > oldSize) {
-                        await fs.promises.writeFile(distjsPath, distjs, "utf-8");
-                        if (mspythonExtension.isActive) {
-                            const select = await vscode.window.showWarningMessage(localize("python.reload"), localize("reload"));
-                            if (select === localize("reload")) {
-                                vscode.commands.executeCommand("workbench.action.reloadWindow");
-                            }
-                        }
-                        log("ms-python.python hooked");
-                    } else {
-                        await vscode.window.showWarningMessage(localize("python.fail"));
-                    }
-                } catch (e) {
-                    console.log(e);
-                    if (e instanceof SafeStringUtil.NotFoundError) {
-                        await vscode.window.showWarningMessage(localize("python.fail"));
-                    }
-                }
-            }
-
+                // inject jedi engine
+                const pythonCompletionItemProviderSignature = "t.PythonCompletionItemProvider=l}";
+                const pythonCompletionItemProviderEnd = SafeStringUtil.indexOf(distjs, pythonCompletionItemProviderSignature);
+                const provideCompletionItemsStart = SafeStringUtil.lastIndexOf(distjs, "async provideCompletionItems(", pythonCompletionItemProviderEnd);
+                const provideCompletionItemsEnd = SafeStringUtil.indexOf(distjs, "return r}", provideCompletionItemsStart);
+                distjs = SafeStringUtil.substring(distjs, 0, provideCompletionItemsEnd) + handleResultCode("r") + SafeStringUtil.substring(distjs, provideCompletionItemsEnd);
+                return distjs;
+            });
             mspythonExtension.exports.aixhook = async function(ll) {
                 ll = await ll;
                 if (ll.items) {
@@ -732,20 +734,8 @@ async function activateCPP(context: vscode.ExtensionContext) {
     const sortResultAwaiters = {};
     let clients: any;
     if (mscpp) {
-        let aixHooked = false;
-        let distjs: string;
-        if (mscpp.isActive) {
-            aixHooked = mscpp.exports.getApi().getClients != null;
-        } else {
-            const distjsPath = path.join(mscpp.extensionPath, "dist", "main.js");
-            distjs = await fs.promises.readFile(distjsPath, "utf-8");
-            aixHooked = distjs.startsWith("/**AiXHooked**/");
-        }
-        if (!aixHooked) {
-            const distjsPath = path.join(mscpp.extensionPath, "dist", "main.js");
-            await fs.promises.copyFile(distjsPath, distjsPath + ".bak");
-            const oldSize = distjs.length;
-            distjs = "/**AiXHooked**/" + distjs;
+        const distjsPath = path.join(mscpp.extensionPath, "dist", "main.js");
+        await JSHooker("/**AiXHooked**/", distjsPath, mscpp, "cpp.reload", "cpp.fail", (distjs) => {
             const cpptoolsSignature = "t.CppTools=class{";
             const cpptoolsStart = SafeStringUtil.indexOf(distjs, cpptoolsSignature) + cpptoolsSignature.length;
             const languageServerUglyEnd = SafeStringUtil.indexOf(distjs, ".getClients()", cpptoolsStart);
@@ -759,18 +749,8 @@ async function activateCPP(context: vscode.ExtensionContext) {
             }
             const languageServerUgly = SafeStringUtil.substring(distjs, languageServerUglyStart, languageServerUglyEnd);
             distjs = SafeStringUtil.substring(distjs, 0, cpptoolsStart) + `getClients(){return ${languageServerUgly}.getClients()}` + SafeStringUtil.substring(distjs, cpptoolsStart);
-            if (distjs.length > oldSize) {
-                await fs.promises.writeFile(distjsPath, distjs, "utf-8");
-                if (mscpp.isActive) {
-                    const select = await vscode.window.showWarningMessage(localize("cpp.reload"), localize("reload"));
-                    if (select === localize("reload")) {
-                        vscode.commands.executeCommand("workbench.action.reloadWindow");
-                    }
-                }
-            } else {
-                await vscode.window.showWarningMessage(localize("cpp.fail"));
-            }
-        }
+            return distjs;
+        });
 
         if (mscpp) {
             if (!mscpp.isActive) {
