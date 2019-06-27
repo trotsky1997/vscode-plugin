@@ -16,3 +16,4 @@ webpack.config.js
 packing
 pack.bat
 *.vsix
+images/*_example.gif
