@@ -527,6 +527,9 @@ function mergeSortResult(l: vscode.CompletionItem[], sortResults: SortResult, do
     };
     let insertedRank = 1;
     for (const single of sortResults.list) {
+        if (single.word.match(/^<.+>$/)) {
+            continue;
+        }
         let found = false;
         for (const systemCompletion of l) {
             if (systemCompletion.sortText == null) {

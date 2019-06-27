@@ -17,7 +17,7 @@ using Newtonsoft.Json;
 
 namespace AiXCoder.PythonTools
 {
-    public sealed class LanguageServerExtension : ILanguageServerExtension, IDisposable, ICompletionExtension
+    public sealed class LanguageServerExtension : ILanguageServerExtension, IDisposable, ICompletionExtension2
     {
         private IServiceContainer server;
         private ILogger _log;
@@ -78,7 +78,7 @@ namespace AiXCoder.PythonTools
         }
 
         byte[] messageReceived = new byte[1024 * 100];
-        public Task HandleCompletionAsync(IDocumentAnalysis analysis, SourceLocation location, CompletionItemEx[] completions, CancellationToken token)
+        public Task HandleCompletionAsync(IDocumentAnalysis analysis, SourceLocation location, CompletionList completions, CancellationToken token)
         {
             Log("AiXPython: HandleCompletionAsync 2");
             try
@@ -102,11 +102,11 @@ namespace AiXCoder.PythonTools
                     foreach (var sortCompletion in sortResult.list)
                     {
                         bool found = false;
-                        foreach (var completion in completions)
+                        foreach (var completion in completions.items)
                         {
-                            if (completion.insertText.Equals(sortCompletion.word))
+                            if (completion is CompletionItemEx && completion.insertText.Equals(sortCompletion.word))
                             {
-                                BuildPythiaCompletionItem(completion, rank, sortCompletion);
+                                BuildPythiaCompletionItem(completion as CompletionItemEx, rank, sortCompletion);
                                 found = true;
                                 break;
                             }
@@ -130,8 +130,9 @@ namespace AiXCoder.PythonTools
 
                     if (newItems.Count > 0)
                     {
-                        Array.Resize(ref completions, completions.Length + newItems.Count);
-                        Array.Copy(newItems.ToArray(), completions, newItems.Count);
+                        int oldSize = completions.items.Length;
+                        Array.Resize(ref completions.items, oldSize + newItems.Count);
+                        newItems.ToArray().CopyTo(completions.items, oldSize);
                     }
                 }
             }
