@@ -1,7 +1,7 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
-## [0.1.3] - %DATE%
+## [0.1.3] - 2019-06-27
 ### Added
 - Added a configuration to set the prefered position of long results.
 
