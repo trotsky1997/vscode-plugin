@@ -11,6 +11,7 @@ import { activateJava } from "./javaExtension";
 import { getInstance } from "./lang/commons";
 import { LangUtil } from "./lang/langUtil";
 import log from "./logger";
+import { activatePhp } from "./phpExtension";
 import Preference from "./Preference";
 import { activatePython } from "./pythonExtension";
 import { SafeStringUtil } from "./utils/SafeStringUtil";
@@ -19,7 +20,8 @@ function escapeRegExp(s: string) {
     return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
 }
 
-const myPackageJSON = vscode.extensions.getExtension("nnthink.aixcoder").packageJSON;
+export const myID = "nnthink.aixcoder";
+const myPackageJSON = vscode.extensions.getExtension(myID).packageJSON;
 export const myVersion = myPackageJSON.version;
 
 export async function showInformationMessage(message: string, ...items: string[]): Promise<string | undefined> {
@@ -94,15 +96,28 @@ function fetch(ext: string, text: string, remainingText: string, fileID: string)
     }
 }
 
+// tslint:disable no-bitwise
+function hashCode(s: string) {
+    let hash = 0; let i: number; let chr: number;
+    if (s.length === 0) { return hash; }
+    for (i = 0; i < s.length; i++) {
+        chr = s.charCodeAt(i);
+        hash = ((hash << 5) - hash) + chr;
+        hash |= 0; // Convert to 32bit integer
+    }
+    return hash;
+}
+
 export function getReqText(document: vscode.TextDocument, position: vscode.Position) {
     const offset = document.offsetAt(position);
     const lineEnd = document.lineAt(position).range.end;
     const lineEndOffset = document.offsetAt(lineEnd);
     const text = document.getText();   // 获取编辑器上面已有的文字
+    const partialText = text.substring(0, offset);
     return {
-        text: text.substring(0, offset),
+        text: partialText,
         remainingText: text.substring(offset, lineEndOffset),
-        offsetID: (position.line + 1) * (position.character + 1),
+        offsetID: hashCode(partialText),
     };
 }
 
@@ -135,7 +150,7 @@ function formatResData(results: PredictResult, langUtil: LangUtil, document: vsc
             }
             const mergedTokens = [result.current + result.tokens[0], ...result.tokens.slice(1)];
             let title = langUtil.render(mergedTokens, 0);
-            let rendered = title.replace(/(?=\$\{[^}]+\})/g, "\\");
+            let rendered = title.replace(/(?=\$)/g, "\\");
             if (result.r_completion && result.r_completion.length > 0) {
                 // tslint:disable-next-line: no-invalid-template-strings
                 rendered += "${0}" + result.r_completion.join("");
@@ -286,10 +301,11 @@ export async function JSHooker(aixHookedString: string, distjsPath: string, exte
             if (distjs.length > oldSize) {
                 await fs.promises.writeFile(distjsPath, distjs, "utf-8");
                 if (extension.isActive) {
-                    const select = await vscode.window.showWarningMessage(localize(reloadMsg), localize("reload"));
-                    if (select === localize("reload")) {
-                        vscode.commands.executeCommand("workbench.action.reloadWindow");
-                    }
+                    vscode.window.showWarningMessage(localize(reloadMsg), localize("reload")).then((select) => {
+                        if (select === localize("reload")) {
+                            vscode.commands.executeCommand("workbench.action.reloadWindow");
+                        }
+                    });
                 }
                 log(`${distjsPath} hooked`);
             } else {
@@ -305,6 +321,7 @@ export async function JSHooker(aixHookedString: string, distjsPath: string, exte
 }
 
 export function mergeSortResult(l: vscode.CompletionItem[], sortResults: SortResult, document: vscode.TextDocument, starDisplay = STAR_DISPLAY.LEFT) {
+    if (sortResults == null) { return; }
     const telemetryCommand: vscode.Command = {
         title: "AiXTelemetry",
         command: "aiXcoder.insert",
@@ -412,11 +429,27 @@ export async function activate(context: vscode.ExtensionContext) {
     if (msintellicode) {
         showInformationMessage("msintellicode.enabled");
     }
-    await activatePython(context);
-    await activateJava(context);
-    await activateCPP(context);
     log("AiX: aiXcoder activated");
-    return {};
+    const aixHooks: {
+        [lang: string]: void | {
+            aixHook: (ll: vscode.CompletionList | vscode.CompletionItem[], ...args: any) => Promise<vscode.CompletionList | vscode.CompletionItem[]>,
+        },
+    } = {
+        python: await activatePython(context),
+        java: await activateJava(context),
+        cpp: await activateCPP(context),
+        php: await activatePhp(context),
+    };
+    return {
+        async aixhook(lang: string, ll: vscode.CompletionList | vscode.CompletionItem[] | Promise<vscode.CompletionList | vscode.CompletionItem[]>, ...args: any): Promise<vscode.CompletionList | vscode.CompletionItem[]> {
+            const hookObj = aixHooks[lang];
+            if (hookObj && hookObj.aixHook) {
+                ll = await ll;
+                return hookObj.aixHook(ll, ...args);
+            }
+            return ll;
+        },
+    };
 }
 
 // this method is called when your extension is deactivated
