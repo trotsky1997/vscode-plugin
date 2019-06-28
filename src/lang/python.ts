@@ -1,4 +1,4 @@
-import { ID_REGEX, LangUtil } from "./langUtil";
+import { LangUtil } from "./langUtil";
 
 export class PythonLangUtil extends LangUtil {
     constructor() {

@@ -6,10 +6,6 @@ export class SafeStringUtil {
         }
     };
 
-    public static replace(source: string, searchValue: { [Symbol.replace](s: string, replacer: (substring: string, ...args: any[]) => string): string; }, replacer: (substring: string, ...args: any[]) => string): string {
-        return source.replace(searchValue, replacer);
-    }
-
     public static indexOf(source: string, searchString: string, position = 0): number {
         const p = source.indexOf(searchString, position);
         if (p < 0) {

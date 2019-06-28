@@ -1,7 +1,8 @@
 import * as crypto from "crypto";
 import * as request from "request-promise";
 import * as vscode from "vscode";
-import { localize, myVersion } from "./extension";
+import { myVersion } from "./extension";
+import { localize } from "./i18n";
 import log from "./logger";
 import Preference from "./Preference";
 import CodeStore from "./utils/CodeStore";
