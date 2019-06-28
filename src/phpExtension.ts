@@ -1,6 +1,7 @@
 import * as path from "path";
 import * as vscode from "vscode";
-import { fetchResults, formatSortData, getReqText, JSHooker, mergeSortResult, myID, sendPredictTelemetry, SortResult, STAR_DISPLAY } from "./extension";
+import { fetchResults, formatSortData, getReqText, JSHooker, mergeSortResult, myID, sendPredictTelemetry, showInformationMessage, SortResult, STAR_DISPLAY } from "./extension";
+import { localize } from "./i18n";
 import { getInstance } from "./lang/commons";
 import log from "./logger";
 import { Syncer } from "./Syncer";
@@ -21,7 +22,7 @@ export async function activatePhp(context: vscode.ExtensionContext) {
         if (msphp) {
             log(`AiX: ${msphpId} detected`);
             const distjsPath = path.join(msphp.extensionPath, "dist", "phpMain.js");
-            await JSHooker("/**AiXHooked-0**/", distjsPath, msphp, "php.reload", "php.fail", (distjs) => {
+            await JSHooker("/**AiXHooked-0**/", distjsPath, msphp, "php.reload.msphp", "php.fail.msphp", (distjs) => {
                 const handleResultCode = (r: string) => `const api = require(\"vscode\").extensions.getExtension("${myID}").exports;if(api && api.aixhook){${r}=await api.aixhook(\"php\",${r},$1,$2,$3,$4,\"basic\");}`;
                 const newProvideCompletionItems = `async provideCompletionItems($1,$2,$3,$4){let rr=await this.provideCompletionItems2($1,$2,$3,$4);${handleResultCode("rr")};return rr;}`;
                 distjs = distjs.replace(/provideCompletionItems\((\w+),(\w+),(\w+),(\w+)\){/, `${newProvideCompletionItems}provideCompletionItems2($1,$2,$3,$4){`);
@@ -31,10 +32,16 @@ export async function activatePhp(context: vscode.ExtensionContext) {
         if (intelephense) {
             log(`AiX: ${intelephenseId} detected`);
             const distjsPath = path.join(intelephense.extensionPath, "lib", "extension.js");
-            await JSHooker("/**AiXHooked-2**/", distjsPath, intelephense, "php.reload", "php.fail", (distjs) => {
+            await JSHooker("/**AiXHooked-2**/", distjsPath, intelephense, "php.reload.intelephense", "php.fail.intelephense", (distjs) => {
                 const handleResultCode = (r: string) => `const api = require(\"vscode\").extensions.getExtension("${myID}").exports;if(api && api.aixhook){${r}=await api.aixhook(\"php\",${r},$1,$2,$3,$4,\"intelephense\");}`;
                 distjs = distjs.replace(/provideCompletionItems:\((\w+),(\w+),(\w+),(\w+)\)=>(.+?),resolveCompletionItem:/, `provideCompletionItems:async($1,$2,$3,$4)=>{console.log("intelephense called");let rr=$5;${handleResultCode("rr")};return rr;},resolveCompletionItem:`);
                 return distjs;
+            });
+        } else {
+            showInformationMessage("intelephense.install", "action.install").then((selection) => {
+                if (selection === localize("action.install")) {
+                    vscode.commands.executeCommand("vscode.open", vscode.Uri.parse(intelephenseId));
+                }
             });
         }
     }
