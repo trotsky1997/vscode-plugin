@@ -106,6 +106,22 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "en": "All messages are reset. You will see previously disabled notifications.",
         "zh-cn": "所有消息都被重置。您可以看到之前被禁用的提醒了。",
     },
+    "php.fail.msphp": {
+        "en": "PHP Extension integration failed. Please ensure you have latest version of aiXcoder.",
+        "zh-cn": "PHP 集成失败。请确保您安装了最新版本的aiXcoder插件。",
+    },
+    "php.reload.msphp": {
+        "en": "AiXCoder requires a reload to integrate with PHP extension.",
+        "zh-cn": "AiXCoder需要重新加载以便与 PHP 集成。",
+    },
+    "php.fail.intelephense": {
+        "en": "PHP Intelephense Extension integration failed. Please ensure you have latest version of aiXcoder.",
+        "zh-cn": "PHP Intelephense 集成失败。请确保您安装了最新版本的aiXcoder插件和Intelephense插件。",
+    },
+    "php.reload.intelephense": {
+        "en": "AiXCoder requires a reload to integrate with PHP Intelephense extension.",
+        "zh-cn": "AiXCoder需要重新加载以便与 PHP Intelephense 集成。",
+    },
 };
 export function localize(key: string, ...params: any[]) {
     return localizeMessages[key] ? util.format(localizeMessages[key][vscode.env.language] || localizeMessages[key].en, ...params) : key;
