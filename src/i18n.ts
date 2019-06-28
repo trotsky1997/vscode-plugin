@@ -122,6 +122,10 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "en": "AiXCoder requires a reload to integrate with PHP Intelephense extension.",
         "zh-cn": "AiXCoder需要重新加载以便与 PHP Intelephense 集成。",
     },
+    "intelephense.install": {
+        "en": "AiXCoder: PHP Intelephense is not installed or enabled. Please install PHP Intelephense for the best experience.",
+        "zh-cn": "AiXCoder: PHP Intelephense 插件没有安装或启用。请安装 PHP Intelephense 插件以获得最佳体验。",
+    },
 };
 export function localize(key: string, ...params: any[]) {
     return localizeMessages[key] ? util.format(localizeMessages[key][vscode.env.language] || localizeMessages[key].en, ...params) : key;
