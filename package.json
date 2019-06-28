@@ -47,6 +47,11 @@
                     "default": "cpp(Cpp)",
                     "markdownDescription": "The model name to be used in C++/C. Default: `cpp(Cpp)`."
                 },
+                "aiXcoder.model.php": {
+                    "type": "string",
+                    "default": "php(Php)",
+                    "markdownDescription": "The model name to be used in Php. Default: `php(Php)`."
+                },
                 "aiXcoder.enableTelemetry": {
                     "type": "boolean",
                     "default": false,

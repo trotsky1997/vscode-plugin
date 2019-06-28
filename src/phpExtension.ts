@@ -44,7 +44,7 @@ export async function activatePhp(context: vscode.ExtensionContext) {
             await _activate();
             log("=====================");
             try {
-                const ext = "php(Php)";
+                const ext = vscode.workspace.getConfiguration().get("aiXcoder.model.php") as string;
                 const { longResults, sortResults, offsetID, fetchTime } = await fetchResults(document, position, ext, "php", STAR_DISPLAY.RIGHT);
 
                 if (msphp || intelephense) {
