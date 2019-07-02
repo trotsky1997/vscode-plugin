@@ -296,22 +296,18 @@ export async function JSHooker(aixHookedString: string, distjsPath: string, exte
             await fs.promises.copyFile(distjsPath, distjsPath + ".bak");
         }
         try {
-            const oldSize = distjs.length;
             distjs = aixHookedString + distjs;
             distjs = hookCallback(distjs);
-            if (distjs.length > oldSize) {
-                await fs.promises.writeFile(distjsPath, distjs, "utf-8");
-                if (extension.isActive) {
-                    vscode.window.showWarningMessage(localize(reloadMsg), localize("reload")).then((select) => {
-                        if (select === localize("reload")) {
-                            vscode.commands.executeCommand("workbench.action.reloadWindow");
-                        }
-                    });
-                }
-                log(`${distjsPath} hooked`);
-            } else {
-                await vscode.window.showWarningMessage(localize(failMsg));
+
+            await fs.promises.writeFile(distjsPath, distjs, "utf-8");
+            if (extension.isActive) {
+                vscode.window.showWarningMessage(localize(reloadMsg), localize("reload")).then((select) => {
+                    if (select === localize("reload")) {
+                        vscode.commands.executeCommand("workbench.action.reloadWindow");
+                    }
+                });
             }
+            log(`${distjsPath} hooked`);
         } catch (e) {
             console.log(e);
             if (e instanceof SafeStringUtil.NotFoundError) {

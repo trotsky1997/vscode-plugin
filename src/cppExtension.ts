@@ -1,41 +1,39 @@
 import * as path from "path";
 import * as vscode from "vscode";
-import { fetchResults2, formatSortData, getReqText, JSHooker, sendPredictTelemetry, showInformationMessage, SingleWordCompletion, SortResult, STAR_DISPLAY } from "./extension";
+import { fetchResults, formatSortData, getReqText, JSHooker, mergeSortResult, myID, sendPredictTelemetry, showInformationMessage, SortResult, STAR_DISPLAY } from "./extension";
 import { localize } from "./i18n";
 import { getInstance } from "./lang/commons";
 import log from "./logger";
+import { Syncer } from "./Syncer";
 import { SafeStringUtil } from "./utils/SafeStringUtil";
 
 export async function activateCPP(context: vscode.ExtensionContext) {
     const msintellicode = vscode.extensions.getExtension("visualstudioexptteam.vscodeintellicode");
     const mscpp = vscode.extensions.getExtension("ms-vscode.cpptools");
     const activated = false;
-    const sortResultAwaiters = {};
-    let clients: any;
+    const syncer = new Syncer<SortResult>();
     if (mscpp) {
         const distjsPath = path.join(mscpp.extensionPath, "dist", "main.js");
-        await JSHooker("/**AiXHooked**/", distjsPath, mscpp, "cpp.reload", "cpp.fail", (distjs) => {
-            const cpptoolsSignature = "t.CppTools=class{";
-            const cpptoolsStart = SafeStringUtil.indexOf(distjs, cpptoolsSignature) + cpptoolsSignature.length;
-            const languageServerUglyEnd = SafeStringUtil.indexOf(distjs, ".getClients()", cpptoolsStart);
-            let languageServerUglyStart = languageServerUglyEnd;
-            while (languageServerUglyStart > cpptoolsStart) {
-                languageServerUglyStart--;
-                if (!distjs[languageServerUglyStart].match(/[a-zA-Z]/)) {
-                    languageServerUglyStart++;
-                    break;
-                }
+        await JSHooker("/**AiXHooked-1**/", distjsPath, mscpp, "cpp.reload", "cpp.fail", (distjs) => {
+            const handleResultCode = (r: string) => `const api = require(\"vscode\").extensions.getExtension("${myID}").exports;if(api && api.aixhook){${r}=await api.aixhook(\"cpp\",${r},$1,$2,$3,$4);}`;
+            const targetCode = `provideCompletionItems: async \($1, $2, $3, $4\) => { let rr=($5);${handleResultCode("rr")};return rr;}`;
+            const sig = /provideCompletionItems:\s*\((\w+),\s*(\w+),\s*(\w+),\s*(\w+)\)\s*=>\s*{\s*return\s+((?:.|\s)+?);\s*}/;
+            if (distjs.search(sig) >= 0) {
+                // insider
+                return distjs.replace(sig, targetCode);
             }
-            const languageServerUgly = SafeStringUtil.substring(distjs, languageServerUglyStart, languageServerUglyEnd);
-            distjs = SafeStringUtil.substring(distjs, 0, cpptoolsStart) + `getClients(){return ${languageServerUgly}.getClients()}` + SafeStringUtil.substring(distjs, cpptoolsStart);
-            return distjs;
+            const releaseSig = /provideCompletionItems:\((\w+),(\w+),(\w+),(\w+)\)=>((?:.|\s)+?)(?=,resolveCompletionItem:)/;
+            if (distjs.search(releaseSig) >= 0) {
+                // release
+                return distjs.replace(releaseSig, targetCode);
+            }
+            throw new SafeStringUtil.NotFoundError("");
         });
 
         if (mscpp) {
             if (!mscpp.isActive) {
                 await mscpp.activate();
             }
-            clients = mscpp.exports.getApi().getClients();
         }
     }
     async function _activate() {
@@ -51,116 +49,22 @@ export async function activateCPP(context: vscode.ExtensionContext) {
         }
     }
 
-    function getHookedProvideCompletionItems(oldProvideCompletionItems) {
-        return async (document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, completionContext: vscode.CompletionContext, provideCompletionItems) => {
-            const resultP = oldProvideCompletionItems(document, position, token, completionContext, provideCompletionItems);
-            if (resultP) {
-                const offsetID = getReqText(document, position).text;
-                const l: vscode.CompletionList = await resultP;
-                let sortResults;
-                if (sortResultAwaiters[offsetID] == null) {
-                    sortResults = await new Promise((resolve, reject) => {
-                        const canceller = setTimeout(() => {
-                            reject("time out");
-                            delete sortResultAwaiters[offsetID];
-                        }, 5000);
-                        sortResultAwaiters[offsetID] = (_) => {
-                            clearTimeout(canceller);
-                            resolve(_);
-                        };
-                    });
-                } else {
-                    sortResults = await sortResultAwaiters[offsetID];
-                }
-                delete sortResultAwaiters[offsetID];
-                const telemetryCommand: vscode.Command = {
-                    title: "AiXTelemetry",
-                    command: "aiXcoder.insert",
-                    arguments: ["use", "secondary", getInstance("cpp"), document],
-                };
-                for (let i = 0; i < sortResults.list.length; i++) {
-                    const single: SingleWordCompletion = sortResults.list[i];
-                    let found = false;
-                    for (const systemCompletion of l.items) {
-                        if (systemCompletion.sortText == null) {
-                            systemCompletion.sortText = systemCompletion.filterText;
-                        }
-                        if (systemCompletion.insertText === single.word) {
-                            // systemCompletion.label = "⭐" + systemCompletion.label;
-                            systemCompletion.label = systemCompletion.label + "⭐";
-                            systemCompletion.sortText = "0." + i;
-                            systemCompletion.command = { ...telemetryCommand, arguments: telemetryCommand.arguments.concat([single]) };
-                            found = true;
-                        }
-                    }
-                    if (!found && single.options && single.options.forced) {
-                        l.items.push({
-                            label: single.word + "⭐",
-                            insertText: single.word,
-                            sortText: "0." + i,
-                            command: { ...telemetryCommand, arguments: telemetryCommand.arguments.concat([single]) },
-                            kind: vscode.CompletionItemKind.Variable,
-                        });
-                    }
-                }
-                return l;
-            }
-            return null;
-        };
-    }
-
     const provider = {
-        async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, completionContext: vscode.CompletionContext): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
+        async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
             await _activate();
             const ext = "cpp(Cpp)";
             // log("=====================");
             try {
-                const { text, remainingText } = getReqText(document, position);
-                const offsetID = text;
-                let r = null;
+                const { longResults, sortResults, offsetID, fetchTime } = await fetchResults(document, position, ext, "python", STAR_DISPLAY.LEFT);
                 if (mscpp) {
-                    const resolver: (_: SortResult) => void = await new Promise((res, rej) => {
-                        if (sortResultAwaiters[offsetID] == null) {
-                            const p = new Promise((resolve, reject) => {
-                                const canceller = setTimeout(() => {
-                                    log("master timeout, reject");
-                                    reject("time out");
-                                    delete sortResultAwaiters[offsetID];
-                                }, 5000);
-                                res((_) => {
-                                    clearTimeout(canceller);
-                                    resolve(_);
-                                });
-                            });
-                            sortResultAwaiters[offsetID] = p;
-                        } else {
-                            res(sortResultAwaiters[offsetID]);
-                        }
-                    });
-                    const client = clients.ActiveClient.languageClient;
-                    const oldProvideCompletionItems = client.clientOptions.middleware.provideCompletionItem;
-                    if (!oldProvideCompletionItems.aixhooked) {
-                        log("Hooking C++ extension...");
-                        client.clientOptions.middleware.provideCompletionItem = getHookedProvideCompletionItems(oldProvideCompletionItems);
-                        client.clientOptions.middleware.provideCompletionItem.aixhooked = true;
-                        delete sortResultAwaiters[offsetID]; // it won't work first time
-                        log("C++ extension Hooked");
-                    }
-                    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, ext, "cpp", document, STAR_DISPLAY.NONE);
-                    if (typeof resolver === "function") {
-                        resolver(sortResults);
-                    }
-                    sendPredictTelemetry(fetchTime, longResults);
-                    r = longResults;
+                    syncer.put(offsetID, sortResults);
                 } else {
-                    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, ext, "cpp", document, STAR_DISPLAY.LEFT);
                     const sortLabels = formatSortData(sortResults, getInstance("cpp"), document);
                     longResults.push(...sortLabels);
-                    sendPredictTelemetry(fetchTime, longResults);
-                    r = longResults;
                 }
+                sendPredictTelemetry(fetchTime, longResults);
                 log("provideCompletionItems ends");
-                return r;
+                return longResults;
             } catch (e) {
                 log(e);
             }
@@ -177,4 +81,18 @@ export async function activateCPP(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "c", scheme: "untitled" }, provider, ...triggerCharacters));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "cpp", scheme: "file" }, provider, ...triggerCharacters));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "cpp", scheme: "untitled" }, provider, ...triggerCharacters));
+    return {
+        async aixHook(ll: vscode.CompletionList | vscode.CompletionItem[], document: vscode.TextDocument, position: vscode.Position): Promise<vscode.CompletionList | vscode.CompletionItem[]> {
+            try {
+                const { offsetID } = getReqText(document, position);
+                const sortResults = await syncer.get(offsetID);
+                const items = Array.isArray(ll) ? ll : ll.items;
+
+                mergeSortResult(items, sortResults, document, STAR_DISPLAY.LEFT);
+                return new vscode.CompletionList(items, true);
+            } catch (e) {
+                log(e);
+            }
+        },
+    };
 }
