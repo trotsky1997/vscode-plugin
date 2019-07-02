@@ -43,6 +43,7 @@ export interface Rescue {
 export interface CompletionOptions {
     rescues?: Rescue[];
     forced?: boolean;
+    filters?: string[];
 }
 
 interface PredictResult {
@@ -295,22 +296,18 @@ export async function JSHooker(aixHookedString: string, distjsPath: string, exte
             await fs.promises.copyFile(distjsPath, distjsPath + ".bak");
         }
         try {
-            const oldSize = distjs.length;
             distjs = aixHookedString + distjs;
             distjs = hookCallback(distjs);
-            if (distjs.length > oldSize) {
-                await fs.promises.writeFile(distjsPath, distjs, "utf-8");
-                if (extension.isActive) {
-                    vscode.window.showWarningMessage(localize(reloadMsg), localize("reload")).then((select) => {
-                        if (select === localize("reload")) {
-                            vscode.commands.executeCommand("workbench.action.reloadWindow");
-                        }
-                    });
-                }
-                log(`${distjsPath} hooked`);
-            } else {
-                await vscode.window.showWarningMessage(localize(failMsg));
+
+            await fs.promises.writeFile(distjsPath, distjs, "utf-8");
+            if (extension.isActive) {
+                vscode.window.showWarningMessage(localize(reloadMsg), localize("reload")).then((select) => {
+                    if (select === localize("reload")) {
+                        vscode.commands.executeCommand("workbench.action.reloadWindow");
+                    }
+                });
             }
+            log(`${distjsPath} hooked`);
         } catch (e) {
             console.log(e);
             if (e instanceof SafeStringUtil.NotFoundError) {
@@ -333,27 +330,53 @@ export function mergeSortResult(l: vscode.CompletionItem[], sortResults: SortRes
             continue;
         }
         let found = false;
+        let bestSystemCompletion = null;
+        let bestSystemCompletionRank = 999;
         for (const systemCompletion of l) {
             if (systemCompletion.sortText == null) {
                 systemCompletion.sortText = systemCompletion.filterText;
             }
-            let insertText = systemCompletion.insertText;
-            if (insertText == null) {
-                insertText = systemCompletion.label;
+            let realInsertText = systemCompletion.insertText || systemCompletion.label;
+            if (typeof (realInsertText) !== "string") {
+                realInsertText = realInsertText.value;
             }
+            if (realInsertText.match("^" + escapeRegExp(single.word) + "\\b") && !systemCompletion.label.startsWith("⭐")) {
+                let rank = 998;
+                if (systemCompletion.label.indexOf(" - ") >= 0 && single.options && single.options.filters && single.options.filters.length > 0) {
+                    for (let i = 0; i < single.options.filters.length; i++) {
+                        let filter = single.options.filters[i];
+                        if (filter.endsWith("." + single.word)) {
+                            filter = filter.substring(0, filter.length - single.word.length - 1);
+                        }
+                        if (systemCompletion.label.indexOf(filter) >= 0) {
+                            rank = i;
+                            break;
+                        }
+                    }
+                }
+                if (rank < bestSystemCompletionRank) {
+                    bestSystemCompletionRank = rank;
+                    bestSystemCompletion = systemCompletion;
+                }
+                found = true;
+            }
+        }
+
+        if (found) {
+            if (bestSystemCompletion == null) {
+                log("bestSystemCompletion is null!");
+            }
+            let insertText = bestSystemCompletion.insertText || bestSystemCompletion.label;
             if (typeof (insertText) !== "string") {
                 insertText = insertText.value;
             }
-            if (insertText.match("^" + escapeRegExp(single.word) + "\\b") && !systemCompletion.label.startsWith("⭐")) {
-                systemCompletion.filterText = systemCompletion.filterText || systemCompletion.label;
-                systemCompletion.insertText = systemCompletion.insertText || systemCompletion.label;
-                systemCompletion.label = starDisplay === STAR_DISPLAY.LEFT ? "⭐" + systemCompletion.label : (starDisplay === STAR_DISPLAY.RIGHT ? systemCompletion.label + "⭐" : systemCompletion.label);
-                systemCompletion.sortText = "0." + insertedRank++;
-                systemCompletion.command = { ...telemetryCommand, arguments: telemetryCommand.arguments.concat([single]) };
-                if (systemCompletion.kind === vscode.CompletionItemKind.Function && insertText.indexOf("(") === -1) {
-                    systemCompletion.insertText = new vscode.SnippetString(insertText).appendText("(").appendTabstop().appendText(")");
-                }
-                found = true;
+            bestSystemCompletion.filterText = bestSystemCompletion.filterText || bestSystemCompletion.label;
+            bestSystemCompletion.insertText = bestSystemCompletion.insertText || bestSystemCompletion.label;
+            bestSystemCompletion.label = starDisplay === STAR_DISPLAY.LEFT ? "⭐" + bestSystemCompletion.label : (starDisplay === STAR_DISPLAY.RIGHT ? bestSystemCompletion.label + "⭐" : bestSystemCompletion.label);
+            bestSystemCompletion.sortText = "0." + insertedRank++;
+            bestSystemCompletion.command = { ...telemetryCommand, arguments: telemetryCommand.arguments.concat([single]) };
+            if (bestSystemCompletion.kind === vscode.CompletionItemKind.Function && insertText.indexOf("(") === -1) {
+                bestSystemCompletion.insertText = new vscode.SnippetString(insertText).appendText("(").appendTabstop().appendText(")");
             }
         }
         if (!found && single.options && single.options.forced) {
