@@ -91,8 +91,8 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "zh-cn": "AiXCoder需要重新加载以便与 Python 插件集成。",
     },
     "msintellicode.enabled": {
-        "en": "AiXCoder is in compability mode because MS IntelliCode Extension is installed. Results from aiXcoder will not be shown when IntelliCode results are avaialble.",
-        "zh-cn": "AiXCoder正处于兼容模式因为微软IntelliCode插件已被安装。在IntelliCode插件提供推荐结果时AiXCoder的推荐结果将被隐藏。",
+        "en": "AiXCoder is in compability mode because MS IntelliCode Extension is installed. Results from aiXcoder will be ranked lower when IntelliCode results are avaialble.",
+        "zh-cn": "AiXCoder正处于兼容模式因为微软IntelliCode插件已被安装。在IntelliCode插件提供推荐结果时AiXCoder的推荐结果位置将下移。",
     },
     "nevershowagain": {
         "en": "Don't show again",

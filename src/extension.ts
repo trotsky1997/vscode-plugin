@@ -346,6 +346,7 @@ export function mergeSortResult(l: vscode.CompletionItem[], sortResults: SortRes
             }
             if (insertText.match("^" + escapeRegExp(single.word) + "\\b") && !systemCompletion.label.startsWith("⭐")) {
                 systemCompletion.filterText = systemCompletion.filterText || systemCompletion.label;
+                systemCompletion.insertText = systemCompletion.insertText || systemCompletion.label;
                 systemCompletion.label = starDisplay === STAR_DISPLAY.LEFT ? "⭐" + systemCompletion.label : (starDisplay === STAR_DISPLAY.RIGHT ? systemCompletion.label + "⭐" : systemCompletion.label);
                 systemCompletion.sortText = "0." + insertedRank++;
                 systemCompletion.command = { ...telemetryCommand, arguments: telemetryCommand.arguments.concat([single]) };

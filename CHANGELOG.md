@@ -8,6 +8,8 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 ### Changed
 
 ### Fixed
+- A bug that sometimes writes the star in the code.
+- Add a space after "for" and "while".
 
 ## [0.1.3] - 2019-06-27
 ### Added
