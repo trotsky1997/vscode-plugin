@@ -6,6 +6,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 - Now supports PHP. Works best with "intelliphense" extension.
 
 ### Changed
+- Limit sort results with the same word to the most probable single result.
 
 ### Fixed
 - A bug that sometimes writes the star in the code.
