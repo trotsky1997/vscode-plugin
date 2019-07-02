@@ -1,7 +1,14 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
-## [0.1.4] - %DATE%
+## [0.1.5] - %DATE%
+### Added
+
+### Changed
+
+### Fixed
+
+## [0.1.4] - 2019-07-02
 ### Added
 - Now supports PHP. Works best with "intelliphense" extension.
 
