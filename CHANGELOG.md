@@ -7,7 +7,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 ### Changed
 
 ### Fixed
-
+- (Java)修复了会出现重复的import的bug。
 
 ## [0.1.4] - 2019-07-02
 ### Added
