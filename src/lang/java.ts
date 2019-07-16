@@ -125,6 +125,9 @@ export class JavaLangUtil extends LangUtil {
                     for (let i = 0; i < imports.length; i++) {
                         const importContent = imports[i];
                         const compareResult = importContent[0].localeCompare(rescue.value);
+                        if (compareResult === 0) {
+                            return;
+                        }
                         if (compareResult > 0) {
                             // stop here
                             imports.splice(i, 0, [rescue.value, prevImport[1] + 1]);
