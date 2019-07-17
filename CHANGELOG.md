@@ -1,6 +1,14 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.1.6] - 2019-07-17
+### Added
+
+### Changed
+
+### Fixed
+- (C++)修复了一些会出现多余或缺失合理的空格的问题。
+
 ## [0.1.5] - 2019-07-16
 ### Added
 

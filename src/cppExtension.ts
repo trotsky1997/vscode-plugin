@@ -55,7 +55,7 @@ export async function activateCPP(context: vscode.ExtensionContext) {
             const ext = "cpp(Cpp)";
             // log("=====================");
             try {
-                const { longResults, sortResults, offsetID, fetchTime } = await fetchResults(document, position, ext, "python", STAR_DISPLAY.LEFT);
+                const { longResults, sortResults, offsetID, fetchTime } = await fetchResults(document, position, ext, "cpp", STAR_DISPLAY.LEFT);
                 if (mscpp) {
                     syncer.put(offsetID, sortResults);
                 } else {
