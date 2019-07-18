@@ -2,7 +2,7 @@
     "name": "aixcoder",
     "displayName": "aiXcoder",
     "description": "aiXcoder code suggestion",
-    "version": "0.1.6",
+    "version": "0.1.7",
     "publisher": "nnthink",
     "repository": {
         "url": "https://github.com/felixhao28/vscode-plugin"
@@ -68,6 +68,18 @@
                     "minimum": 1,
                     "maximum": 5,
                     "description": "The prefered rank of long completion result."
+                },
+                "aiXcoder.longResultCuts": {
+                    "type": "string",
+                    "default": "Auto",
+                    "enum": ["Auto", "0-None", "1", "2", "3", "4", "5"],
+                    "description": "Number of shorter results"
+                },
+                "aiXcoder.longResultCutSort": {
+                    "type": "string",
+                    "default": "Long to short",
+                    "enum": ["Short to long", "Long to short"],
+                    "description": "The order of shorter results"
                 }
             }
         },

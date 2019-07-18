@@ -144,6 +144,7 @@ function formatResData(results: PredictResult, langUtil: LangUtil, document: vsc
         arguments: ["use", "primary", langUtil, document],
     };
     const minCompletionTokensCount = Preference.getParam("controllerMode") ? 0 : 1;
+    const sortL2S = Preference.getLongResultCutsLong2Short();
     for (const result of results.data) {
         if (result.tokens.length > minCompletionTokensCount) {
             if (result.tokens.length === 2 && result.tokens[1] === "(" && result.tokens[0].match(/[a-zA-Z0-9_$]+/)) {
@@ -162,7 +163,7 @@ function formatResData(results: PredictResult, langUtil: LangUtil, document: vsc
                 filterText: title,
                 insertText: new vscode.SnippetString(rendered),
                 kind: vscode.CompletionItemKind.Snippet,
-                sortText: Preference.getLongResultRankSortText(),
+                sortText: Preference.getLongResultRankSortText() + "." + (sortL2S ?  1 - title.length / 100 : title.length / 100),
                 command: { ...command, arguments: command.arguments.concat([result]) },
                 aixPrimary: true,
             });

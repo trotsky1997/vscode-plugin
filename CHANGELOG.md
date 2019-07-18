@@ -1,6 +1,14 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.1.7] - %DATE%
+### Added
+- 提供多个不同长度的结果，这个行为可以在设置页面中设置开关及出现的结果的数量和顺序。
+
+### Changed
+
+### Fixed
+
 ## [0.1.6] - 2019-07-17
 ### Added
 
