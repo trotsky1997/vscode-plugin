@@ -19,7 +19,11 @@
         "onLanguage:java",
         "onLanguage:c",
         "onLanguage:cpp",
-        "onLanguage:php"
+        "onLanguage:php",
+        "onLanguage:typescript",
+        "onLanguage:typescriptreact",
+        "onLanguage:javascript",
+        "onLanguage:javascriptreact"
     ],
     "main": "./dist/extension",
     "contributes": {

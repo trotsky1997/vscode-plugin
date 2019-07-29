@@ -14,6 +14,7 @@ import log from "./logger";
 import { activatePhp } from "./phpExtension";
 import Preference from "./Preference";
 import { activatePython } from "./pythonExtension";
+import { activateTypeScript } from "./typescriptExtension";
 import { SafeStringUtil } from "./utils/SafeStringUtil";
 
 function escapeRegExp(s: string) {
@@ -464,6 +465,7 @@ export async function activate(context: vscode.ExtensionContext) {
         java: await activateJava(context),
         cpp: await activateCPP(context),
         php: await activatePhp(context),
+        typescript: await activateTypeScript(context),
     };
     return {
         async aixhook(lang: string, ll: vscode.CompletionList | vscode.CompletionItem[] | Promise<vscode.CompletionList | vscode.CompletionItem[]>, ...args: any): Promise<vscode.CompletionList | vscode.CompletionItem[]> {
