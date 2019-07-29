@@ -116,6 +116,12 @@ export class JavaLangUtil extends LangUtil {
                         prepareImports();
                     }
                     let prevImport: [string, number] = ["", importStart];
+                    for (const importContent of imports) {
+                        const compareResult = importContent[0].localeCompare(rescue.value);
+                        if (compareResult === 0) {
+                            return;
+                        }
+                    }
                     for (let i = 0; i < imports.length; i++) {
                         const importContent = imports[i];
                         const compareResult = importContent[0].localeCompare(rescue.value);

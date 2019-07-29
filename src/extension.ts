@@ -14,6 +14,7 @@ import log from "./logger";
 import { activatePhp } from "./phpExtension";
 import Preference from "./Preference";
 import { activatePython } from "./pythonExtension";
+import { activateTypeScript } from "./typescriptExtension";
 import { SafeStringUtil } from "./utils/SafeStringUtil";
 
 function escapeRegExp(s: string) {
@@ -144,6 +145,7 @@ function formatResData(results: PredictResult, langUtil: LangUtil, document: vsc
         arguments: ["use", "primary", langUtil, document],
     };
     const minCompletionTokensCount = Preference.getParam("controllerMode") ? 0 : 1;
+    const sortL2S = Preference.getLongResultCutsLong2Short();
     for (const result of results.data) {
         if (result.tokens.length > minCompletionTokensCount) {
             if (result.tokens.length === 2 && result.tokens[1] === "(" && result.tokens[0].match(/[a-zA-Z0-9_$]+/)) {
@@ -162,7 +164,7 @@ function formatResData(results: PredictResult, langUtil: LangUtil, document: vsc
                 filterText: title,
                 insertText: new vscode.SnippetString(rendered),
                 kind: vscode.CompletionItemKind.Snippet,
-                sortText: Preference.getLongResultRankSortText(),
+                sortText: Preference.getLongResultRankSortText() + "." + (sortL2S ?  1 - title.length / 100 : title.length / 100),
                 command: { ...command, arguments: command.arguments.concat([result]) },
                 aixPrimary: true,
             });
@@ -496,6 +498,7 @@ export async function activate(context: vscode.ExtensionContext) {
         java: await activateJava(context),
         cpp: await activateCPP(context),
         php: await activatePhp(context),
+        typescript: await activateTypeScript(context),
     };
     return {
         async aixhook(lang: string, ll: vscode.CompletionList | vscode.CompletionItem[] | Promise<vscode.CompletionList | vscode.CompletionItem[]>, ...args: any): Promise<vscode.CompletionList | vscode.CompletionItem[]> {

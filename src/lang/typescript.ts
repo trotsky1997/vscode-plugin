@@ -1,6 +1,6 @@
 import { ID_REGEX, LangUtil } from "./langUtil";
 
-export class CppLangUtil extends LangUtil {
+export class TypeScriptLangUtil extends LangUtil {
 
     public genericTypeRegex = /^([a-zA-Z0-9_$]+|<|>|,|\[\])$/;
 
@@ -40,22 +40,19 @@ export class CppLangUtil extends LangUtil {
         const left = nextI === 0 ? "" : tokens[nextI - 1];
         const right = tokens[nextI];
         if (left === "" || right === "") { return false; }
-        if (left === "::" || right === "::") { return false; }
         if (left === "." || right === ".") { return false; }
         if (left === "<ENTER>" || right === "<ENTER>") { return false; }
         if (left === "(" || right === ")") { return false; }
         if (left === "[" || right === "]") { return false; }
         if (right === "[") { return false; }
+        if (left === "for" || left === "while") { return true; }
+        if (left === ")" && right === "{") { return true; }
         if (left.match(ID_REGEX) && right === "(") { return false; }
         if (right === ";") { return false; }
+        if (!left.match(ID_REGEX) && !right.match(ID_REGEX)) { return false; }
         if (left === "++" || right === "++") { return false; }
         if (left === "--" || right === "--") { return false; }
-        if (left === ">" && (right === "*" || right === "&")) {
-            return true;
-        }
-        if (left !== "<str>" && right !== "<str>" && !left.match(ID_REGEX) && !right.match(ID_REGEX)) {
-            return false;
-        }
+
         if (right === "<" || right === ">") {
             return !this.isGenericTypeBracket(tokens, nextI);
         }
@@ -70,7 +67,7 @@ export class CppLangUtil extends LangUtil {
         for (let i = 0; i < s.length; i++) {
             const c = s.charAt(i);
             stringBuilder += (c);
-            if (c === '"' || c === "'") {
+            if (c === '"' || c === "'" || c === "`") {
                 i++;
                 const strStart = i;
                 for (; i < s.length; i++) {

@@ -66,4 +66,30 @@ export default class Preference {
         const rank = vscode.workspace.getConfiguration().get("aiXcoder.longResultRank") as number;
         return "0." + (rank - 1) + ".0";
     }
+
+    public static getLongResultCuts() {
+        const cuts = vscode.workspace.getConfiguration().get("aiXcoder.longResultCuts") as string;
+        switch (cuts) {
+            case "Auto":
+                return -1;
+            case "0-None":
+                return 0;
+            case "1":
+                return 1;
+            case "2":
+                return 2;
+            case "3":
+                return 3;
+            case "4":
+                return 4;
+            case "5":
+                return 5;
+        }
+        return -1;
+    }
+
+    public static getLongResultCutsLong2Short() {
+        const order = vscode.workspace.getConfiguration().get("aiXcoder.longResultCutSort") as string;
+        return order === "Long to short";
+    }
 }

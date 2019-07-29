@@ -1,7 +1,32 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
-## [0.1.4] - %DATE%
+## [0.1.7] -2019-07-29
+### Added
+- 提供多个不同长度的结果，这个行为可以在设置页面中设置开关及出现的结果的数量和顺序。
+- 新增JavaScript和TypeScript支持（实验版本）。
+
+### Changed
+
+### Fixed
+
+## [0.1.6] - 2019-07-17
+### Added
+
+### Changed
+
+### Fixed
+- (C++)修复了一些会出现多余或缺失合理的空格的问题。
+
+## [0.1.5] - 2019-07-16
+### Added
+
+### Changed
+
+### Fixed
+- (Java)修复了会出现重复的import的bug。
+
+## [0.1.4] - 2019-07-02
 ### Added
 - Now supports PHP. Works best with "intelliphense" extension.
 
