@@ -17,7 +17,7 @@ export function activateTypeScript(context: vscode.ExtensionContext) {
             await _activate();
             log("=====================");
             try {
-                const ext = "javascript(Javascript)";
+                const ext = vscode.workspace.getConfiguration().get("aiXcoder.model.javascript") as string;
                 const { longResults, sortResults, fetchTime } = await fetchResults(document, position, ext, "js");
                 const sortLabels = formatSortData(sortResults, getInstance("js"), document);
                 longResults.push(...sortLabels);
@@ -37,7 +37,7 @@ export function activateTypeScript(context: vscode.ExtensionContext) {
             await _activate();
             log("=====================");
             try {
-                const ext = "typescript(TypeScript)";
+                const ext = vscode.workspace.getConfiguration().get("aiXcoder.model.typescript") as string;
                 const { longResults, sortResults, fetchTime } = await fetchResults(document, position, ext, "ts");
                 const sortLabels = formatSortData(sortResults, getInstance("ts"), document);
                 longResults.push(...sortLabels);

@@ -455,7 +455,7 @@ export async function activate(context: vscode.ExtensionContext) {
     }));
 
     const commandHandler = async () => {
-        const langs = { cpp: "C++/C", python: "Python", java: "Java" };
+        const langs = { cpp: "C++/C", python: "Python", java: "Java", php: "Php", javascript: "JavaScript", typescript: "TypeScript" };
         const selectedLang = await vscode.window.showQuickPick((async () => {
             const displays: ModelQuickPickItem[] = [];
             for (const lang of Object.keys(langs)) {

@@ -56,6 +56,16 @@
                     "default": "php(Php)",
                     "markdownDescription": "The model name to be used in Php. Default: `php(Php)`."
                 },
+                "aiXcoder.model.javascript": {
+                    "type": "string",
+                    "default": "javascript(JavaScript)",
+                    "markdownDescription": "The model name to be used in JavaScript. Default: `javascript(JavaScript)`."
+                },
+                "aiXcoder.model.typescript": {
+                    "type": "string",
+                    "default": "typescript(TypeScript)",
+                    "markdownDescription": "The model name to be used in TypeScript. Default: `typescript(TypeScript)`."
+                },
                 "aiXcoder.enableTelemetry": {
                     "type": "boolean",
                     "default": false,
