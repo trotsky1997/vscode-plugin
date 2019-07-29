@@ -37,6 +37,7 @@ function myRequest(options: request.OptionsWithUrl, endpoint?: string) {
         proxy: proxyUrl,
         strictSSL: proxyStrictSSL,
         // agent: keepaliveAgent,
+        timeout: 1000,
     };
     return request(options);
 }
@@ -70,6 +71,10 @@ export async function predict(text: string, ext: string, remainingText: string, 
                 version: myVersion,
                 long_result_cuts: Preference.getLongResultCuts(),
                 ...Preference.getRequestParams(),
+            },
+            headers: {
+                ext,
+                uuid: Preference.uuid,
             },
             timeout: 2000,
         });

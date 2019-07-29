@@ -9,6 +9,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 ### Changed
 
 ### Fixed
+- 修复了一个由于服务延迟导致的影响正常VS Code使用的问题。
 
 ## [0.1.6] - 2019-07-17
 ### Added
