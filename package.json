@@ -2,7 +2,7 @@
     "name": "aixcoder",
     "displayName": "aiXcoder",
     "description": "aiXcoder code suggestion",
-    "version": "0.1.7",
+    "version": "0.1.8",
     "publisher": "nnthink",
     "repository": {
         "url": "https://github.com/felixhao28/vscode-plugin"
@@ -132,8 +132,6 @@
     },
     "dependencies": {
         "agentkeepalive": "^4.0.2",
-        "portfinder": "^1.0.21",
-        "request": "^2.88.0",
         "request-promise": "^4.2.4",
         "uuid": "^3.3.2"
     }
