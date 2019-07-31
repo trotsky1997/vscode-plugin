@@ -24,7 +24,7 @@ export class LangUtil {
         let r = "";
         for (let i = start; i < tokens.length; i++) {
             let token = tokens[i];
-            if (token in this.tags2str) {
+            if (this.tags2str.hasOwnProperty(token)) {
                 token = this.tags2str[token];
             }
             if (token !== "" && i > 0 && this.hasSpaceBetween(tokens, i)) {
