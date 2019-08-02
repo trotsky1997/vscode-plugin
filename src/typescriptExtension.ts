@@ -21,7 +21,7 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
         log(`AiX: ${mstsId} detected`);
         const distjsPath = path.join(msts.extensionPath, "dist", "extension.js");
         hooked = await JSHooker("/**AiXHooked-1**/", distjsPath, msts, "js.reload.msts", "js.fail.msts", (distjs) => {
-            const handleResultCode = (r: string) => `const api = require(\"vscode\").extensions.getExtension("${myID}").exports;if(api && api.aixhook){${r}=await api.aixhook(\"typescript\",${r},$1,$2,$3,$4);}`;
+            const handleResultCode = (r: string) => `const aix = require(\"vscode\").extensions.getExtension("${myID}");const api = aix && aix.exports; if(api && api.aixhook){${r}=await api.aixhook(\"typescript\",${r},$1,$2,$3,$4);}`;
             const newProvideCompletionItems = `async provideCompletionItems($1,$2,$3,$4){let rr=await this.provideCompletionItems2($1,$2,$3,$4);${handleResultCode("rr")};return rr;}`;
             distjs = distjs.replace(/async provideCompletionItems\((\w+),\s*(\w+),\s*(\w+),\s*(\w+)\)\s*{/, `${newProvideCompletionItems}async provideCompletionItems2($1,$2,$3,$4){`);
             return distjs;
@@ -39,16 +39,20 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
             log("=====================");
             try {
                 const ext = "javascript(Javascript)";
-                const { longResults, sortResults, offsetID, fetchTime } = await fetchResults(document, position, ext, "js");
+                const theFetchResults  = await fetchResults(document, position, ext, "js", STAR_DISPLAY.LEFT);
+                const { sortResults, offsetID, fetchTime} = theFetchResults;
+                let { longResults } = theFetchResults;
                 if (msts && hooked) {
+                    sortResults.longResults = longResults;
                     syncer.put(offsetID, sortResults);
+                    longResults = [];
                 } else {
                     const sortLabels = formatSortData(sortResults, getInstance("js"), document);
                     longResults.push(...sortLabels);
                 }
                 sendPredictTelemetry(fetchTime, longResults);
-                log("provideCompletionItems Javascript ends");
-                return longResults;
+                log("provideCompletionItems Javascript ends " + longResults.length);
+                return [];
             } catch (e) {
                 log(e);
             }
@@ -66,15 +70,19 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
             log("=====================");
             try {
                 const ext = "typescript(Typescript)";
-                const { longResults, sortResults, offsetID, fetchTime } = await fetchResults(document, position, ext, "ts");
+                const theFetchResults = await fetchResults(document, position, ext, "ts", STAR_DISPLAY.LEFT);
+                const { sortResults, offsetID, fetchTime} = theFetchResults;
+                let { longResults } = theFetchResults;
                 if (msts && hooked) {
+                    sortResults.longResults = longResults;
                     syncer.put(offsetID, sortResults);
+                    longResults = [];
                 } else {
                     const sortLabels = formatSortData(sortResults, getInstance("ts"), document);
                     longResults.push(...sortLabels);
                 }
                 sendPredictTelemetry(fetchTime, longResults);
-                log("provideCompletionItems TypeScript ends");
+                log("provideCompletionItems TypeScript ends " + longResults.length);
                 return longResults;
             } catch (e) {
                 log(e);
@@ -94,7 +102,7 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
             try {
                 const { offsetID } = getReqText(document, position);
                 const sortResults = await syncer.get(offsetID);
-                const items = Array.isArray(ll) ? ll : ll.items;
+                const items = ll == null ? [] : (Array.isArray(ll) ? ll : ll.items);
 
                 mergeSortResult(items, sortResults, document, STAR_DISPLAY.LEFT);
                 return new vscode.CompletionList(items, true);

@@ -71,6 +71,7 @@ export interface SingleWordCompletion {
 export interface SortResult {
     queryUUID: string;
     list: SingleWordCompletion[];
+    longResults?: AiXCompletionItem[];
 }
 
 let lastText = "";
@@ -146,6 +147,7 @@ function formatResData(results: PredictResult, langUtil: LangUtil, document: vsc
     };
     const minCompletionTokensCount = Preference.getParam("controllerMode") ? 0 : 1;
     const sortL2S = Preference.getLongResultCutsLong2Short();
+    const unique = new Set();
     for (const result of results.data) {
         if (result.tokens.length > minCompletionTokensCount) {
             if (result.tokens.length === 2 && result.tokens[1] === "(" && result.tokens[0].match(/[a-zA-Z0-9_$]+/)) {
@@ -159,15 +161,19 @@ function formatResData(results: PredictResult, langUtil: LangUtil, document: vsc
                 rendered += "${0}" + result.r_completion.join("");
                 title += "..." + result.r_completion.join("");
             }
-            r.push({
-                label: starDisplay === STAR_DISPLAY.LEFT ? "⭐" + title : (starDisplay === STAR_DISPLAY.RIGHT ? title + "⭐" : title),
-                filterText: title,
-                insertText: new vscode.SnippetString(rendered),
-                kind: vscode.CompletionItemKind.Snippet,
-                sortText: Preference.getLongResultRankSortText() + "." + (sortL2S ? 1 - title.length / 100 : title.length / 100),
-                command: { ...command, arguments: command.arguments.concat([result]) },
-                aixPrimary: true,
-            });
+            const label = starDisplay === STAR_DISPLAY.LEFT ? "⭐" + title : (starDisplay === STAR_DISPLAY.RIGHT ? title + "⭐" : title);
+            if (!unique.has(label)) {
+                r.push({
+                    label,
+                    filterText: title,
+                    insertText: new vscode.SnippetString(rendered),
+                    kind: vscode.CompletionItemKind.Snippet,
+                    sortText: Preference.getLongResultRankSortText() + "." + (sortL2S ? 1 - title.length / 100 : title.length / 100),
+                    command: { ...command, arguments: command.arguments.concat([result]) },
+                    aixPrimary: true,
+                });
+                unique.add(label);
+            }
         }
     }
     return r;
@@ -223,13 +229,24 @@ export async function fetchResults2(text: string, remainingText: string, fileNam
         if (predictResults.data == null) {
             predictResults = { data: predictResults as any };
         }
-        const strLabels = formatResData(predictResults, getInstance(lang), document, starDisplay);
+        let strLabels = formatResData(predictResults, getInstance(lang), document, starDisplay);
         // log("predict result:");
         // log(strLabels);
         const results = {
             queryUUID: queryUUID.toString(),
             list: predictResults.data.length > 0 ? predictResults.data[0].sort || [] : [],
         };
+        const unique = new Set();
+        for (const sortResult of results.list) {
+            unique.add(sortResult[1]);
+        }
+        const newStrLabels = [];
+        for (const strLabel of strLabels) {
+            if (!unique.has(strLabel.filterText)) {
+                newStrLabels.push(strLabel);
+            }
+        }
+        strLabels = newStrLabels;
         // log("mina result:");
         const mappedResults = {
             ...results,
@@ -328,6 +345,8 @@ export async function JSHooker(aixHookedString: string, distjsPath: string, exte
                 await vscode.window.showWarningMessage(localize(failMsg));
             }
         }
+    } else {
+        return true;
     }
     return false;
 }
@@ -404,6 +423,9 @@ export function mergeSortResult(l: vscode.CompletionItem[], sortResults: SortRes
                 kind: vscode.CompletionItemKind.Variable,
             });
         }
+    }
+    if (sortResults.longResults) {
+        l.push(...sortResults.longResults);
     }
 }
 
