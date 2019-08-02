@@ -14,8 +14,8 @@ export async function activateCPP(context: vscode.ExtensionContext) {
     const syncer = new Syncer<SortResult>();
     if (mscpp) {
         const distjsPath = path.join(mscpp.extensionPath, "dist", "main.js");
-        await JSHooker("/**AiXHooked-1**/", distjsPath, mscpp, "cpp.reload", "cpp.fail", (distjs) => {
-            const handleResultCode = (r: string) => `const api = require(\"vscode\").extensions.getExtension("${myID}").exports;if(api && api.aixhook){${r}=await api.aixhook(\"cpp\",${r},$1,$2,$3,$4);}`;
+        await JSHooker("/**AiXHooked-2**/", distjsPath, mscpp, "cpp.reload", "cpp.fail", (distjs) => {
+            const handleResultCode = (r: string) => `const aix = require(\"vscode\").extensions.getExtension("${myID}");const api = aix && aix.exports;if(api && api.aixhook){${r}=await api.aixhook(\"cpp\",${r},$1,$2,$3,$4);}`;
             const targetCode = `provideCompletionItems: async \($1, $2, $3, $4\) => { let rr=($5);${handleResultCode("rr")};return rr;}`;
             const sig = /provideCompletionItems:\s*\((\w+),\s*(\w+),\s*(\w+),\s*(\w+)\)\s*=>\s*{\s*return\s+((?:.|\s)+?);\s*}/;
             if (distjs.search(sig) >= 0) {

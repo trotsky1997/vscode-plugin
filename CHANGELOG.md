@@ -1,6 +1,24 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.1.9] -2019-08-02
+### Added
+
+### Changed
+
+### Fixed
+- 修复了一个卸载aixcoder后原本的补全会出问题的bug。
+- 修复了JS/TS中偶尔出现的结果显示不全的问题。
+- 修复了相同结果重复出现的问题。
+
+## [0.1.8] -2019-07-31
+### Added
+- 优化了JavaScript和TypeScript的支持（实验版本）。
+
+### Changed
+
+### Fixed
+
 ## [0.1.7] -2019-07-29
 ### Added
 - 提供多个不同长度的结果，这个行为可以在设置页面中设置开关及出现的结果的数量和顺序。

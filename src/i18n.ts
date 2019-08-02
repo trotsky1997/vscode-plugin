@@ -126,6 +126,22 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "en": "AiXCoder: PHP Intelephense is not installed or enabled. Please install PHP Intelephense for the best experience.",
         "zh-cn": "AiXCoder: PHP Intelephense 插件没有安装或启用。请安装 PHP Intelephense 插件以获得最佳体验。",
     },
+    "hookFailPerm": {
+        "en": "AiXCoder integration failed. Please restart VS Code in administator mode (only needed once before next time VS Code updates itself).",
+        "zh-cn": "AiXCoder集成失败，请以管理员权限启动VS Code以重试（VS Code更新之前只需要一次）。",
+    },
+    "hookFailOther": {
+        "en": "AiXCoder integration failed. Cause: %s",
+        "zh-cn": "AiXCoder集成失败，原因：%s",
+    },
+    "js.fail.msts": {
+        "en": "JavaScript/TypeScript integration failed. Please ensure you have latest version of aiXcoder and VS Code.",
+        "zh-cn": "JavaScript/TypeScript 集成失败。请确保您安装了最新版本的aiXcoder插件和VS Code。",
+    },
+    "js.reload.msts": {
+        "en": "AiXCoder requires a reload to integrate with JavaScript/TypeScript extension.",
+        "zh-cn": "AiXCoder需要重新加载以便与 JavaScript/TypeScript 集成。",
+    },
 };
 export function localize(key: string, ...params: any[]) {
     return localizeMessages[key] ? util.format(localizeMessages[key][vscode.env.language] || localizeMessages[key].en, ...params) : key;
