@@ -27,11 +27,13 @@
     ],
     "main": "./dist/extension",
     "contributes": {
-        "commands": [{
-            "command": "aiXcoder.resetMessage",
-            "title": "Reset messages",
-            "category": "aiXcoder"
-        }],
+        "commands": [
+            {
+                "command": "aiXcoder.resetMessage",
+                "title": "Reset messages",
+                "category": "aiXcoder"
+            }
+        ],
         "configuration": {
             "type": "object",
             "title": "AiXcoder",
@@ -111,7 +113,7 @@
     },
     "devDependencies": {
         "@types/mocha": "^5.2.7",
-        "@types/node": "^12.6.8",
+        "@types/node": "^12.6.9",
         "@types/request-promise": "^4.1.44",
         "@types/uuid": "^3.4.5",
         "eslint": "^6.1.0",
@@ -124,8 +126,8 @@
         "ts-loader": "^6.0.4",
         "tslint": "^5.18.0",
         "typescript": "^3.5.3",
-        "vscode": "^1.1.35",
-        "webpack": "^4.38.0",
+        "vscode": "^1.1.36",
+        "webpack": "^4.39.1",
         "webpack-cli": "^3.3.6"
     },
     "dependencies": {
