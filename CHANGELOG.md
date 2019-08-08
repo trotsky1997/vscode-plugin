@@ -7,7 +7,9 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 ### Changed
 
 ### Fixed
-- 修复了一个未编码的用户id可能会导致请求失败的问题
+- 修复了一个未编码的用户id可能会导致请求失败的问题。
+- (TS/JS)在预测结果的 = 和 { 之间加入了一个空格。
+- 修复了奇怪的标签偶尔会出现的bug。
 
 ## [0.1.9] -2019-08-02
 ### Added

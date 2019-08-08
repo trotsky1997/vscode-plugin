@@ -157,9 +157,11 @@ function formatResData(results: PredictResult, langUtil: LangUtil, document: vsc
             let title = langUtil.render(mergedTokens, 0);
             let rendered = title.replace(/(?=\$)/g, "\\");
             if (result.r_completion && result.r_completion.length > 0) {
+                const template = langUtil.getTemplateForTag(result.r_completion[0]);
+                const rCompletionText = langUtil.render(result.r_completion.slice(1), 0);
                 // tslint:disable-next-line: no-invalid-template-strings
-                rendered += "${0}" + result.r_completion.join("");
-                title += "..." + result.r_completion.join("");
+                rendered += template + rCompletionText;
+                title += (template + rCompletionText).replace("${0}", "...");
             }
             const label = starDisplay === STAR_DISPLAY.LEFT ? "⭐" + title : (starDisplay === STAR_DISPLAY.RIGHT ? title + "⭐" : title);
             if (!unique.has(label)) {
@@ -229,7 +231,8 @@ export async function fetchResults2(text: string, remainingText: string, fileNam
         if (predictResults.data == null) {
             predictResults = { data: predictResults as any };
         }
-        let strLabels = formatResData(predictResults, getInstance(lang), document, starDisplay);
+        const langUtil = getInstance(lang);
+        let strLabels = formatResData(predictResults, langUtil, document, starDisplay);
         // log("predict result:");
         // log(strLabels);
         const results = {
@@ -250,7 +253,7 @@ export async function fetchResults2(text: string, remainingText: string, fileNam
         // log("mina result:");
         const mappedResults = {
             ...results,
-            list: results.list.map(([prob, word, options]) => ({ prob, word, options })),
+            list: results.list.map(([prob, word, options]) => ({ prob, word: langUtil.renderToken(word), options })),
         };
         return {
             longResults: strLabels,

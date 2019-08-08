@@ -19,14 +19,46 @@ export class LangUtil {
         "<bool>": "true",
         "<null>": "null",
     };
+    /**
+     * getTemplateForTag
+     */
+    // tslint:disable: no-invalid-template-strings
+    public getTemplateForTag(tag: string, order = 0) {
+        switch (tag) {
+            case "<str>":
+                return "\"${0}\"";
+            case "<char>":
+                return "'${0}'";
+            case "<float>":
+                return "${0:0.0}";
+            case "<int>":
+                return "${0:0}";
+            case "<double>":
+                return "${0:0.0}";
+            case "<long>":
+                return "${0:0}";
+            case "<bool>":
+                return "${0:true}";
+            case "<null>":
+                return "null${0}";
+            default:
+                break;
+        }
+        return "${0}" + tag;
+    }
+
+    public renderToken(token: string): string {
+        if (this.tags2str.hasOwnProperty(token)) {
+            token = this.tags2str[token];
+        }
+        return token;
+    }
 
     public render(tokens: string[], start: number): string {
         let r = "";
         for (let i = start; i < tokens.length; i++) {
             let token = tokens[i];
-            if (this.tags2str.hasOwnProperty(token)) {
-                token = this.tags2str[token];
-            }
+            token = this.renderToken(token);
             if (token !== "" && i > 0 && this.hasSpaceBetween(tokens, i)) {
                 r += " ";
             }
