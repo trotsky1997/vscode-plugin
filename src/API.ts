@@ -27,6 +27,13 @@ function myRequest(options: request.OptionsWithUrl, endpoint?: string) {
     if (!endpoint.endsWith("/")) {
         endpoint += "/";
     }
+    if (options.headers) {
+        for (const headerKey in options.headers) {
+            if (options.headers.hasOwnProperty(headerKey)) {
+                options.headers[headerKey] = encodeURIComponent(options.headers[headerKey]);
+            }
+        }
+    }
     options = {
         ...options,
         url: endpoint + options.url,

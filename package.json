@@ -2,7 +2,7 @@
     "name": "aixcoder",
     "displayName": "aiXcoder",
     "description": "aiXcoder code suggestion",
-    "version": "0.1.9",
+    "version": "0.1.10",
     "publisher": "nnthink",
     "repository": {
         "url": "https://github.com/felixhao28/vscode-plugin"
@@ -27,13 +27,6 @@
     ],
     "main": "./dist/extension",
     "contributes": {
-        "commands": [
-            {
-                "command": "aiXcoder.resetMessage",
-                "title": "Reset messages",
-                "category": "aiXcoder"
-            }
-        ],
         "configuration": {
             "type": "object",
             "title": "AiXcoder",
@@ -100,6 +93,11 @@
                 }
             }
         },
+        "commands": [{
+            "command": "aiXcoder.resetMessage",
+            "title": "Reset messages",
+            "category": "aiXcoder"
+        }],
         "javaExtensions": [
             "dist/aixjdtls.jar"
         ]

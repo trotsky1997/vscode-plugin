@@ -1,6 +1,14 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.1.10] -2019-08-08
+### Added
+
+### Changed
+
+### Fixed
+- 修复了一个未编码的用户id可能会导致请求失败的问题
+
 ## [0.1.9] -2019-08-02
 ### Added
 
