@@ -14,6 +14,7 @@ export class JavaScriptLangUtil extends LangUtil {
         if (left === "for" || left === "while") { return true; }
         if (left === "=" && right === "{") { return true; }
         if (left === ")" && right === "{") { return true; }
+        if (left === ")" && right === "=>") { return true; }
         if (right === ":") { return false; }
         if (left === ":") { return true; }
         if (left.match(ID_REGEX) && right === "(") { return false; }

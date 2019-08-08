@@ -161,7 +161,7 @@ function formatResData(results: PredictResult, langUtil: LangUtil, document: vsc
                 const rCompletionText = langUtil.render(result.r_completion.slice(1), 0);
                 // tslint:disable-next-line: no-invalid-template-strings
                 rendered += template + rCompletionText;
-                title += (template + rCompletionText).replace("${0}", "...");
+                title += (template + rCompletionText).replace(/\$\{0:([^}]+)\}/, "\\1").replace(/\$\{0\}/, "...");
             }
             const label = starDisplay === STAR_DISPLAY.LEFT ? "⭐" + title : (starDisplay === STAR_DISPLAY.RIGHT ? title + "⭐" : title);
             if (!unique.has(label)) {
