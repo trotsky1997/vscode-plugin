@@ -67,13 +67,13 @@ export function activateJava(context: vscode.ExtensionContext) {
                     mergeSortResult(l, sortResults, document);
                     longResults.push(...l);
                     sendPredictTelemetry(fetchTime, longResults);
-                    return longResults;
+                    return new vscode.CompletionList(longResults, true);
                 } else {
                     const { longResults, sortResults, fetchTime } = await fetchResults(document, position, ext, "java");
                     const sortLabels = formatSortData(sortResults, getInstance("java"), document);
                     longResults.push(...sortLabels);
                     sendPredictTelemetry(fetchTime, longResults);
-                    return longResults;
+                    return new vscode.CompletionList(longResults, true);
                 }
                 // log("provideCompletionItems ends");
             } catch (e) {
@@ -84,7 +84,7 @@ export function activateJava(context: vscode.ExtensionContext) {
             return null;
         },
     };
-    const triggerCharacters = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "="];
+    const triggerCharacters = ["="];
     if (!msintellicode) {
         triggerCharacters.push(".");
     }

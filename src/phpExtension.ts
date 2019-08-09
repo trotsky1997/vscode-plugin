@@ -62,7 +62,7 @@ export async function activatePhp(context: vscode.ExtensionContext) {
                 }
                 sendPredictTelemetry(fetchTime, longResults);
                 log("provideCompletionItems ends");
-                return longResults;
+                return new vscode.CompletionList(longResults, true);
             } catch (e) {
                 log(e);
             }
@@ -71,7 +71,7 @@ export async function activatePhp(context: vscode.ExtensionContext) {
             return null;
         },
     };
-    const triggerCharacters = [".", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "=", "$", ">"];
+    const triggerCharacters = [".", "=", "$", ">"];
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "php", scheme: "file" }, provider, ...triggerCharacters));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "php", scheme: "untitled" }, provider, ...triggerCharacters));
     return {

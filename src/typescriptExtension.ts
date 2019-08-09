@@ -30,7 +30,7 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
 
     let lastTime = 0;
     const jsprovider = {
-        async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
+        async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, completionContext: vscode.CompletionContext): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
             if (Date.now() - lastTime < 100) {
                 return [];
             }
@@ -41,18 +41,16 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
                 const ext = "javascript(Javascript)";
                 const theFetchResults  = await fetchResults(document, position, ext, "js", STAR_DISPLAY.LEFT);
                 const { sortResults, offsetID, fetchTime} = theFetchResults;
-                let { longResults } = theFetchResults;
+                const { longResults } = theFetchResults;
                 if (msts && hooked) {
-                    sortResults.longResults = longResults;
                     syncer.put(offsetID, sortResults);
-                    longResults = [];
                 } else {
                     const sortLabels = formatSortData(sortResults, getInstance("js"), document);
                     longResults.push(...sortLabels);
                 }
                 sendPredictTelemetry(fetchTime, longResults);
                 log("provideCompletionItems Javascript ends " + longResults.length);
-                return [];
+                return new vscode.CompletionList(longResults, true);
             } catch (e) {
                 log(e);
             }
@@ -67,23 +65,22 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
                 return [];
             }
             await _activate();
+            console.log("hey");
             log("=====================");
             try {
                 const ext = "typescript(Typescript)";
                 const theFetchResults = await fetchResults(document, position, ext, "ts", STAR_DISPLAY.LEFT);
                 const { sortResults, offsetID, fetchTime} = theFetchResults;
-                let { longResults } = theFetchResults;
+                const { longResults } = theFetchResults;
                 if (msts && hooked) {
-                    sortResults.longResults = longResults;
                     syncer.put(offsetID, sortResults);
-                    longResults = [];
                 } else {
                     const sortLabels = formatSortData(sortResults, getInstance("ts"), document);
                     longResults.push(...sortLabels);
                 }
                 sendPredictTelemetry(fetchTime, longResults);
                 log("provideCompletionItems TypeScript ends " + longResults.length);
-                return longResults;
+                return new vscode.CompletionList(longResults, true);
             } catch (e) {
                 log(e);
             }
@@ -92,7 +89,7 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
             return null;
         },
     };
-    const triggerCharacters = [".", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "=", "_", "$"];
+    const triggerCharacters = [".", "/", "@", "<", "=", "_", "$"];
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "javascript", scheme: "file" }, jsprovider, ...triggerCharacters));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "javascript", scheme: "untitled" }, jsprovider, ...triggerCharacters));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "typescript", scheme: "file" }, tsprovider, ...triggerCharacters));

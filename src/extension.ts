@@ -25,6 +25,21 @@ export const myID = "nnthink.aixcoder";
 const myPackageJSON = vscode.extensions.getExtension(myID).packageJSON;
 export const myVersion = myPackageJSON.version;
 
+export function compareVersion(v1: any, v2: any) {
+    if (typeof v1 !== "string") { return false; }
+    if (typeof v2 !== "string") { return false; }
+    v1 = v1.split(".");
+    v2 = v2.split(".");
+    const k = Math.min(v1.length, v2.length);
+    for (let i = 0; i < k; ++i) {
+        v1[i] = parseInt(v1[i], 10);
+        v2[i] = parseInt(v2[i], 10);
+        if (v1[i] > v2[i]) { return 1; }
+        if (v1[i] < v2[i]) { return -1; }
+    }
+    return v1.length === v2.length ? 0 : (v1.length < v2.length ? -1 : 1);
+}
+
 export async function showInformationMessage(message: string, ...items: string[]): Promise<string | undefined> {
     if (!Preference.context.globalState.get("hide:" + message)) {
         const select = await vscode.window.showInformationMessage(localize(message), ...items.map(localize), localize("nevershowagain"));
@@ -161,7 +176,7 @@ function formatResData(results: PredictResult, langUtil: LangUtil, document: vsc
                 const rCompletionText = langUtil.render(result.r_completion.slice(1), 0);
                 // tslint:disable-next-line: no-invalid-template-strings
                 rendered += template + rCompletionText;
-                title += (template + rCompletionText).replace(/\$\{0:([^}]+)\}/, "\\1").replace(/\$\{0\}/, "...");
+                title += (template + rCompletionText).replace(/\$\{0:([^}]+)\}/, "$1").replace(/\$\{0\}/, "...");
             }
             const label = starDisplay === STAR_DISPLAY.LEFT ? "⭐" + title : (starDisplay === STAR_DISPLAY.RIGHT ? title + "⭐" : title);
             if (!unique.has(label)) {
@@ -293,9 +308,9 @@ export async function fetchResults(document: vscode.TextDocument, position: vsco
 export function sendPredictTelemetry(fetchTime: number, longResults: AiXCompletionItem[]) {
     if (fetchTime) {
         if (fetchTime === lastFetchTime && longResults.length > 0 && longResults[0].aixPrimary) {
-            API.sendTelemetry("show");
+            // API.sendTelemetry("show");
         } else {
-            API.sendTelemetry("nul");
+            // API.sendTelemetry("nul");
         }
     }
 }
@@ -472,7 +487,7 @@ export async function activate(context: vscode.ExtensionContext) {
         }
     }));
     context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.insert", (type: string, subtype: string, langUtil: LangUtil, document: vscode.TextDocument, single: SinglePredictResult | SingleWordCompletion) => {
-        API.sendTelemetry(type, subtype);
+        // API.sendTelemetry(type, subtype);
         if (typeof langUtil === "string") {
             langUtil = getInstance(langUtil);
         }

@@ -64,7 +64,7 @@ export async function activateCPP(context: vscode.ExtensionContext) {
                 }
                 sendPredictTelemetry(fetchTime, longResults);
                 log("provideCompletionItems ends");
-                return longResults;
+                return new vscode.CompletionList(longResults, true);
             } catch (e) {
                 log(e);
             }
@@ -73,7 +73,7 @@ export async function activateCPP(context: vscode.ExtensionContext) {
             return null;
         },
     };
-    const triggerCharacters = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "="];
+    const triggerCharacters = ["="];
     if (!msintellicode) {
         triggerCharacters.push(".");
     }
