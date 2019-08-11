@@ -56,7 +56,7 @@ export async function activatePhp(context: vscode.ExtensionContext) {
                 const { longResults, sortResults, offsetID, fetchTime } = await fetchResults(document, position, ext, "php", STAR_DISPLAY.RIGHT);
 
                 if (msphp || intelephense) {
-                    syncer.put(offsetID, {...sortResults, ext, fetchTime});
+                    syncer.put(offsetID, { ...sortResults, ext, fetchTime });
                 } else {
                     const sortLabels = formatSortData(sortResults, getInstance("php"), document, ext);
                     longResults.push(...sortLabels);
@@ -86,7 +86,7 @@ export async function activatePhp(context: vscode.ExtensionContext) {
                 const { offsetID } = getReqText(document, position);
                 const sortResults = await syncer.get(offsetID);
                 const items = Array.isArray(ll) ? ll : ll.items;
-                const {ext, fetchTime} = sortResults;
+                const { ext, fetchTime } = sortResults;
 
                 mergeSortResult(items, sortResults, document, STAR_DISPLAY.RIGHT);
                 if (!token.isCancellationRequested) {

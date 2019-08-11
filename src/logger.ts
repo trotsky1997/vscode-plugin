@@ -18,7 +18,7 @@ class Logger {
     /**
      * log
      */
-    public log(s: string | Error, sendTelemetry= true) {
+    public log(s: string | Error, sendTelemetry = true) {
         if (s instanceof Error) {
             s = this.formatErrorForLogging(s);
             if (sendTelemetry) {
