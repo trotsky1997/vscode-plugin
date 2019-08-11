@@ -157,7 +157,7 @@ export async function sendTelemetry(ext: string, type: TelemetryType, tokenNum =
     if (telemetry) {
         console.log("send telemetry: " + type + "/" + tokenNum + "/" + charNum);
         try {
-            const updateURL = `/user/predict/userUseInfo`;
+            const updateURL = `user/predict/userUseInfo`;
             await myRequest({
                 method: "post",
                 url: updateURL,
@@ -178,16 +178,16 @@ export async function sendTelemetry(ext: string, type: TelemetryType, tokenNum =
 }
 
 export async function sendErrorTelemetry(msg: string) {
-    const telemetry = vscode.workspace.getConfiguration().get("aiXcoder.enableTelemetry");
-    if (telemetry) {
-        try {
-            const updateURL = `/user/predict/err?uuid=${Preference.uuid}&client=vscode&msg=${encodeURIComponent(msg)}`;
-            await myRequest({
-                method: "get",
-                url: updateURL,
-            });
-        } catch (e) {
-            log(e, false);
-        }
-    }
+    // const telemetry = vscode.workspace.getConfiguration().get("aiXcoder.enableTelemetry");
+    // if (telemetry) {
+    //     try {
+    //         const updateURL = `/user/predict/err?uuid=${Preference.uuid}&client=vscode&msg=${encodeURIComponent(msg)}`;
+    //         await myRequest({
+    //             method: "get",
+    //             url: updateURL,
+    //         });
+    //     } catch (e) {
+    //         log(e, false);
+    //     }
+    // }
 }

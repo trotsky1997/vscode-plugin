@@ -1,7 +1,7 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
-## [0.1.10] -2019-08-08
+## [0.1.10] -2019-08-11
 ### Added
 
 ### Changed
@@ -11,6 +11,8 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 - (TS/JS)在预测结果的 = 和 { 之间加入了一个空格。
 - (TS/JS)在预测结果的 ) 和 => 之间加入了一个空格。
 - 修复了奇怪的标签偶尔会出现的bug。
+- 修复了一个在 1.37.0 版本上出现的VSCode默认提示不会显示的问题。
+- 更新了统计信息的接口。
 
 ## [0.1.9] -2019-08-02
 ### Added

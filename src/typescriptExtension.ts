@@ -68,7 +68,6 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
                 return [];
             }
             await _activate();
-            console.log("hey");
             log("=====================");
             try {
                 const ext = "typescript(Typescript)";
