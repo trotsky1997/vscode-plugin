@@ -1,7 +1,7 @@
 import * as crypto from "crypto";
 import * as request from "request-promise";
 import * as vscode from "vscode";
-import { myVersion } from "./extension";
+import { compareVersion, myVersion } from "./extension";
 import { localize } from "./i18n";
 import log from "./logger";
 import Preference from "./Preference";
@@ -112,21 +112,6 @@ export function getTrivialLiterals(ext: string) {
     });
 }
 
-function compareVersion(v1: any, v2: any) {
-    if (typeof v1 !== "string") { return false; }
-    if (typeof v2 !== "string") { return false; }
-    v1 = v1.split(".");
-    v2 = v2.split(".");
-    const k = Math.min(v1.length, v2.length);
-    for (let i = 0; i < k; ++i) {
-        v1[i] = parseInt(v1[i], 10);
-        v2[i] = parseInt(v2[i], 10);
-        if (v1[i] > v2[i]) { return 1; }
-        if (v1[i] < v2[i]) { return -1; }
-    }
-    return v1.length === v2.length ? 0 : (v1.length < v2.length ? -1 : 1);
-}
-
 export async function checkUpdate() {
     try {
         const updateURL = "download/installtool/aixcoderinstaller_aixcoder.json";
@@ -157,18 +142,34 @@ export async function checkUpdate() {
     }
 }
 
-export async function sendTelemetry(type: string, subtype?: string) {
+export enum TelemetryType {
+    LongShow = "001",
+    ShortShow = "002",
+    LongUse = "003",
+    ShortUse = "004",
+    SystemShow = "005",
+    SystemUse = "007",
+    UseLength = "008",
+}
+
+export async function sendTelemetry(ext: string, type: TelemetryType, tokenNum = 0, charNum = 0) {
     const telemetry = vscode.workspace.getConfiguration().get("aiXcoder.enableTelemetry");
     if (telemetry) {
-        console.log("send telemetry: " + type + "/" + subtype);
+        console.log("send telemetry: " + type + "/" + tokenNum + "/" + charNum);
         try {
-            let updateURL = `/user/predict/${type}?uuid=${Preference.uuid}`;
-            if (subtype) {
-                updateURL += `&subtype=${subtype}`;
-            }
+            const updateURL = `user/predict/userUseInfo`;
             await myRequest({
-                method: "get",
+                method: "post",
                 url: updateURL,
+                form: {
+                    area: ext,
+                    uuid: Preference.uuid,
+                    plugin_version: myVersion,
+                    ide_version: vscode.version,
+                    ide_type: "vscode",
+                    token_num: tokenNum,
+                    char_num: charNum,
+                },
             });
         } catch (e) {
             log(e);
@@ -177,18 +178,18 @@ export async function sendTelemetry(type: string, subtype?: string) {
 }
 
 export async function sendErrorTelemetry(msg: string) {
-    const telemetry = vscode.workspace.getConfiguration().get("aiXcoder.enableTelemetry");
-    if (telemetry) {
-        try {
-            const updateURL = `/user/predict/err?uuid=${Preference.uuid}&client=vscode&msg=${encodeURIComponent(msg)}`;
-            await myRequest({
-                method: "get",
-                url: updateURL,
-            });
-        } catch (e) {
-            log(e, false);
-        }
-    }
+    // const telemetry = vscode.workspace.getConfiguration().get("aiXcoder.enableTelemetry");
+    // if (telemetry) {
+    //     try {
+    //         const updateURL = `/user/predict/err?uuid=${Preference.uuid}&client=vscode&msg=${encodeURIComponent(msg)}`;
+    //         await myRequest({
+    //             method: "get",
+    //             url: updateURL,
+    //         });
+    //     } catch (e) {
+    //         log(e, false);
+    //     }
+    // }
 }
 
 export async function getModels(): Promise<string[]> {

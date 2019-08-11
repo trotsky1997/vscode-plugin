@@ -1,6 +1,7 @@
 import * as path from "path";
 import * as vscode from "vscode";
-import { fetchResults, formatSortData, getReqText, JSHooker, mergeSortResult, myID, sendPredictTelemetry, showInformationMessage, SortResult, STAR_DISPLAY } from "./extension";
+import { TelemetryType } from "./API";
+import { fetchResults, formatSortData, getReqText, JSHooker, mergeSortResult, myID, sendPredictTelemetryLong, sendPredictTelemetryShort, showInformationMessage, SortResultEx, STAR_DISPLAY } from "./extension";
 import { localize } from "./i18n";
 import { getInstance } from "./lang/commons";
 import log from "./logger";
@@ -9,7 +10,7 @@ import { SafeStringUtil } from "./utils/SafeStringUtil";
 
 export function activatePython(context: vscode.ExtensionContext) {
     const mspythonExtension = vscode.extensions.getExtension("ms-python.python");
-    const syncer = new Syncer<SortResult>();
+    const syncer = new Syncer<SortResultEx>();
     let activated = false;
     async function _activate() {
         if (activated) {
@@ -52,14 +53,16 @@ export function activatePython(context: vscode.ExtensionContext) {
                 const { longResults, sortResults, offsetID, fetchTime } = await fetchResults(document, position, ext, "python");
 
                 if (mspythonExtension) {
-                    syncer.put(offsetID, sortResults);
+                    syncer.put(offsetID, {...sortResults, ext, fetchTime});
                 } else {
-                    const sortLabels = formatSortData(sortResults, getInstance("python"), document);
+                    const sortLabels = formatSortData(sortResults, getInstance("python"), document, ext);
                     longResults.push(...sortLabels);
                 }
-                sendPredictTelemetry(fetchTime, longResults);
+                if (!token.isCancellationRequested) {
+                    sendPredictTelemetryLong(ext, fetchTime, longResults);
+                }
                 log("provideCompletionItems ends");
-                return longResults;
+                return new vscode.CompletionList(longResults, true);
             } catch (e) {
                 log(e);
             }
@@ -68,7 +71,7 @@ export function activatePython(context: vscode.ExtensionContext) {
             return null;
         },
     };
-    const triggerCharacters = [".", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "="];
+    const triggerCharacters = [".", "="];
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "python", scheme: "file" }, provider, ...triggerCharacters));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "python", scheme: "untitled" }, provider, ...triggerCharacters));
     return {
@@ -77,8 +80,12 @@ export function activatePython(context: vscode.ExtensionContext) {
                 const { offsetID } = getReqText(document, position);
                 const sortResults = await syncer.get(offsetID);
                 const items = Array.isArray(ll) ? ll : ll.items;
+                const {ext, fetchTime} = sortResults;
 
                 mergeSortResult(items, sortResults, document, STAR_DISPLAY.LEFT);
+                if (!token.isCancellationRequested) {
+                    sendPredictTelemetryShort(ext, fetchTime, sortResults);
+                }
                 return new vscode.CompletionList(items, true);
             } catch (e) {
                 log(e);

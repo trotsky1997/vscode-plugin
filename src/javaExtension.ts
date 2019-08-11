@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
-import { fetchResults, formatSortData, mergeSortResult, onDeactivateHandlers, sendPredictTelemetry, showInformationMessage } from "./extension";
+import { TelemetryType } from "./API";
+import { fetchResults, formatSortData, mergeSortResult, onDeactivateHandlers, sendPredictTelemetryLong, sendPredictTelemetryShort, showInformationMessage } from "./extension";
 import { localize } from "./i18n";
 import { getInstance } from "./lang/commons";
 import log from "./logger";
@@ -66,14 +67,18 @@ export function activateJava(context: vscode.ExtensionContext) {
                     const l = await redhatPromise as vscode.CompletionItem[];
                     mergeSortResult(l, sortResults, document);
                     longResults.push(...l);
-                    sendPredictTelemetry(fetchTime, longResults);
-                    return longResults;
+                    if (!token.isCancellationRequested) {
+                        sendPredictTelemetryLong(ext, fetchTime, longResults);
+                    }
+                    return new vscode.CompletionList(longResults, true);
                 } else {
                     const { longResults, sortResults, fetchTime } = await fetchResults(document, position, ext, "java");
-                    const sortLabels = formatSortData(sortResults, getInstance("java"), document);
+                    const sortLabels = formatSortData(sortResults, getInstance("java"), document, ext);
                     longResults.push(...sortLabels);
-                    sendPredictTelemetry(fetchTime, longResults);
-                    return longResults;
+                    if (!token.isCancellationRequested) {
+                        sendPredictTelemetryLong(ext, fetchTime, longResults);
+                    }
+                    return new vscode.CompletionList(longResults, true);
                 }
                 // log("provideCompletionItems ends");
             } catch (e) {
@@ -84,7 +89,7 @@ export function activateJava(context: vscode.ExtensionContext) {
             return null;
         },
     };
-    const triggerCharacters = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "="];
+    const triggerCharacters = ["="];
     if (!msintellicode) {
         triggerCharacters.push(".");
     }

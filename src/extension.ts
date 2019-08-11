@@ -25,6 +25,21 @@ export const myID = "nnthink.aixcoder";
 const myPackageJSON = vscode.extensions.getExtension(myID).packageJSON;
 export const myVersion = myPackageJSON.version;
 
+export function compareVersion(v1: any, v2: any) {
+    if (typeof v1 !== "string") { return false; }
+    if (typeof v2 !== "string") { return false; }
+    v1 = v1.split(".");
+    v2 = v2.split(".");
+    const k = Math.min(v1.length, v2.length);
+    for (let i = 0; i < k; ++i) {
+        v1[i] = parseInt(v1[i], 10);
+        v2[i] = parseInt(v2[i], 10);
+        if (v1[i] > v2[i]) { return 1; }
+        if (v1[i] < v2[i]) { return -1; }
+    }
+    return v1.length === v2.length ? 0 : (v1.length < v2.length ? -1 : 1);
+}
+
 export async function showInformationMessage(message: string, ...items: string[]): Promise<string | undefined> {
     if (!Preference.context.globalState.get("hide:" + message)) {
         const select = await vscode.window.showInformationMessage(localize(message), ...items.map(localize), localize("nevershowagain"));
@@ -72,6 +87,11 @@ export interface SortResult {
     queryUUID: string;
     list: SingleWordCompletion[];
     longResults?: AiXCompletionItem[];
+}
+
+export interface SortResultEx extends SortResult {
+    ext: string;
+    fetchTime: number;
 }
 
 let lastText = "";
@@ -138,12 +158,12 @@ export enum STAR_DISPLAY {
 }
 
 // 处理返回的值，最终变成放入提示框的内容
-function formatResData(results: PredictResult, langUtil: LangUtil, document: vscode.TextDocument, starDisplay = STAR_DISPLAY.LEFT): AiXCompletionItem[] {
+function formatResData(results: PredictResult, langUtil: LangUtil, document: vscode.TextDocument, ext: string, starDisplay = STAR_DISPLAY.LEFT): AiXCompletionItem[] {
     const r: AiXCompletionItem[] = [];
     const command: vscode.Command = {
         title: "AiXTelemetry",
         command: "aiXcoder.insert",
-        arguments: ["use", "primary", langUtil, document],
+        arguments: [ext, "primary", langUtil, document],
     };
     const minCompletionTokensCount = Preference.getParam("controllerMode") ? 0 : 1;
     const sortL2S = Preference.getLongResultCutsLong2Short();
@@ -157,21 +177,24 @@ function formatResData(results: PredictResult, langUtil: LangUtil, document: vsc
             let title = langUtil.render(mergedTokens, 0);
             let rendered = title.replace(/(?=\$)/g, "\\");
             if (result.r_completion && result.r_completion.length > 0) {
+                const template = langUtil.getTemplateForTag(result.r_completion[0]);
+                const rCompletionText = langUtil.render(result.r_completion.slice(1), 0);
                 // tslint:disable-next-line: no-invalid-template-strings
-                rendered += "${0}" + result.r_completion.join("");
-                title += "..." + result.r_completion.join("");
+                rendered += template + rCompletionText;
+                title += (template + rCompletionText).replace(/\$\{0:([^}]+)\}/, "$1").replace(/\$\{0\}/, "...");
             }
             const label = starDisplay === STAR_DISPLAY.LEFT ? "⭐" + title : (starDisplay === STAR_DISPLAY.RIGHT ? title + "⭐" : title);
             if (!unique.has(label)) {
-                r.push({
+                const z: AiXCompletionItem = {
                     label,
                     filterText: title,
                     insertText: new vscode.SnippetString(rendered),
                     kind: vscode.CompletionItemKind.Snippet,
                     sortText: Preference.getLongResultRankSortText() + "." + (sortL2S ? 1 - title.length / 100 : title.length / 100),
-                    command: { ...command, arguments: command.arguments.concat([result]) },
                     aixPrimary: true,
-                });
+                };
+                z.command = { ...command, arguments: command.arguments.concat([result, z]) };
+                r.push(z);
                 unique.add(label);
             }
         }
@@ -179,27 +202,28 @@ function formatResData(results: PredictResult, langUtil: LangUtil, document: vsc
     return r;
 }
 
-export function formatSortData(results: SortResult | null, langUtil: LangUtil, document: vscode.TextDocument) {
+export function formatSortData(results: SortResult | null, langUtil: LangUtil, document: vscode.TextDocument, ext: string) {
     if (results == null) { return []; }
     const r: vscode.CompletionItem[] = [];
     const command: vscode.Command = {
         title: "AiXTelemetry",
         command: "aiXcoder.insert",
-        arguments: ["use", "secondary", langUtil, document],
+        arguments: [ext, "secondary", langUtil, document],
     };
     let insertedRank = 1;
     for (const single of results.list) {
         if (single.word.match(/^<.+>$/)) {
             continue;
         }
-        r.push({
+        const z: AiXCompletionItem = {
             label: "⭐" + single.word,
             filterText: single.word,
             insertText: single.word,
             kind: vscode.CompletionItemKind.Variable,
             sortText: "0." + insertedRank++,
-            command: { ...command, arguments: command.arguments.concat([single]) },
-        });
+        };
+        z.command = { ...command, arguments: command.arguments.concat([single, z]) };
+        r.push(z);
     }
     return r;
 }
@@ -229,7 +253,8 @@ export async function fetchResults2(text: string, remainingText: string, fileNam
         if (predictResults.data == null) {
             predictResults = { data: predictResults as any };
         }
-        let strLabels = formatResData(predictResults, getInstance(lang), document, starDisplay);
+        const langUtil = getInstance(lang);
+        let strLabels = formatResData(predictResults, langUtil, document, ext, starDisplay);
         // log("predict result:");
         // log(strLabels);
         const results = {
@@ -250,7 +275,7 @@ export async function fetchResults2(text: string, remainingText: string, fileNam
         // log("mina result:");
         const mappedResults = {
             ...results,
-            list: results.list.map(([prob, word, options]) => ({ prob, word, options })),
+            list: results.list.map(([prob, word, options]) => ({ prob, word: langUtil.renderToken(word), options })),
         };
         return {
             longResults: strLabels,
@@ -287,13 +312,19 @@ export async function fetchResults(document: vscode.TextDocument, position: vsco
     };
 }
 
-export function sendPredictTelemetry(fetchTime: number, longResults: AiXCompletionItem[]) {
-    if (fetchTime) {
-        if (fetchTime === lastFetchTime && longResults.length > 0 && longResults[0].aixPrimary) {
-            API.sendTelemetry("show");
-        } else {
-            API.sendTelemetry("nul");
-        }
+export function sendPredictTelemetryShort(ext: string, fetchTime: number, sortResult: SortResult) {
+    if (fetchTime && fetchTime === lastFetchTime && sortResult.list.length > 0) {
+        const tokenLen = sortResult.list.length;
+        const charLen = sortResult.list.map((r) => r.word.length).reduce((a, b) => a + b, 0);
+        API.sendTelemetry(ext, API.TelemetryType.ShortShow, tokenLen, charLen);
+    }
+}
+
+export function sendPredictTelemetryLong(ext: string, fetchTime: number, longResults: AiXCompletionItem[]) {
+    if (fetchTime && fetchTime === lastFetchTime && longResults.length > 0 && longResults[0].aixPrimary) {
+        const tokenLen = Math.max(...longResults.map((r) => r.insertText.toString().split(/\b/g).filter((s) => s.trim().length > 0).length));
+        const charLen = Math.max(...longResults.map((r) => r.insertText.toString().length));
+        API.sendTelemetry(ext, API.TelemetryType.LongShow, tokenLen, charLen);
     }
 }
 
@@ -471,8 +502,14 @@ export async function activate(context: vscode.ExtensionContext) {
             lastModifedTime[event.document.uri.toJSON()] = Date.now();
         }
     }));
-    context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.insert", (type: string, subtype: string, langUtil: LangUtil, document: vscode.TextDocument, single: SinglePredictResult | SingleWordCompletion) => {
-        API.sendTelemetry(type, subtype);
+    context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.insert", (ext: string, subtype: string, langUtil: LangUtil, document: vscode.TextDocument, single: SinglePredictResult | SingleWordCompletion, completionItem: AiXCompletionItem) => {
+        if (subtype === "primary") {
+            const tokenLen = completionItem.insertText.toString().split(/\b/g).filter((s) => s.trim().length > 0).length;
+            const charLen = completionItem.insertText.toString().length;
+            API.sendTelemetry(ext, API.TelemetryType.LongUse, tokenLen, charLen);
+        } else if (subtype === "secondary") {
+            API.sendTelemetry(ext, API.TelemetryType.ShortUse, 1, (single as SingleWordCompletion).word.length);
+        }
         if (typeof langUtil === "string") {
             langUtil = getInstance(langUtil);
         }

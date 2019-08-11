@@ -1,6 +1,7 @@
 import * as path from "path";
 import * as vscode from "vscode";
-import { fetchResults, formatSortData, getReqText, JSHooker, mergeSortResult, myID, sendPredictTelemetry, showInformationMessage, SortResult, STAR_DISPLAY } from "./extension";
+import { TelemetryType } from "./API";
+import { fetchResults, formatSortData, getReqText, JSHooker, mergeSortResult, myID, sendPredictTelemetryLong, sendPredictTelemetryShort, showInformationMessage, SortResultEx, STAR_DISPLAY } from "./extension";
 import { localize } from "./i18n";
 import { getInstance } from "./lang/commons";
 import log from "./logger";
@@ -11,7 +12,7 @@ export async function activatePhp(context: vscode.ExtensionContext) {
     const msphp = vscode.extensions.getExtension(msphpId);
     const intelephenseId = "bmewburn.vscode-intelephense-client";
     const intelephense = vscode.extensions.getExtension(intelephenseId);
-    const syncer = new Syncer<SortResult>();
+    const syncer = new Syncer<SortResultEx>();
 
     let activated = false;
     async function _activate() {
@@ -47,7 +48,7 @@ export async function activatePhp(context: vscode.ExtensionContext) {
     }
 
     const provider = {
-        async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
+        async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, completionContext: vscode.CompletionContext): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
             await _activate();
             log("=====================");
             try {
@@ -55,14 +56,16 @@ export async function activatePhp(context: vscode.ExtensionContext) {
                 const { longResults, sortResults, offsetID, fetchTime } = await fetchResults(document, position, ext, "php", STAR_DISPLAY.RIGHT);
 
                 if (msphp || intelephense) {
-                    syncer.put(offsetID, sortResults);
+                    syncer.put(offsetID, {...sortResults, ext, fetchTime});
                 } else {
-                    const sortLabels = formatSortData(sortResults, getInstance("php"), document);
+                    const sortLabels = formatSortData(sortResults, getInstance("php"), document, ext);
                     longResults.push(...sortLabels);
                 }
-                sendPredictTelemetry(fetchTime, longResults);
+                if (!token.isCancellationRequested) {
+                    sendPredictTelemetryLong(ext, fetchTime, longResults);
+                }
                 log("provideCompletionItems ends");
-                return longResults;
+                return new vscode.CompletionList(longResults, true);
             } catch (e) {
                 log(e);
             }
@@ -71,20 +74,24 @@ export async function activatePhp(context: vscode.ExtensionContext) {
             return null;
         },
     };
-    const triggerCharacters = [".", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "=", "$", ">"];
+    const triggerCharacters = [".", "=", "$", ">"];
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "php", scheme: "file" }, provider, ...triggerCharacters));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "php", scheme: "untitled" }, provider, ...triggerCharacters));
     return {
-        async aixHook(ll: vscode.CompletionList | vscode.CompletionItem[], document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, completionContext: vscode.CompletionContext, ext: string): Promise<vscode.CompletionList | vscode.CompletionItem[]> {
-            if (ext === "basic" && !vscode.workspace.getConfiguration("php").get("suggest.basic", true)) {
+        async aixHook(ll: vscode.CompletionList | vscode.CompletionItem[], document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, completionContext: vscode.CompletionContext, mode: string): Promise<vscode.CompletionList | vscode.CompletionItem[]> {
+            if (mode === "basic" && !vscode.workspace.getConfiguration("php").get("suggest.basic", true)) {
                 return ll;
             }
             try {
                 const { offsetID } = getReqText(document, position);
                 const sortResults = await syncer.get(offsetID);
                 const items = Array.isArray(ll) ? ll : ll.items;
+                const {ext, fetchTime} = sortResults;
 
                 mergeSortResult(items, sortResults, document, STAR_DISPLAY.RIGHT);
+                if (!token.isCancellationRequested) {
+                    sendPredictTelemetryShort(ext, fetchTime, sortResults);
+                }
                 return new vscode.CompletionList(items, true);
             } catch (e) {
                 log(e);

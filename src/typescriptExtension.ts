@@ -1,6 +1,7 @@
 import * as path from "path";
 import * as vscode from "vscode";
-import { fetchResults, formatSortData, getReqText, JSHooker, mergeSortResult, myID, sendPredictTelemetry, SortResult, STAR_DISPLAY } from "./extension";
+import { TelemetryType } from "./API";
+import { fetchResults, formatSortData, getReqText, JSHooker, mergeSortResult, myID, sendPredictTelemetryLong, sendPredictTelemetryShort, SortResultEx, STAR_DISPLAY } from "./extension";
 import { getInstance } from "./lang/commons";
 import log from "./logger";
 import { Syncer } from "./Syncer";
@@ -13,7 +14,7 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
         }
         activated = true;
     }
-    const syncer = new Syncer<SortResult>();
+    const syncer = new Syncer<SortResultEx>();
     const mstsId = "vscode.typescript-language-features";
     const msts = vscode.extensions.getExtension(mstsId);
     let hooked = false;
@@ -30,7 +31,7 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
 
     let lastTime = 0;
     const jsprovider = {
-        async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
+        async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, completionContext: vscode.CompletionContext): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
             if (Date.now() - lastTime < 100) {
                 return [];
             }
@@ -41,18 +42,18 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
                 const ext = vscode.workspace.getConfiguration().get("aiXcoder.model.javascript") as string;
                 const theFetchResults = await fetchResults(document, position, ext, "js", STAR_DISPLAY.LEFT);
                 const { sortResults, offsetID, fetchTime } = theFetchResults;
-                let { longResults } = theFetchResults;
+                const { longResults } = theFetchResults;
                 if (msts && hooked) {
-                    sortResults.longResults = longResults;
-                    syncer.put(offsetID, sortResults);
-                    longResults = [];
+                    syncer.put(offsetID, {...sortResults, ext, fetchTime});
                 } else {
-                    const sortLabels = formatSortData(sortResults, getInstance("js"), document);
+                    const sortLabels = formatSortData(sortResults, getInstance("js"), document, ext);
                     longResults.push(...sortLabels);
                 }
-                sendPredictTelemetry(fetchTime, longResults);
+                if (!token.isCancellationRequested) {
+                    sendPredictTelemetryLong(ext, fetchTime, longResults);
+                }
                 log("provideCompletionItems Javascript ends " + longResults.length);
-                return [];
+                return new vscode.CompletionList(longResults, true);
             } catch (e) {
                 log(e);
             }
@@ -62,7 +63,7 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
         },
     };
     const tsprovider = {
-        async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
+        async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, completionContext: vscode.CompletionContext): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
             if (Date.now() - lastTime < 100) {
                 return [];
             }
@@ -71,19 +72,19 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
             try {
                 const ext = vscode.workspace.getConfiguration().get("aiXcoder.model.typescript") as string;
                 const theFetchResults = await fetchResults(document, position, ext, "ts", STAR_DISPLAY.LEFT);
-                const { sortResults, offsetID, fetchTime } = theFetchResults;
-                let { longResults } = theFetchResults;
+                const { sortResults, offsetID, fetchTime} = theFetchResults;
+                const { longResults } = theFetchResults;
                 if (msts && hooked) {
-                    sortResults.longResults = longResults;
-                    syncer.put(offsetID, sortResults);
-                    longResults = [];
+                    syncer.put(offsetID, {...sortResults, ext, fetchTime});
                 } else {
-                    const sortLabels = formatSortData(sortResults, getInstance("ts"), document);
+                    const sortLabels = formatSortData(sortResults, getInstance("ts"), document, ext);
                     longResults.push(...sortLabels);
                 }
-                sendPredictTelemetry(fetchTime, longResults);
+                if (!token.isCancellationRequested) {
+                    sendPredictTelemetryLong(ext, fetchTime, longResults);
+                }
                 log("provideCompletionItems TypeScript ends " + longResults.length);
-                return longResults;
+                return new vscode.CompletionList(longResults, true);
             } catch (e) {
                 log(e);
             }
@@ -92,19 +93,23 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
             return null;
         },
     };
-    const triggerCharacters = [".", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "=", "_", "$"];
+    const triggerCharacters = [".", "/", "@", "<", "=", "_", "$"];
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "javascript", scheme: "file" }, jsprovider, ...triggerCharacters));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "javascript", scheme: "untitled" }, jsprovider, ...triggerCharacters));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "typescript", scheme: "file" }, tsprovider, ...triggerCharacters));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "typescript", scheme: "untitled" }, tsprovider, ...triggerCharacters));
     return {
-        async aixHook(ll: vscode.CompletionList | vscode.CompletionItem[], document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, completionContext: vscode.CompletionContext, ext: string): Promise<vscode.CompletionList | vscode.CompletionItem[]> {
+        async aixHook(ll: vscode.CompletionList | vscode.CompletionItem[], document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, completionContext: vscode.CompletionContext): Promise<vscode.CompletionList | vscode.CompletionItem[]> {
             try {
                 const { offsetID } = getReqText(document, position);
                 const sortResults = await syncer.get(offsetID);
                 const items = ll == null ? [] : (Array.isArray(ll) ? ll : ll.items);
+                const {ext, fetchTime} = sortResults;
 
                 mergeSortResult(items, sortResults, document, STAR_DISPLAY.LEFT);
+                if (!token.isCancellationRequested) {
+                    sendPredictTelemetryShort(ext, fetchTime, sortResults);
+                }
                 return new vscode.CompletionList(items, true);
             } catch (e) {
                 log(e);

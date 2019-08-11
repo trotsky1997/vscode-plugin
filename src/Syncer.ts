@@ -28,6 +28,7 @@ export class Syncer<T> {
      */
     public async get(key: number) {
         let value: T;
+        const _t = Date.now();
         const awaiter = this.awaiters[key];
         if (awaiter == null) {
             let resolved = false;
@@ -55,7 +56,7 @@ export class Syncer<T> {
                         resolve();
                         delete this.awaiters[key];
                     }
-                }, 5 * 1000);
+                }, 500);
             });
             value = await ppp;
             // console.log("ppp is resolved with " + JSON.stringify(value));
@@ -64,6 +65,7 @@ export class Syncer<T> {
             // AIX went earlier
             value = awaiter;
         }
+        console.log(`syncer get took ${Date.now() - _t}ms`);
         return value;
     }
 }
