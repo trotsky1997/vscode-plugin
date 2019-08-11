@@ -58,7 +58,7 @@ export async function activateCPP(context: vscode.ExtensionContext) {
             try {
                 const { longResults, sortResults, offsetID, fetchTime } = await fetchResults(document, position, ext, "cpp", STAR_DISPLAY.LEFT);
                 if (mscpp) {
-                    syncer.put(offsetID, {...sortResults, ext, fetchTime});
+                    syncer.put(offsetID, { ...sortResults, ext, fetchTime });
                 } else {
                     const sortLabels = formatSortData(sortResults, getInstance("cpp"), document, ext);
                     longResults.push(...sortLabels);
@@ -90,7 +90,7 @@ export async function activateCPP(context: vscode.ExtensionContext) {
                 const { offsetID } = getReqText(document, position);
                 const sortResults = await syncer.get(offsetID);
                 const items = Array.isArray(ll) ? ll : ll.items;
-                const {ext, fetchTime} = sortResults;
+                const { ext, fetchTime } = sortResults;
                 mergeSortResult(items, sortResults, document, STAR_DISPLAY.LEFT);
                 if (!token.isCancellationRequested) {
                     sendPredictTelemetryShort(ext, fetchTime, sortResults);

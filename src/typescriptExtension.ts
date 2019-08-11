@@ -44,7 +44,7 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
                 const { sortResults, offsetID, fetchTime } = theFetchResults;
                 const { longResults } = theFetchResults;
                 if (msts && hooked) {
-                    syncer.put(offsetID, {...sortResults, ext, fetchTime});
+                    syncer.put(offsetID, { ...sortResults, ext, fetchTime });
                 } else {
                     const sortLabels = formatSortData(sortResults, getInstance("js"), document, ext);
                     longResults.push(...sortLabels);
@@ -72,10 +72,10 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
             try {
                 const ext = vscode.workspace.getConfiguration().get("aiXcoder.model.typescript") as string;
                 const theFetchResults = await fetchResults(document, position, ext, "ts", STAR_DISPLAY.LEFT);
-                const { sortResults, offsetID, fetchTime} = theFetchResults;
+                const { sortResults, offsetID, fetchTime } = theFetchResults;
                 const { longResults } = theFetchResults;
                 if (msts && hooked) {
-                    syncer.put(offsetID, {...sortResults, ext, fetchTime});
+                    syncer.put(offsetID, { ...sortResults, ext, fetchTime });
                 } else {
                     const sortLabels = formatSortData(sortResults, getInstance("ts"), document, ext);
                     longResults.push(...sortLabels);
@@ -104,7 +104,7 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
                 const { offsetID } = getReqText(document, position);
                 const sortResults = await syncer.get(offsetID);
                 const items = ll == null ? [] : (Array.isArray(ll) ? ll : ll.items);
-                const {ext, fetchTime} = sortResults;
+                const { ext, fetchTime } = sortResults;
 
                 mergeSortResult(items, sortResults, document, STAR_DISPLAY.LEFT);
                 if (!token.isCancellationRequested) {

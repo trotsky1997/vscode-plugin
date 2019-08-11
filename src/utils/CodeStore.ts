@@ -62,7 +62,7 @@ export default class CodeStore {
      * @param fileID  文件id
      * @param content 文件内容
      */
-    public saveLastSent(project: string,  fileID: string,  content: string) {
+    public saveLastSent(project: string, fileID: string, content: string) {
         if (this.project == null || this.project !== project) {
             this.project = project;
             this.store = {};
