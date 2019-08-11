@@ -1,6 +1,7 @@
 import * as path from "path";
 import * as vscode from "vscode";
-import { fetchResults, formatSortData, getReqText, JSHooker, mergeSortResult, myID, sendPredictTelemetry, showInformationMessage, SortResult, STAR_DISPLAY } from "./extension";
+import { TelemetryType } from "./API";
+import { fetchResults, formatSortData, getReqText, JSHooker, mergeSortResult, myID, sendPredictTelemetryLong, sendPredictTelemetryShort, showInformationMessage, SortResultEx, STAR_DISPLAY } from "./extension";
 import { localize } from "./i18n";
 import { getInstance } from "./lang/commons";
 import log from "./logger";
@@ -11,7 +12,7 @@ export async function activateCPP(context: vscode.ExtensionContext) {
     const msintellicode = vscode.extensions.getExtension("visualstudioexptteam.vscodeintellicode");
     const mscpp = vscode.extensions.getExtension("ms-vscode.cpptools");
     const activated = false;
-    const syncer = new Syncer<SortResult>();
+    const syncer = new Syncer<SortResultEx>();
     if (mscpp) {
         const distjsPath = path.join(mscpp.extensionPath, "dist", "main.js");
         await JSHooker("/**AiXHooked-2**/", distjsPath, mscpp, "cpp.reload", "cpp.fail", (distjs) => {
@@ -50,19 +51,21 @@ export async function activateCPP(context: vscode.ExtensionContext) {
     }
 
     const provider = {
-        async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
+        async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, completioContext: vscode.CompletionContext): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
             await _activate();
             const ext = "cpp(Cpp)";
             // log("=====================");
             try {
                 const { longResults, sortResults, offsetID, fetchTime } = await fetchResults(document, position, ext, "cpp", STAR_DISPLAY.LEFT);
                 if (mscpp) {
-                    syncer.put(offsetID, sortResults);
+                    syncer.put(offsetID, {...sortResults, ext, fetchTime});
                 } else {
-                    const sortLabels = formatSortData(sortResults, getInstance("cpp"), document);
+                    const sortLabels = formatSortData(sortResults, getInstance("cpp"), document, ext);
                     longResults.push(...sortLabels);
                 }
-                sendPredictTelemetry(fetchTime, longResults);
+                if (!token.isCancellationRequested) {
+                    sendPredictTelemetryLong(ext, fetchTime, longResults);
+                }
                 log("provideCompletionItems ends");
                 return new vscode.CompletionList(longResults, true);
             } catch (e) {
@@ -82,13 +85,16 @@ export async function activateCPP(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "cpp", scheme: "file" }, provider, ...triggerCharacters));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "cpp", scheme: "untitled" }, provider, ...triggerCharacters));
     return {
-        async aixHook(ll: vscode.CompletionList | vscode.CompletionItem[], document: vscode.TextDocument, position: vscode.Position): Promise<vscode.CompletionList | vscode.CompletionItem[]> {
+        async aixHook(ll: vscode.CompletionList | vscode.CompletionItem[], document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, completioContext: vscode.CompletionContext): Promise<vscode.CompletionList | vscode.CompletionItem[]> {
             try {
                 const { offsetID } = getReqText(document, position);
                 const sortResults = await syncer.get(offsetID);
                 const items = Array.isArray(ll) ? ll : ll.items;
-
+                const {ext, fetchTime} = sortResults;
                 mergeSortResult(items, sortResults, document, STAR_DISPLAY.LEFT);
+                if (!token.isCancellationRequested) {
+                    sendPredictTelemetryShort(ext, fetchTime, sortResults);
+                }
                 return new vscode.CompletionList(items, true);
             } catch (e) {
                 log(e);
