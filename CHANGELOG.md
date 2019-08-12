@@ -1,6 +1,14 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.1.11] -2019-08-12
+### Added
+
+### Changed
+
+### Fixed
+- 修复了偶尔提示不会自动显示的bug。
+
 ## [0.1.10] -2019-08-11
 ### Added
 

@@ -314,17 +314,13 @@ export async function fetchResults(document: vscode.TextDocument, position: vsco
 
 export function sendPredictTelemetryShort(ext: string, fetchTime: number, sortResult: SortResult) {
     if (fetchTime && fetchTime === lastFetchTime && sortResult.list.length > 0) {
-        const tokenLen = sortResult.list.length;
-        const charLen = sortResult.list.map((r) => r.word.length).reduce((a, b) => a + b, 0);
-        API.sendTelemetry(ext, API.TelemetryType.ShortShow, tokenLen, charLen);
+        API.sendTelemetry(ext, API.TelemetryType.ShortShow);
     }
 }
 
 export function sendPredictTelemetryLong(ext: string, fetchTime: number, longResults: AiXCompletionItem[]) {
     if (fetchTime && fetchTime === lastFetchTime && longResults.length > 0 && longResults[0].aixPrimary) {
-        const tokenLen = Math.max(...longResults.map((r) => r.insertText.toString().split(/\b/g).filter((s) => s.trim().length > 0).length));
-        const charLen = Math.max(...longResults.map((r) => r.insertText.toString().length));
-        API.sendTelemetry(ext, API.TelemetryType.LongShow, tokenLen, charLen);
+        API.sendTelemetry(ext, API.TelemetryType.LongShow);
     }
 }
 
@@ -500,12 +496,16 @@ export async function activate(context: vscode.ExtensionContext) {
         }
     }));
     context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.insert", (ext: string, subtype: string, langUtil: LangUtil, document: vscode.TextDocument, single: SinglePredictResult | SingleWordCompletion, completionItem: AiXCompletionItem) => {
-        if (subtype === "primary") {
-            const tokenLen = completionItem.insertText.toString().split(/\b/g).filter((s) => s.trim().length > 0).length;
-            const charLen = completionItem.insertText.toString().length;
-            API.sendTelemetry(ext, API.TelemetryType.LongUse, tokenLen, charLen);
-        } else if (subtype === "secondary") {
-            API.sendTelemetry(ext, API.TelemetryType.ShortUse, 1, (single as SingleWordCompletion).word.length);
+        try {
+            if (subtype === "primary") {
+                const tokenLen = completionItem.insertText.toString().split(/\b/g).filter((s) => s.trim().length > 0).length;
+                const charLen = completionItem.insertText.toString().length;
+                API.sendTelemetry(ext, API.TelemetryType.LongUse, tokenLen, charLen);
+            } else if (subtype === "secondary") {
+                API.sendTelemetry(ext, API.TelemetryType.ShortUse, 1, (single as SingleWordCompletion).word.length);
+            }
+        } catch (e) {
+            log(e);
         }
         if (typeof langUtil === "string") {
             langUtil = getInstance(langUtil);
