@@ -26,15 +26,15 @@ export class Syncer<T> {
     /**
      * get
      */
-    public async get(key: number) {
-        let value: T;
+    public async get(key: number): Promise<T | undefined> {
+        let value: T | undefined;
         const _t = Date.now();
         const awaiter = this.awaiters[key];
         if (awaiter == null) {
             let resolved = false;
             // console.log("AIX will go later");
             // AIX will go later
-            const ppp = new Promise<T>((resolve, reject) => {
+            const ppp = new Promise<T | undefined>((resolve, reject) => {
                 const newResolve = (_: T) => {
                     resolved = true;
                     // console.log("ppp will be resolved with " + JSON.stringify(_));

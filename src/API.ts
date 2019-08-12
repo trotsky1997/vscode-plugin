@@ -85,7 +85,7 @@ export async function predict(text: string, ext: string, remainingText: string, 
             },
             timeout: 2000,
         });
-        if (retry && resp && resp.indexOf("err:Conflict") >= 0) {
+        if (retry && resp && resp.indexOf("Conflict") >= 0) {
             console.log("conflict");
             CodeStore.getInstance().invalidateFile(projName, fileID);
             return predict(text, ext, remainingText, lastQueryUUID, fileID, false);
@@ -95,7 +95,7 @@ export async function predict(text: string, ext: string, remainingText: string, 
         }
         return resp;
     } catch (e) {
-        if (e.message && e.message.indexOf("409: Conflict") >= 0) {
+        if (e.message && e.message.indexOf("Conflict") >= 0) {
             CodeStore.getInstance().invalidateFile(projName, fileID);
             return predict(text, ext, remainingText, lastQueryUUID, fileID, false);
         }

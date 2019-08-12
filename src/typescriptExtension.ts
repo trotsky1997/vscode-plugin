@@ -103,6 +103,7 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
             try {
                 const { offsetID } = getReqText(document, position);
                 const sortResults = await syncer.get(offsetID);
+                if (sortResults == null) { return ll; }
                 const items = ll == null ? [] : (Array.isArray(ll) ? ll : ll.items);
                 const { ext, fetchTime } = sortResults;
 
