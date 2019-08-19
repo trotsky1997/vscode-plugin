@@ -92,7 +92,7 @@ export async function activateCPP(context: vscode.ExtensionContext) {
                 if (sortResults == null) { return ll; }
                 const items = Array.isArray(ll) ? ll : ll.items;
                 const { ext, fetchTime } = sortResults;
-                mergeSortResult(items, sortResults, document, STAR_DISPLAY.LEFT);
+                mergeSortResult(items, sortResults, document, "cpp", ext, STAR_DISPLAY.LEFT);
                 if (!token.isCancellationRequested) {
                     sendPredictTelemetryShort(ext, fetchTime, sortResults);
                 }

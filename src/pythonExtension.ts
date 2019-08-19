@@ -83,7 +83,7 @@ export function activatePython(context: vscode.ExtensionContext) {
                 const items = Array.isArray(ll) ? ll : ll.items;
                 const { ext, fetchTime } = sortResults;
 
-                mergeSortResult(items, sortResults, document, STAR_DISPLAY.LEFT);
+                mergeSortResult(items, sortResults, document, "python", ext, STAR_DISPLAY.LEFT);
                 if (!token.isCancellationRequested) {
                     sendPredictTelemetryShort(ext, fetchTime, sortResults);
                 }

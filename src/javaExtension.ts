@@ -65,7 +65,7 @@ export function activateJava(context: vscode.ExtensionContext) {
                     });
                     const { longResults, sortResults, fetchTime } = await fetchPromise;
                     const l = await redhatPromise as vscode.CompletionItem[];
-                    mergeSortResult(l, sortResults, document);
+                    mergeSortResult(l, sortResults, document, "java", ext);
                     longResults.push(...l);
                     if (!token.isCancellationRequested) {
                         sendPredictTelemetryLong(ext, fetchTime, longResults);

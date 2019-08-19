@@ -378,12 +378,15 @@ export async function JSHooker(aixHookedString: string, distjsPath: string, exte
     return false;
 }
 
-export function mergeSortResult(l: vscode.CompletionItem[], sortResults: SortResult, document: vscode.TextDocument, starDisplay = STAR_DISPLAY.LEFT) {
+export function mergeSortResult(l: vscode.CompletionItem[], sortResults: SortResult, document: vscode.TextDocument, lang: string, ext: string, starDisplay = STAR_DISPLAY.LEFT) {
     if (sortResults == null) { return; }
+    if (l.length === 0) {
+        l.push(...formatSortData(sortResults, getInstance(lang), document, ext));
+    }
     const telemetryCommand: vscode.Command = {
         title: "AiXTelemetry",
         command: "aiXcoder.insert",
-        arguments: ["use", "secondary", getInstance("java"), document],
+        arguments: [ext, "secondary", getInstance(lang), document],
     };
     let insertedRank = 1;
     for (const single of sortResults.list) {

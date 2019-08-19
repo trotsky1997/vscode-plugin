@@ -1,6 +1,15 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.1.12] -
+### Added
+
+### Changed
+- 更少出现"no suggestions"。
+
+### Fixed
+- 修复了if后面缺空格的问题。
+
 ## [0.1.11] -2019-08-12
 ### Added
 

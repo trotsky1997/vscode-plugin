@@ -45,6 +45,7 @@ export class CppLangUtil extends LangUtil {
         if (left === "<ENTER>" || right === "<ENTER>") { return false; }
         if (left === "(" || right === ")") { return false; }
         if (left === "[" || right === "]") { return false; }
+        if (left === "for" || left === "while" || left === "if") { return true; }
         if (right === "[") { return false; }
         if (left.match(ID_REGEX) && right === "(") { return false; }
         if (right === ";") { return false; }

@@ -89,7 +89,7 @@ export async function activatePhp(context: vscode.ExtensionContext) {
                 const items = Array.isArray(ll) ? ll : ll.items;
                 const { ext, fetchTime } = sortResults;
 
-                mergeSortResult(items, sortResults, document, STAR_DISPLAY.RIGHT);
+                mergeSortResult(items, sortResults, document, "php", ext, STAR_DISPLAY.RIGHT);
                 if (!token.isCancellationRequested) {
                     sendPredictTelemetryShort(ext, fetchTime, sortResults);
                 }
