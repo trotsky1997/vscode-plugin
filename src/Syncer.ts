@@ -1,16 +1,40 @@
+const NOTIFIED =  "__" as any;
+
 export class Syncer<T> {
+    private last: T;
     private awaiters: {
         [key: number]: (T | ((v: T) => void));
     } = {};
+
+    public notify(key: number) {
+        const awaiter = this.awaiters[key];
+        console.log("syncer notify: AiX: resolve " + key + " " + awaiter);
+        if (awaiter === undefined || awaiter === NOTIFIED) {
+            // LSE will go later
+            console.log("syncer notify: LSE will go later");
+            this.awaiters[key] = NOTIFIED;
+            setTimeout(() => {
+                if (awaiter === NOTIFIED) {
+                    delete this.awaiters[key];
+                }
+            }, 10 * 1000);
+        } else if (typeof awaiter === "function" && (awaiter as any).notify) {
+            // LSE went earlier
+            console.log("syncer notify: LSE went earlier");
+            (awaiter as any)();
+        }
+    }
+
     /**
      * put
      */
     public put(key: number, value: T) {
+        this.last = value;
         const awaiter = this.awaiters[key];
-        // console.log("AiX: resolve " + key + " " + awaiter);
-        if (awaiter == null) {
+        // console.log("syncer put: AiX: resolve " + key + " " + awaiter);
+        if (awaiter === undefined || awaiter === NOTIFIED) {
             // LSE will go later
-            // console.log("LSE will go later");
+            // console.log("syncer put: LSE will go later");
             this.awaiters[key] = value;
             setTimeout(() => {
                 if (awaiter === value) {
@@ -19,7 +43,7 @@ export class Syncer<T> {
             }, 10 * 1000);
         } else if (typeof awaiter === "function") {
             // LSE went earlier
-            // console.log("LSE went earlier");
+            // console.log("syncer put: LSE went earlier");
             (awaiter as any)(value);
         }
     }
@@ -30,14 +54,14 @@ export class Syncer<T> {
         let value: T | undefined;
         const _t = Date.now();
         const awaiter = this.awaiters[key];
-        if (awaiter == null) {
+        if (awaiter === undefined || awaiter === NOTIFIED) {
             let resolved = false;
-            // console.log("AIX will go later");
+            console.log("syncer get: AIX will go later");
             // AIX will go later
             const ppp = new Promise<T | undefined>((resolve, reject) => {
                 const newResolve = (_: T) => {
                     resolved = true;
-                    // console.log("ppp will be resolved with " + JSON.stringify(_));
+                    console.log("syncer get: ppp will be resolved with " + JSON.stringify(_));
                     resolve(_);
                     if (this.awaiters[key] === newResolve) {
                         delete this.awaiters[key];
@@ -46,22 +70,35 @@ export class Syncer<T> {
                 this.awaiters[key] = newResolve;
                 setTimeout(() => {
                     if (this.awaiters[key] === newResolve) {
-                        // console.log("clear cache at " + key);
+                        // console.log("syncer get: clear cache at " + key);
                         delete this.awaiters[key];
                     }
                 }, 10 * 1000);
-                setTimeout(() => {
+                const resultWaiter = setTimeout(() => {
                     if (!resolved) {
-                        // console.log("timed out at " + key);
+                        console.log("syncer get: timed out at " + key);
                         resolve();
                         delete this.awaiters[key];
                     }
                 }, 500);
+                if (awaiter !== NOTIFIED) {
+                    newResolve.notify = true;
+                    // wait for notify
+                    console.log("syncer get: not notified " + key);
+                    setTimeout(() => {
+                        if (!resolved) {
+                            console.log("syncer get: notify timed out at " + key);
+                            clearTimeout(resultWaiter);
+                            resolve(this.last);
+                            delete this.awaiters[key];
+                        }
+                    }, 100);
+                }
             });
             value = await ppp;
-            // console.log("ppp is resolved with " + JSON.stringify(value));
+            console.log("syncer get: ppp is resolved with " + JSON.stringify(value));
         } else if (typeof awaiter === "object") {
-            // console.log("AIX went earlier");
+            console.log("syncer get: AIX went earlier");
             // AIX went earlier
             value = awaiter;
         }

@@ -13,9 +13,10 @@ export async function activateCPP(context: vscode.ExtensionContext) {
     const mscpp = vscode.extensions.getExtension("ms-vscode.cpptools");
     const activated = false;
     const syncer = new Syncer<SortResultEx>();
+    let hooked = false;
     if (mscpp) {
         const distjsPath = path.join(mscpp.extensionPath, "dist", "main.js");
-        await JSHooker("/**AiXHooked-2**/", distjsPath, mscpp, "cpp.reload", "cpp.fail", (distjs) => {
+        hooked = await JSHooker("/**AiXHooked-2**/", distjsPath, mscpp, "cpp.reload", "cpp.fail", (distjs) => {
             const handleResultCode = (r: string) => `const aix = require(\"vscode\").extensions.getExtension("${myID}");const api = aix && aix.exports;if(api && api.aixhook){${r}=await api.aixhook(\"cpp\",${r},$1,$2,$3,$4);}`;
             const targetCode = `provideCompletionItems: async \($1, $2, $3, $4\) => { let rr=($5);${handleResultCode("rr")};return rr;}`;
             const sig = /provideCompletionItems:\s*\((\w+),\s*(\w+),\s*(\w+),\s*(\w+)\)\s*=>\s*{\s*return\s+((?:.|\s)+?);\s*}/;
@@ -49,14 +50,13 @@ export async function activateCPP(context: vscode.ExtensionContext) {
             });
         }
     }
-
     const provider = {
         async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, completioContext: vscode.CompletionContext): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
             await _activate();
             const ext = "cpp(Cpp)";
             // log("=====================");
             try {
-                const { longResults, sortResults, offsetID, fetchTime } = await fetchResults(document, position, ext, "cpp", STAR_DISPLAY.LEFT);
+                const { longResults, sortResults, offsetID, fetchTime } = await fetchResults(document, position, ext, "cpp", syncer, STAR_DISPLAY.LEFT);
                 if (mscpp) {
                     syncer.put(offsetID, { ...sortResults, ext, fetchTime });
                 } else {

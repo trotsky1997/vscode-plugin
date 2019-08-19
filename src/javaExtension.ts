@@ -47,7 +47,6 @@ export function activateJava(context: vscode.ExtensionContext) {
             });
         }
     }
-
     const provider = {
         async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, completionContext: vscode.CompletionContext): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
             await _activate();
@@ -82,7 +81,11 @@ export function activateJava(context: vscode.ExtensionContext) {
                 }
                 // log("provideCompletionItems ends");
             } catch (e) {
-                log(e);
+                if (e.message.includes("command 'java.execute.workspaceCommand' not found")) {
+                    log(localize("java.redhat.loading"));
+                } else {
+                    log(e);
+                }
             }
         },
         resolveCompletionItem(): vscode.ProviderResult<vscode.CompletionItem> {

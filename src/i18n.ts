@@ -142,6 +142,10 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "en": "AiXCoder requires a reload to integrate with JavaScript/TypeScript extension.",
         "zh-cn": "AiXCoder需要重新加载以便与 JavaScript/TypeScript 集成。",
     },
+    "java.redhat.loading": {
+        "en": "redhat.java extension is still being loaded, please wait...",
+        "zh-cn": "redhat.java 插件还在加载中，请稍后...",
+    },
 };
 export function localize(key: string, ...params: any[]) {
     return localizeMessages[key] ? util.format(localizeMessages[key][vscode.env.language] || localizeMessages[key].en, ...params) : key;

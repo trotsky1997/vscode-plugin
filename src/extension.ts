@@ -14,6 +14,7 @@ import log from "./logger";
 import { activatePhp } from "./phpExtension";
 import Preference from "./Preference";
 import { activatePython } from "./pythonExtension";
+import { Syncer } from "./Syncer";
 import { activateTypeScript } from "./typescriptExtension";
 import { SafeStringUtil } from "./utils/SafeStringUtil";
 
@@ -299,9 +300,10 @@ export async function fetchResults2(text: string, remainingText: string, fileNam
     }
 }
 
-export async function fetchResults(document: vscode.TextDocument, position: vscode.Position, ext: string, lang: string, starDisplay: STAR_DISPLAY = STAR_DISPLAY.LEFT) {
+export async function fetchResults<T>(document: vscode.TextDocument, position: vscode.Position, ext: string, lang: string, syncer?: Syncer<T>, starDisplay: STAR_DISPLAY = STAR_DISPLAY.LEFT) {
     const startTime = Date.now();
     const { text, remainingText, offsetID } = getReqText(document, position);
+    if (syncer) { syncer.notify(offsetID); }
     const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, ext, lang, document, starDisplay);
     log("< fetch took " + (Date.now() - startTime) + "ms");
     return {

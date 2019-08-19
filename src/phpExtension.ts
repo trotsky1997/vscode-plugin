@@ -15,6 +15,7 @@ export async function activatePhp(context: vscode.ExtensionContext) {
     const syncer = new Syncer<SortResultEx>();
 
     let activated = false;
+    let hooked = false;
     async function _activate() {
         if (activated) {
             return;
@@ -23,7 +24,7 @@ export async function activatePhp(context: vscode.ExtensionContext) {
         if (msphp) {
             log(`AiX: ${msphpId} detected`);
             const distjsPath = path.join(msphp.extensionPath, "dist", "phpMain.js");
-            await JSHooker("/**AiXHooked-1**/", distjsPath, msphp, "php.reload.msphp", "php.fail.msphp", (distjs) => {
+            hooked = await JSHooker("/**AiXHooked-1**/", distjsPath, msphp, "php.reload.msphp", "php.fail.msphp", (distjs) => {
                 const handleResultCode = (r: string) => `const aix = require(\"vscode\").extensions.getExtension("${myID}");const api = aix && aix.exports;if(api && api.aixhook){${r}=await api.aixhook(\"php\",${r},$1,$2,$3,$4,\"basic\");}`;
                 const newProvideCompletionItems = `async provideCompletionItems($1,$2,$3,$4){let rr=await this.provideCompletionItems2($1,$2,$3,$4);${handleResultCode("rr")};return rr;}`;
                 distjs = distjs.replace(/provideCompletionItems\((\w+),(\w+),(\w+),(\w+)\){/, `${newProvideCompletionItems}provideCompletionItems2($1,$2,$3,$4){`);
@@ -46,14 +47,13 @@ export async function activatePhp(context: vscode.ExtensionContext) {
             });
         }
     }
-
     const provider = {
         async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, completionContext: vscode.CompletionContext): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
             await _activate();
             log("=====================");
             try {
                 const ext = "php(Php)";
-                const { longResults, sortResults, offsetID, fetchTime } = await fetchResults(document, position, ext, "php", STAR_DISPLAY.RIGHT);
+                const { longResults, sortResults, offsetID, fetchTime } = await fetchResults(document, position, ext, "php", syncer, STAR_DISPLAY.RIGHT);
 
                 if (msphp || intelephense) {
                     syncer.put(offsetID, { ...sortResults, ext, fetchTime });
