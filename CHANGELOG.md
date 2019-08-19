@@ -1,6 +1,18 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.1.12] - 2019-08-20
+### Added
+- 更好的支持react语法。
+- 支持了vue语法。
+
+### Changed
+- 更少出现"no suggestions"。
+
+### Fixed
+- 修复了if后面缺空格的问题。
+- 修复了在连续快速输入的情况下，提示会慢甚至不出现的问题。
+
 ## [0.1.11] -2019-08-12
 ### Added
 

@@ -2,7 +2,7 @@
     "name": "aixcoder",
     "displayName": "aiXcoder",
     "description": "aiXcoder code suggestion",
-    "version": "0.1.11",
+    "version": "0.1.12",
     "publisher": "nnthink",
     "repository": {
         "url": "https://github.com/felixhao28/vscode-plugin"
@@ -23,7 +23,8 @@
         "onLanguage:typescript",
         "onLanguage:typescriptreact",
         "onLanguage:javascript",
-        "onLanguage:javascriptreact"
+        "onLanguage:javascriptreact",
+        "onLanguage:vue"
     ],
     "main": "./dist/extension",
     "contributes": {

@@ -25,6 +25,7 @@ class Logger {
                 API.sendErrorTelemetry(s);
             }
         }
+        console.log(s);
         this.channel.appendLine(s);
     }
 
