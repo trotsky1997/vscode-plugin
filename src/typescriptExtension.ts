@@ -136,51 +136,54 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "vue", scheme: "file" }, vueprovider, ...triggerCharacters));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "vue", scheme: "untitled" }, vueprovider, ...triggerCharacters));
 
-    const reactprovider = {
-        async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, completionContext: vscode.CompletionContext): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
-            await _activate();
-            log("===========vue==========");
-            try {
-                const ext = "javascript(Javascript)";
-                const startTime = Date.now();
-                const { text: t, remainingText, offsetID } = getReqText(document, position);
-                let text = t;
-                if (t.match(/<\s*([a-zA-Z_$][a-zA-Z_$0-9]*)[^>]*>(.(?!\1))*?$/s)) {
-                    // inside react tag. Using regex to match react tags is faulty.
-                    text = "";
-                }
-                if (text.length === 0) {
-                    if (msts && hooked) {
-                        syncer.put(offsetID, null);
+    function reactproviderMaker(ext: string, lang: string) {
+        return {
+            async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, completionContext: vscode.CompletionContext): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
+                await _activate();
+                log("===========vue==========");
+                try {
+                    const startTime = Date.now();
+                    const { text: t, remainingText, offsetID } = getReqText(document, position);
+                    let text = t;
+                    if (t.match(/<\s*([a-zA-Z_$][a-zA-Z_$0-9]*)[^>]*>(.(?!\1))*?$/s)) {
+                        // inside react tag. Using regex to match react tags is faulty.
+                        text = "";
                     }
-                    return [];
+                    if (text.length === 0) {
+                        if (msts && hooked) {
+                            syncer.put(offsetID, null);
+                        }
+                        return [];
+                    }
+                    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, ext, lang, document, STAR_DISPLAY.LEFT);
+                    log("< fetch took " + (Date.now() - startTime) + "ms");
+                    if (msts && hooked) {
+                        syncer.put(offsetID, { ...sortResults, ext, fetchTime });
+                    } else {
+                        const sortLabels = formatSortData(sortResults, getInstance(lang), document, ext);
+                        longResults.push(...sortLabels);
+                    }
+                    if (!token.isCancellationRequested) {
+                        sendPredictTelemetryLong(ext, fetchTime, longResults);
+                    }
+                    log("provideCompletionItems vue of " + ext + " ends " + longResults.length);
+                    return new vscode.CompletionList(longResults, true);
+                } catch (e) {
+                    log(e);
                 }
-                const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, ext, "ts", document, STAR_DISPLAY.LEFT);
-                log("< fetch took " + (Date.now() - startTime) + "ms");
-                if (msts && hooked) {
-                    syncer.put(offsetID, { ...sortResults, ext, fetchTime });
-                } else {
-                    const sortLabels = formatSortData(sortResults, getInstance("ts"), document, ext);
-                    longResults.push(...sortLabels);
-                }
-                if (!token.isCancellationRequested) {
-                    sendPredictTelemetryLong(ext, fetchTime, longResults);
-                }
-                log("provideCompletionItems vue of " + ext + " ends " + longResults.length);
-                return new vscode.CompletionList(longResults, true);
-            } catch (e) {
-                log(e);
-            }
-        },
-        resolveCompletionItem(): vscode.ProviderResult<vscode.CompletionItem> {
-            return null;
-        },
-    };
+            },
+            resolveCompletionItem(): vscode.ProviderResult<vscode.CompletionItem> {
+                return null;
+            },
+        };
+    }
 
-    context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "javascriptreact", scheme: "file" }, reactprovider, ...triggerCharacters));
-    context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "javascriptreact", scheme: "untitled" }, reactprovider, ...triggerCharacters));
-    context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "typescriptreact", scheme: "file" }, reactprovider, ...triggerCharacters));
-    context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "typescriptreact", scheme: "untitled" }, reactprovider, ...triggerCharacters));
+    const reactJsProvider = reactproviderMaker("javascript(Javascript)", "js");
+    const reactTsProvider = reactproviderMaker("typescript(Typescript)", "ts");
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "javascriptreact", scheme: "file" }, reactJsProvider, ...triggerCharacters));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "javascriptreact", scheme: "untitled" }, reactJsProvider, ...triggerCharacters));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "typescriptreact", scheme: "file" }, reactTsProvider, ...triggerCharacters));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "typescriptreact", scheme: "untitled" }, reactTsProvider, ...triggerCharacters));
     return {
         async aixHook(ll: vscode.CompletionList | vscode.CompletionItem[], document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, completionContext: vscode.CompletionContext): Promise<vscode.CompletionList | vscode.CompletionItem[]> {
             try {
