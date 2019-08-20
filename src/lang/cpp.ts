@@ -42,6 +42,8 @@ export class CppLangUtil extends LangUtil {
         if (left === "" || right === "") { return false; }
         if (left === "::" || right === "::") { return false; }
         if (left === "." || right === ".") { return false; }
+        if (right === ",") { return false; }
+        if (right === "<str>" || right === "<int>") { return true; }
         if (left === "<ENTER>" || right === "<ENTER>") { return false; }
         if (left === "(" || right === ")") { return false; }
         if (left === "[" || right === "]") { return false; }

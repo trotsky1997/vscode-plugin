@@ -72,6 +72,7 @@ export class LangUtil {
         const right = tokens[nextI];
         if (left === "" || right === "") { return false; }
         if (right === ",") { return false; }
+        if (right === "<str>" || right === "<int>") { return true; }
         if (left === "." || right === ".") { return false; }
         if (left === "<ENTER>" || right === "<ENTER>") { return false; }
         if (left === "(" || right === ")") { return false; }
