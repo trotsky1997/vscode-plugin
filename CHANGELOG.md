@@ -12,6 +12,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 ### Fixed
 - 修复了if后面缺空格的问题。
 - 修复了在连续快速输入的情况下，提示会慢甚至不出现的问题。
+- 在字符串和数字前面加上了空格。
 
 ## [0.1.11] -2019-08-12
 ### Added
