@@ -162,6 +162,7 @@ export async function sendTelemetry(ext: string, type: TelemetryType, tokenNum =
                 method: "post",
                 url: updateURL,
                 form: {
+                    type,
                     area: ext,
                     uuid: Preference.uuid,
                     plugin_version: myVersion,

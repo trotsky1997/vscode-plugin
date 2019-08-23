@@ -1,6 +1,14 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.1.13] - 2019-08-20
+### Added
+
+### Changed
+
+### Fixed
+- 修复了一个收集用户使用信息漏传信息类型的bug
+
 ## [0.1.12] - 2019-08-20
 ### Added
 - 更好的支持react语法。
