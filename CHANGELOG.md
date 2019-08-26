@@ -7,7 +7,9 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 ### Changed
 
 ### Fixed
-- 修复了一个收集用户使用信息漏传信息类型的bug
+- 修复了一个收集用户使用信息漏传信息类型的bug。
+- 在数字和[之间加入了空格。
+- (C++)修复了一个cirular json serialization的问题。
 
 ## [0.1.12] - 2019-08-20
 ### Added

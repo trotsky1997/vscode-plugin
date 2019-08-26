@@ -459,6 +459,12 @@ export function mergeSortResult(l: vscode.CompletionItem[], sortResults: SortRes
     if (sortResults.longResults) {
         l.push(...sortResults.longResults);
     }
+    for (const item of l) {
+        if (item.command && item.command.arguments && item.command.arguments.length > 5) {
+            item.command.arguments[5] = {...item.command.arguments[5]};
+            delete item.command.arguments[5].command;
+        }
+    }
 }
 
 const lastModifedTime: { [uri: string]: number } = {};

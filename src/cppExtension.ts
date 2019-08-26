@@ -76,10 +76,7 @@ export async function activateCPP(context: vscode.ExtensionContext) {
             return null;
         },
     };
-    const triggerCharacters = ["="];
-    if (!msintellicode) {
-        triggerCharacters.push(".");
-    }
+    const triggerCharacters = ["=", "."];
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "c", scheme: "file" }, provider, ...triggerCharacters));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "c", scheme: "untitled" }, provider, ...triggerCharacters));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "cpp", scheme: "file" }, provider, ...triggerCharacters));
@@ -87,6 +84,7 @@ export async function activateCPP(context: vscode.ExtensionContext) {
     return {
         async aixHook(ll: vscode.CompletionList | vscode.CompletionItem[], document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, completioContext: vscode.CompletionContext): Promise<vscode.CompletionList | vscode.CompletionItem[]> {
             try {
+                // return ll;
                 const { offsetID } = getReqText(document, position);
                 const sortResults = await syncer.get(offsetID);
                 if (sortResults == null) { return ll; }
