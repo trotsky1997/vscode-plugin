@@ -44,7 +44,7 @@ export function compareVersion(v1: any, v2: any) {
 export async function showInformationMessage(message: string, ...items: string[]): Promise<string | undefined> {
     if (!Preference.context.globalState.get("hide:" + message)) {
         const localizedItems = [];
-        for (const item in items) {
+        for (const item of items) {
             localizedItems.push(localize(item));
         }
         const select = await vscode.window.showInformationMessage(localize(message), ...localizedItems, localize("nevershowagain"));

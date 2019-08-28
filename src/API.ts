@@ -107,7 +107,7 @@ export async function predict(text: string, ext: string, remainingText: string, 
 export function getTrivialLiterals(ext: string) {
     return myRequest({
         method: "get",
-        url: "trivial_literals?uuid=" + Preference.uuid + "&ext=" + ext,
+        url: "trivial_literals?uuid=" + encodeURIComponent(Preference.uuid) + "&ext=" + ext,
         timeout: 2000,
     });
 }
