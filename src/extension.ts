@@ -17,6 +17,7 @@ import { activatePython } from "./pythonExtension";
 import { Syncer } from "./Syncer";
 import { activateTypeScript } from "./typescriptExtension";
 import { SafeStringUtil } from "./utils/SafeStringUtil";
+import * as path from "path";
 
 function escapeRegExp(s: string) {
     return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
@@ -331,55 +332,107 @@ export function sendPredictTelemetryLong(ext: string, fetchTime: number, longRes
 }
 
 export const onDeactivateHandlers = [];
-
+let actualIDEPaths: string[] = [];
 export async function JSHooker(aixHookedString: string, distjsPath: string, extension: vscode.Extension<any>, reloadMsg: string, failMsg: string, hookCallback: (distjs: string) => string) {
     let aixHooked = false;
     let distjs: string;
     distjs = await fs.promises.readFile(distjsPath, "utf-8");
     aixHooked = distjs.startsWith(aixHookedString);
-    if (!aixHooked) {
-        log(`Hooking ${distjsPath}`);
-        try {
-            // restore backup file
-            await fs.promises.copyFile(distjsPath + ".bak", distjsPath);
-            distjs = await fs.promises.readFile(distjsPath, "utf-8");
-        } catch (e) {
-            // create backup file
-            await fs.promises.copyFile(distjsPath, distjsPath + ".bak");
-        }
-        try {
-            distjs = aixHookedString + distjs;
-            distjs = hookCallback(distjs);
-            try {
-                await fs.promises.writeFile(distjsPath, distjs, "utf-8");
-            } catch (e) {
-                console.log(e);
-                const errMsg = e.message;
-                if (errMsg.indexOf("operation not permitted") >= 0 && errMsg.indexOf("EPERM") >= 0) {
-                    vscode.window.showWarningMessage(localize("hookFailPerm"));
-                } else {
-                    vscode.window.showWarningMessage(localize("hookFailOther", errMsg));
-                }
-                return false;
+    if (aixHooked) {
+        return true;
+    }
+
+    if (distjsPath.indexOf("/private/var/folders") >= 0) {
+        // mac temporary path, need to find actual "Visual Studio Code.app" path
+        const relPath = distjsPath.substring(distjsPath.indexOf(".app/") + ".app/".length);
+        async function actualHook() {
+            for (const idePath of actualIDEPaths) {
+                const realDistJsPath = path.join(idePath, relPath);
+                await JSHooker(aixHookedString, realDistJsPath, extension, reloadMsg, failMsg, hookCallback);
             }
-            log(`${distjsPath} hooked`);
-            if (extension.isActive) {
-                vscode.window.showWarningMessage(localize(reloadMsg), localize("reload")).then((select) => {
-                    if (select === localize("reload")) {
-                        vscode.commands.executeCommand("workbench.action.reloadWindow");
+        }
+        if (actualIDEPaths.length == 0) {
+            try {
+                // try aiXcoder installer paths.json
+                const pathsJson = fs.readFileSync(path.join(process.env.HOME, "Library", "Application Support", "aiXcoder", "installer", "paths.json"), 'utf-8');
+                const pathsObj: object = JSON.parse(pathsJson);
+                let found = false;
+                for (const idePath in pathsObj) {
+                    if (pathsObj.hasOwnProperty(idePath)) {
+                        if (pathsObj[idePath].idetype === "vscode" && pathsObj[idePath].idePath.indexOf("/private/var/folders") < 0) {
+                            found = true;
+                            actualIDEPaths.push(pathsObj[idePath].idePath);
+                        }
+                    }
+                }
+                if (!found) {
+                    throw "not found";
+                }
+                await actualHook();
+            } catch (e) {
+                // on any error, prompt to choose the location
+                vscode.window.showWarningMessage(localize("locateIDE"), localize("locate")).then(async (select) => {
+                    if (select === localize("locate")) {
+                        const idePaths = await vscode.window.showOpenDialog({
+                            canSelectFiles: true,
+                            canSelectFolders: false,
+                            canSelectMany: false,
+                            filters: {
+                                'VS Code': ['app']
+                            },
+                            openLabel: localize("locateDialog")
+                        });
+                        if (idePaths) {
+                            actualIDEPaths.push(...idePaths.map(_ => _.fsPath));
+                            await actualHook();
+                        }
                     }
                 });
-            } else {
-                return true;
-            }
-        } catch (e) {
-            console.log(e);
-            if (e instanceof SafeStringUtil.NotFoundError) {
-                await vscode.window.showWarningMessage(localize(failMsg));
             }
         }
-    } else {
-        return true;
+        return false;
+    }
+
+    log(`Hooking ${distjsPath}`);
+
+    try {
+        // restore backup file
+        await fs.promises.copyFile(distjsPath + ".bak", distjsPath);
+        distjs = await fs.promises.readFile(distjsPath, "utf-8");
+    } catch (e) {
+        // create backup file
+        await fs.promises.copyFile(distjsPath, distjsPath + ".bak");
+    }
+    try {
+        distjs = aixHookedString + distjs;
+        distjs = hookCallback(distjs);
+        try {
+            await fs.promises.writeFile(distjsPath, distjs, "utf-8");
+        } catch (e) {
+            console.log(e);
+            const errMsg = e.message;
+            if (errMsg.indexOf("operation not permitted") >= 0 && errMsg.indexOf("EPERM") >= 0) {
+                vscode.window.showWarningMessage(localize("hookFailPerm"));
+            } else {
+                vscode.window.showWarningMessage(localize("hookFailOther", errMsg));
+            }
+            return false;
+        }
+        log(`${distjsPath} hooked`);
+        if (extension.isActive) {
+            vscode.window.showWarningMessage(localize(reloadMsg), localize("reload")).then((select) => {
+                if (select === localize("reload")) {
+                    vscode.commands.executeCommand("workbench.action.reloadWindow");
+                }
+            });
+        } else {
+            return true;
+        }
+    } catch (e) {
+        console.log(e);
+        if (e instanceof SafeStringUtil.NotFoundError) {
+            await vscode.window.showWarningMessage(localize(failMsg));
+        }
     }
     return false;
 }
@@ -465,7 +518,7 @@ export function mergeSortResult(l: vscode.CompletionItem[], sortResults: SortRes
     }
     for (const item of l) {
         if (item.command && item.command.arguments && item.command.arguments.length > 5) {
-            item.command.arguments[5] = {...item.command.arguments[5]};
+            item.command.arguments[5] = { ...item.command.arguments[5] };
             delete item.command.arguments[5].command;
         }
     }

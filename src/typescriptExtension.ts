@@ -89,7 +89,6 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
     const vueprovider = {
         async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, completionContext: vscode.CompletionContext): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
             await _activate();
-            log("===========vue==========");
             try {
                 let ext = vscode.workspace.getConfiguration().get("aiXcoder.model.javascript") as string;
                 const startTime = Date.now();
@@ -97,7 +96,7 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
                 let text: string;
                 const lastScriptTag = Math.max(t.lastIndexOf("<script "), t.lastIndexOf("<script>"));
                 if (lastScriptTag < 0) {
-                    text = t;
+                    text = "";
                 } else {
                     if (t.startsWith("<script lang=\"ts\"", lastScriptTag) || t.startsWith("<script lang='ts'", lastScriptTag) || t.startsWith("<script lang=\"typescript\"", lastScriptTag) || t.startsWith("<script lang='typescript'", lastScriptTag)) {
                         ext = vscode.workspace.getConfiguration().get("aiXcoder.model.typescript") as string;
@@ -135,12 +134,13 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
     };
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "vue", scheme: "file" }, vueprovider, ...triggerCharacters));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "vue", scheme: "untitled" }, vueprovider, ...triggerCharacters));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "html", scheme: "file" }, vueprovider, ...triggerCharacters));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "html", scheme: "untitled" }, vueprovider, ...triggerCharacters));
 
     function reactproviderMaker(ext: string, lang: string) {
         return {
             async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, completionContext: vscode.CompletionContext): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
                 await _activate();
-                log("===========vue==========");
                 try {
                     const startTime = Date.now();
                     const { text: t, remainingText, offsetID } = getReqText(document, position);
@@ -184,6 +184,7 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "javascriptreact", scheme: "untitled" }, reactJsProvider, ...triggerCharacters));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "typescriptreact", scheme: "file" }, reactTsProvider, ...triggerCharacters));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "typescriptreact", scheme: "untitled" }, reactTsProvider, ...triggerCharacters));
+
     return {
         async aixHook(ll: vscode.CompletionList | vscode.CompletionItem[], document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, completionContext: vscode.CompletionContext): Promise<vscode.CompletionList | vscode.CompletionItem[]> {
             try {
