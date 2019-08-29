@@ -22,7 +22,7 @@ export function activatePython(context: vscode.ExtensionContext) {
         if (mspythonExtension) {
             log("AiX: ms-python.python detected");
             const distjsPath = path.join(mspythonExtension.extensionPath, "out", "client", "extension.js");
-            hooked = await JSHooker("/**AiXHooked-10**/", distjsPath, mspythonExtension, "python.reload", "python.fail", (distjs) => {
+            hooked = await JSHooker("/**AiXHooked-16**/", distjsPath, mspythonExtension, "python.reload", "python.fail", (distjs) => {
                 // inject ms engine
                 const handleResultCode = (r: string) => `const aix = require(\"vscode\").extensions.getExtension("${myID}");const api = aix && aix.exports;if(api && api.aixhook){r = await api.aixhook("python",${r},$1,$2,$3,$4);}`;
                 const replaceTarget = `middleware:{provideCompletionItem:async($1,$2,$3,$4,$5)=>{$6;let rr=$7;${handleResultCode("rr")};return rr;}`;
@@ -33,7 +33,10 @@ export function activatePython(context: vscode.ExtensionContext) {
                 const pythonCompletionItemProviderEnd = SafeStringUtil.indexOf(distjs, pythonCompletionItemProviderSignature);
                 const provideCompletionItemsStart = SafeStringUtil.lastIndexOf(distjs, "async provideCompletionItems(", pythonCompletionItemProviderEnd);
                 const provideCompletionItemsEnd = SafeStringUtil.indexOf(distjs, "return r}", provideCompletionItemsStart);
-                distjs = SafeStringUtil.substring(distjs, 0, provideCompletionItemsEnd) + handleResultCode("r") + SafeStringUtil.substring(distjs, provideCompletionItemsEnd);
+                const provideCompletionItemsFunc = distjs.substring(provideCompletionItemsStart, provideCompletionItemsEnd);
+                const jediHandleResultCode = (r: string, e: string, t: string, n: string) => `const aix = require(\"vscode\").extensions.getExtension("${myID}");const api = aix && aix.exports;if(api && api.aixhook){return api.aixhook("python",${r},${e},${t},${n});}`;
+                const m = provideCompletionItemsFunc.match(/async\s+provideCompletionItems\s*\((\w+),\s*(\w+),\s*(\w+)/);
+                distjs = SafeStringUtil.substring(distjs, 0, provideCompletionItemsEnd) + jediHandleResultCode("r", m[1], m[2], m[3]) + SafeStringUtil.substring(distjs, provideCompletionItemsEnd);
                 return distjs;
             });
         } else {
