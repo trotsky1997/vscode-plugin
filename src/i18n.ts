@@ -146,6 +146,18 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "en": "redhat.java extension is still being loaded, please wait...",
         "zh-cn": "redhat.java 插件还在加载中，请稍后...",
     },
+    "locateIDE": {
+        "en": "Visual Studio Code is launched from a temporary folder. Please locate the actual \"Visual Studio Code.app\" application for aiXcoder to integrate with.",
+        "zh-cn": "Visual Studio Code是从一个临时目录启动的。请定位Visual Studio Code.app的实际位置以便aiXcoder进行集成。",
+    },
+    "locate": {
+        "en": "Locate...",
+        "zh-cn": "定位...",
+    },
+    "locateDialog": {
+        "en": "Locate",
+        "zh-cn": "定位...",
+    },
 };
 export function localize(key: string, ...params: any[]) {
     return localizeMessages[key] ? util.format(localizeMessages[key][vscode.env.language] || localizeMessages[key].en, ...params) : key;

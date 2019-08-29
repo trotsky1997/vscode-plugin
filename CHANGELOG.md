@@ -12,6 +12,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 - (C++)修复了一个cirular json serialization的问题。
 - 修复了弹出的消息窗口中按钮文本的格式错误。
 - (Python)修复了Mac上使用Jedi引擎时无法提示的bug。
+- 修复了导致无法在Mac上显示排序结果的bug。
 
 ## [0.1.12] - 2019-08-20
 ### Added
