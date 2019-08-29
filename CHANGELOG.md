@@ -1,7 +1,7 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
-## [0.1.13] - 2019-08-20
+## [0.1.13] - 2019-08-29
 ### Added
 
 ### Changed
@@ -11,6 +11,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 - 在数字和[之间加入了空格。
 - (C++)修复了一个cirular json serialization的问题。
 - 修复了弹出的消息窗口中按钮文本的格式错误。
+- (Python)修复了Mac上使用Jedi引擎时无法提示的bug。
 
 ## [0.1.12] - 2019-08-20
 ### Added
