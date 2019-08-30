@@ -95,7 +95,8 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
                 const { text: t, remainingText, offsetID } = getReqText(document, position);
                 let text: string;
                 const lastScriptTag = Math.max(t.lastIndexOf("<script "), t.lastIndexOf("<script>"));
-                if (lastScriptTag < 0) {
+                const lastScriptEndTag = Math.max(t.lastIndexOf("</script "), t.lastIndexOf("</script>"));
+                if (lastScriptTag < 0 || lastScriptEndTag > lastScriptTag) {
                     text = "";
                 } else {
                     if (t.startsWith("<script lang=\"ts\"", lastScriptTag) || t.startsWith("<script lang='ts'", lastScriptTag) || t.startsWith("<script lang=\"typescript\"", lastScriptTag) || t.startsWith("<script lang='typescript'", lastScriptTag)) {
