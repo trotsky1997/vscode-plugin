@@ -8,6 +8,7 @@ export class JavaScriptLangUtil extends LangUtil {
         if (left === "" || right === "") { return false; }
         if (left === "." || right === ".") { return false; }
         if (right === ",") { return false; }
+        if (left === "==" || right === "===") { return true; }
         if (left === "<ENTER>" || right === "<ENTER>") { return false; }
         if (left === "(" || right === ")") { return false; }
         if (left === "[" || right === "]") { return false; }

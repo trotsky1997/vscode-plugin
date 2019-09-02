@@ -1,6 +1,15 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.1.14] - 2019-09-02
+### Added
+
+### Changed
+
+### Fixed
+- 修复了HTML script标签内的预测没有短结果的问题。
+- 修复了等号附近的空格问题。
+
 ## [0.1.13] - 2019-08-29
 ### Added
 
