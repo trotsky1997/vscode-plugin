@@ -152,7 +152,7 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
         async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, completionContext: vscode.CompletionContext): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
             await _activate();
             try {
-                let ext = "javascript(Javascript)";
+                let ext = vscode.workspace.getConfiguration().get("aiXcoder.model.javascript") as string;
                 const startTime = Date.now();
                 const { text: t, remainingText, offsetID } = getReqText(document, position);
                 let text: string;
@@ -162,7 +162,7 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
                     text = "";
                 } else {
                     if (t.startsWith("<script lang=\"ts\"", lastScriptTag) || t.startsWith("<script lang='ts'", lastScriptTag) || t.startsWith("<script lang=\"typescript\"", lastScriptTag) || t.startsWith("<script lang='typescript'", lastScriptTag)) {
-                        ext = "typescript(Typescript)";
+                        ext = vscode.workspace.getConfiguration().get("aiXcoder.model.typescript") as string;
                     }
                     const lastScriptTagEnd = t.indexOf(">", lastScriptTag) + 1;
                     text = lastScriptTagEnd === 0 ? "" : t.substring(lastScriptTagEnd);
