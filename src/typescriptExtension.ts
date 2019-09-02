@@ -28,6 +28,20 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
         });
     }
 
+    const mshtmlId = "vscode.html-language-features";
+    const mshtml = vscode.extensions.getExtension(mshtmlId);
+    let htmlhooked = false;
+    if (mshtml) {
+        log(`AiX: ${mshtmlId} detected`);
+        const distjsPath = path.join(mshtml.extensionPath, "client", "dist", "htmlMain.js");
+        htmlhooked = await JSHooker("/**AiXHooked-2**/", distjsPath, mshtml, "js.reload.msts", "js.fail.msts", (distjs) => {
+            const handleResultCode = (r: string) => `const aix = require(\"vscode\").extensions.getExtension("${myID}");const api = aix && aix.exports; if(api && api.aixhook){${r}=await api.aixhook(\"typescript\",${r},e,t,r,n);}`;
+            const newProvideCompletionItems = `middleware:{async provideCompletionItem(e,t,r,n,o){let rr=o(e,t,r,n);${handleResultCode("rr")}return rr;}}`;
+            distjs = distjs.replace("initializationOptions:{embeddedLanguages:", `${newProvideCompletionItems},initializationOptions:{embeddedLanguages:`);
+            return distjs;
+        });
+    }
+
     const jsprovider = {
         async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, completionContext: vscode.CompletionContext): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
             await _activate();
@@ -133,10 +147,58 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
             return null;
         },
     };
+
+    const htmlprovider = {
+        async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, completionContext: vscode.CompletionContext): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
+            await _activate();
+            try {
+                let ext = "javascript(Javascript)";
+                const startTime = Date.now();
+                const { text: t, remainingText, offsetID } = getReqText(document, position);
+                let text: string;
+                const lastScriptTag = Math.max(t.lastIndexOf("<script "), t.lastIndexOf("<script>"));
+                const lastScriptEndTag = Math.max(t.lastIndexOf("</script "), t.lastIndexOf("</script>"));
+                if (lastScriptTag < 0 || lastScriptEndTag > lastScriptTag) {
+                    text = "";
+                } else {
+                    if (t.startsWith("<script lang=\"ts\"", lastScriptTag) || t.startsWith("<script lang='ts'", lastScriptTag) || t.startsWith("<script lang=\"typescript\"", lastScriptTag) || t.startsWith("<script lang='typescript'", lastScriptTag)) {
+                        ext = "typescript(Typescript)";
+                    }
+                    const lastScriptTagEnd = t.indexOf(">", lastScriptTag) + 1;
+                    text = lastScriptTagEnd === 0 ? "" : t.substring(lastScriptTagEnd);
+                }
+                if (text.length === 0) {
+                    if (mshtml && htmlhooked) {
+                        syncer.put(offsetID, null);
+                    }
+                    return [];
+                }
+                log(text);
+                const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, ext, "ts", document, STAR_DISPLAY.LEFT);
+                log("< fetch took " + (Date.now() - startTime) + "ms");
+                if (mshtml && htmlhooked) {
+                    syncer.put(offsetID, { ...sortResults, ext, fetchTime });
+                } else {
+                    const sortLabels = formatSortData(sortResults, getInstance("ts"), document, ext);
+                    longResults.push(...sortLabels);
+                }
+                if (!token.isCancellationRequested) {
+                    sendPredictTelemetryLong(ext, fetchTime, longResults);
+                }
+                log("provideCompletionItems html of " + ext + " ends " + longResults.length);
+                return new vscode.CompletionList(longResults, true);
+            } catch (e) {
+                log(e);
+            }
+        },
+        resolveCompletionItem(): vscode.ProviderResult<vscode.CompletionItem> {
+            return null;
+        },
+    };
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "vue", scheme: "file" }, vueprovider, ...triggerCharacters));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "vue", scheme: "untitled" }, vueprovider, ...triggerCharacters));
-    context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "html", scheme: "file" }, vueprovider, ...triggerCharacters));
-    context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "html", scheme: "untitled" }, vueprovider, ...triggerCharacters));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "html", scheme: "file" }, htmlprovider, ...triggerCharacters));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "html", scheme: "untitled" }, htmlprovider, ...triggerCharacters));
 
     function reactproviderMaker(ext: string, lang: string) {
         return {
