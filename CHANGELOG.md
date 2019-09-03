@@ -3,6 +3,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 
 ## [0.1.14] - 2019-09-02
 ### Added
+- 在Windows上安装到系统目录时发生权限问题时提示用户使用管理员权限重启。
 
 ### Changed
 

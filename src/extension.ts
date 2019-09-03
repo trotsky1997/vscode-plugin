@@ -2,6 +2,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as fs from "fs";
+import * as path from "path";
 import * as util from "util";
 import * as vscode from "vscode";
 import * as API from "./API";
@@ -17,7 +18,6 @@ import { activatePython } from "./pythonExtension";
 import { Syncer } from "./Syncer";
 import { activateTypeScript } from "./typescriptExtension";
 import { SafeStringUtil } from "./utils/SafeStringUtil";
-import * as path from "path";
 
 function escapeRegExp(s: string) {
     return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
@@ -332,7 +332,9 @@ export function sendPredictTelemetryLong(ext: string, fetchTime: number, longRes
 }
 
 export const onDeactivateHandlers = [];
-let actualIDEPaths: string[] = [];
+const actualIDEPaths: string[] = [];
+const actualHooks = [];
+let locateIDEShown = false;
 export async function JSHooker(aixHookedString: string, distjsPath: string, extension: vscode.Extension<any>, reloadMsg: string, failMsg: string, hookCallback: (distjs: string) => string) {
     let aixHooked = false;
     let distjs: string;
@@ -351,10 +353,10 @@ export async function JSHooker(aixHookedString: string, distjsPath: string, exte
                 await JSHooker(aixHookedString, realDistJsPath, extension, reloadMsg, failMsg, hookCallback);
             }
         }
-        if (actualIDEPaths.length == 0) {
+        if (actualIDEPaths.length === 0) {
             try {
                 // try aiXcoder installer paths.json
-                const pathsJson = fs.readFileSync(path.join(process.env.HOME, "Library", "Application Support", "aiXcoder", "installer", "paths.json"), 'utf-8');
+                const pathsJson = fs.readFileSync(path.join(process.env.HOME, "Library", "Application Support", "aiXcoder", "installer", "paths.json"), "utf-8");
                 const pathsObj: object = JSON.parse(pathsJson);
                 let found = false;
                 for (const idePath in pathsObj) {
@@ -366,28 +368,35 @@ export async function JSHooker(aixHookedString: string, distjsPath: string, exte
                     }
                 }
                 if (!found) {
-                    throw "not found";
+                    throw new Error("not found");
                 }
                 await actualHook();
             } catch (e) {
                 // on any error, prompt to choose the location
-                vscode.window.showWarningMessage(localize("locateIDE"), localize("locate")).then(async (select) => {
-                    if (select === localize("locate")) {
-                        const idePaths = await vscode.window.showOpenDialog({
-                            canSelectFiles: true,
-                            canSelectFolders: false,
-                            canSelectMany: false,
-                            filters: {
-                                'VS Code': ['app']
-                            },
-                            openLabel: localize("locateDialog")
-                        });
-                        if (idePaths) {
-                            actualIDEPaths.push(...idePaths.map(_ => _.fsPath));
-                            await actualHook();
+                actualHooks.push(actualHook);
+                if (!locateIDEShown) {
+                    locateIDEShown = true;
+                    vscode.window.showWarningMessage(localize("locateIDE"), localize("locate")).then(async (select) => {
+                        locateIDEShown = false;
+                        if (select === localize("locate")) {
+                            const idePaths = await vscode.window.showOpenDialog({
+                                canSelectFiles: true,
+                                canSelectFolders: false,
+                                canSelectMany: false,
+                                filters: {
+                                    "VS Code": ["app"],
+                                },
+                                openLabel: localize("locateDialog"),
+                            });
+                            if (idePaths) {
+                                actualIDEPaths.push(...idePaths.map((_) => _.fsPath));
+                                for (const theActualHook of actualHooks) {
+                                    await theActualHook();
+                                }
+                            }
                         }
-                    }
-                });
+                    });
+                }
             }
         }
         return false;
@@ -400,8 +409,19 @@ export async function JSHooker(aixHookedString: string, distjsPath: string, exte
         await fs.promises.copyFile(distjsPath + ".bak", distjsPath);
         distjs = await fs.promises.readFile(distjsPath, "utf-8");
     } catch (e) {
-        // create backup file
-        await fs.promises.copyFile(distjsPath, distjsPath + ".bak");
+        if (e.code === "ENOENT") {
+            try {
+                await fs.promises.copyFile(distjsPath, distjsPath + ".bak");
+            } catch (error) {
+                if (error.code === "EPERM") {
+                    // create backup file
+                    vscode.window.showErrorMessage(localize("needAdmin"));
+                } else {
+                    log(e);
+                }
+                return false;
+            }
+        }
     }
     try {
         distjs = aixHookedString + distjs;
@@ -595,28 +615,33 @@ export async function activate(context: vscode.ExtensionContext) {
     if (msintellicode) {
         showInformationMessage("msintellicode.enabled");
     }
-    log("AiX: aiXcoder activated");
-    const aixHooks: {
-        [lang: string]: void | {
-            aixHook: (ll: vscode.CompletionList | vscode.CompletionItem[], ...args: any) => Promise<vscode.CompletionList | vscode.CompletionItem[]>,
-        },
-    } = {
-        python: await activatePython(context),
-        java: await activateJava(context),
-        cpp: await activateCPP(context),
-        php: await activatePhp(context),
-        typescript: await activateTypeScript(context),
-    };
-    return {
-        async aixhook(lang: string, ll: vscode.CompletionList | vscode.CompletionItem[] | Promise<vscode.CompletionList | vscode.CompletionItem[]>, ...args: any): Promise<vscode.CompletionList | vscode.CompletionItem[]> {
-            const hookObj = aixHooks[lang];
-            if (hookObj && hookObj.aixHook) {
-                ll = await ll;
-                return hookObj.aixHook(ll, ...args);
-            }
-            return ll;
-        },
-    };
+    try {
+        const aixHooks: {
+            [lang: string]: void | {
+                aixHook: (ll: vscode.CompletionList | vscode.CompletionItem[], ...args: any) => Promise<vscode.CompletionList | vscode.CompletionItem[]>,
+            },
+        } = {
+            python: await activatePython(context),
+            java: await activateJava(context),
+            cpp: await activateCPP(context),
+            php: await activatePhp(context),
+            typescript: await activateTypeScript(context),
+        };
+        log("AiX: aiXcoder activated");
+        return {
+            async aixhook(lang: string, ll: vscode.CompletionList | vscode.CompletionItem[] | Promise<vscode.CompletionList | vscode.CompletionItem[]>, ...args: any): Promise<vscode.CompletionList | vscode.CompletionItem[]> {
+                const hookObj = aixHooks[lang];
+                if (hookObj && hookObj.aixHook) {
+                    ll = await ll;
+                    return hookObj.aixHook(ll, ...args);
+                }
+                return ll;
+            },
+        };
+    } catch (e) {
+        log("AiX: aiXcoder activation failed, reason:");
+        log(e);
+    }
 }
 
 // this method is called when your extension is deactivated
