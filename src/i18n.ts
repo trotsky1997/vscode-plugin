@@ -158,6 +158,10 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "en": "Locate",
         "zh-cn": "定位...",
     },
+    "needAdmin": {
+        "en": "Please restart Visual Studio Code with Administrator Priviledges to finish the integration (you only need to do it once).",
+        "zh-cn": "请使用管理员权限启动Visual Studio Code以完成集成（您只需要做一次）。",
+    },
 };
 export function localize(key: string, ...params: any[]) {
     return localizeMessages[key] ? util.format(localizeMessages[key][vscode.env.language] || localizeMessages[key].en, ...params) : key;
