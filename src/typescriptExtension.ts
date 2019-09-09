@@ -125,7 +125,6 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
                     }
                     return [];
                 }
-                log(text);
                 const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, ext, "ts", document, STAR_DISPLAY.LEFT);
                 log("< fetch took " + (Date.now() - startTime) + "ms");
                 if (msts && hooked) {
@@ -173,7 +172,6 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
                     }
                     return [];
                 }
-                log(text);
                 const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, ext, "ts", document, STAR_DISPLAY.LEFT);
                 log("< fetch took " + (Date.now() - startTime) + "ms");
                 if (mshtml && htmlhooked) {
@@ -253,12 +251,10 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
             try {
                 // return ll;
                 const { offsetID } = getReqText(document, position);
-                const sortResults = await syncer.get(offsetID);
-                // console.log(`syncer.get ${offsetID} ${sortResults}`);
-                if (sortResults == null) { return ll; }
                 const items = ll == null ? [] : (Array.isArray(ll) ? ll : ll.items);
+                const sortResults = await syncer.get(offsetID, items.length === 0);
+                if (sortResults == null) { return ll; }
                 const { ext, fetchTime } = sortResults;
-
                 mergeSortResult(items, sortResults, document, ext.indexOf("Typescript") >= 0 ? "ts" : "js", ext, STAR_DISPLAY.LEFT);
                 if (!token.isCancellationRequested) {
                     sendPredictTelemetryShort(ext, fetchTime, sortResults);

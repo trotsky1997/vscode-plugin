@@ -1,7 +1,8 @@
-const NOTIFIED =  "__" as any;
+const NOTIFIED = "__" as any;
 
 export class Syncer<T> {
     private last: T;
+    private lastKey: number;
     private awaiters: {
         [key: number]: (T | ((v: T) => void));
     } = {};
@@ -30,6 +31,7 @@ export class Syncer<T> {
      */
     public put(key: number, value: T) {
         this.last = value;
+        this.lastKey = key;
         const awaiter = this.awaiters[key];
         // console.log("syncer put: AiX: resolve " + key + " " + awaiter);
         if (awaiter === undefined || awaiter === NOTIFIED) {
@@ -50,7 +52,7 @@ export class Syncer<T> {
     /**
      * get
      */
-    public async get(key: number): Promise<T | undefined> {
+    public async get(key: number, strict = false): Promise<T | undefined> {
         let value: T | undefined;
         const _t = Date.now();
         const awaiter = this.awaiters[key];
@@ -61,7 +63,7 @@ export class Syncer<T> {
             const ppp = new Promise<T | undefined>((resolve, reject) => {
                 const newResolve = (_: T) => {
                     resolved = true;
-                    console.log("syncer get: ppp will be resolved with " + JSON.stringify(_));
+                    console.log("syncer get: ppp will be resolved");
                     resolve(_);
                     if (this.awaiters[key] === newResolve) {
                         delete this.awaiters[key];
@@ -89,14 +91,14 @@ export class Syncer<T> {
                         if (!resolved) {
                             console.log("syncer get: notify timed out at " + key);
                             clearTimeout(resultWaiter);
-                            resolve(this.last);
+                            resolve((!strict || this.lastKey === key) ? this.last : null);
                             delete this.awaiters[key];
                         }
                     }, 100);
                 }
             });
             value = await ppp;
-            console.log("syncer get: ppp is resolved with " + JSON.stringify(value));
+            console.log("syncer get: ppp is resolved");
         } else if (typeof awaiter === "object") {
             console.log("syncer get: AIX went earlier");
             // AIX went earlier
