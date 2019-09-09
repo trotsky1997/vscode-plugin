@@ -164,7 +164,7 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
                         ext = "typescript(Typescript)";
                     }
                     const lastScriptTagEnd = t.indexOf(">", lastScriptTag) + 1;
-                    text = lastScriptTagEnd === 0 ? "" : t.substring(lastScriptTagEnd);
+                    text = lastScriptTagEnd === 0 ? "" : t.substring(lastScriptTagEnd).trimLeft();
                 }
                 if (text.length === 0) {
                     if (mshtml && htmlhooked) {

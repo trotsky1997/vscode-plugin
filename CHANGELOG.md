@@ -9,6 +9,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 
 ### Fixed
 - 修复了一些情况下会把前一次的预测结果重复显示的问题。
+- 修复了一个导致html里script标签下预测变差的问题。
 
 ## [0.1.14] - 2019-09-02
 ### Added
