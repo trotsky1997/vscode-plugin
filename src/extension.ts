@@ -467,72 +467,145 @@ export function mergeSortResult(l: vscode.CompletionItem[], sortResults: SortRes
         command: "aiXcoder.insert",
         arguments: [ext, "secondary", getInstance(lang), document],
     };
+    const sortResultsMap = {};
+    const sortResultCompletions = {};
     let insertedRank = 1;
     for (const single of sortResults.list) {
         if (single.word.match(/^<.+>$/)) {
             continue;
         }
-        let found = false;
-        let bestSystemCompletion = null;
-        let bestSystemCompletionRank = 999;
-        for (const systemCompletion of l) {
-            if (systemCompletion.sortText == null) {
-                systemCompletion.sortText = systemCompletion.filterText;
-            }
-            let realInsertText = systemCompletion.label || systemCompletion.insertText;
-            if (typeof (realInsertText) !== "string") {
-                realInsertText = realInsertText.value;
-            }
-            if (realInsertText.match("^" + escapeRegExp(single.word) + "\\b") && !systemCompletion.label.startsWith("⭐")) {
-                let rank = 998;
-                if (systemCompletion.label.indexOf(" - ") >= 0 && single.options && single.options.filters && single.options.filters.length > 0) {
-                    for (let i = 0; i < single.options.filters.length; i++) {
-                        let filter = single.options.filters[i];
-                        if (filter.endsWith("." + single.word)) {
-                            filter = filter.substring(0, filter.length - single.word.length - 1);
+        sortResultsMap[single.word] = [single, insertedRank++];
+    }
+
+    for (const systemCompletion of l) {
+        if (systemCompletion.sortText == null) {
+            systemCompletion.sortText = systemCompletion.filterText;
+        }
+        let realInsertText = systemCompletion.label || systemCompletion.insertText;
+        if (typeof (realInsertText) !== "string") {
+            realInsertText = realInsertText.value;
+        }
+        const m = realInsertText.match("^.+?\\b");
+        if (m && sortResultsMap.hasOwnProperty(m[0])) {
+            const single = sortResultsMap[m[0]][0];
+            if (systemCompletion.label.indexOf(" - ") >= 0 && single.options && single.options.filters && single.options.filters.length > 0) {
+                for (let i = 0; i < single.options.filters.length; i++) {
+                    let filter = single.options.filters[i];
+                    if (filter.endsWith("." + single.word)) {
+                        filter = filter.substring(0, filter.length - single.word.length - 1);
+                    }
+                    if (systemCompletion.label.indexOf(filter) >= 0) {
+                        if (sortResultCompletions[single.word] == null || i < sortResultCompletions[single.word][0]) {
+                            sortResultCompletions[single.word] = [i, systemCompletion];
                         }
-                        if (systemCompletion.label.indexOf(filter) >= 0) {
-                            rank = i;
-                            break;
-                        }
+                        break;
                     }
                 }
-                if (rank < bestSystemCompletionRank) {
-                    bestSystemCompletionRank = rank;
-                    bestSystemCompletion = systemCompletion;
-                }
-                found = true;
             }
-        }
-
-        if (found) {
-            if (bestSystemCompletion == null) {
-                log("bestSystemCompletion is null!");
+            if (sortResultCompletions[single.word] == null) {
+                sortResultCompletions[single.word] = [999, systemCompletion];
             }
-            let insertText = bestSystemCompletion.insertText || bestSystemCompletion.label;
-            if (typeof (insertText) !== "string") {
-                insertText = insertText.value;
-            }
-            bestSystemCompletion.filterText = bestSystemCompletion.filterText || bestSystemCompletion.label;
-            bestSystemCompletion.insertText = bestSystemCompletion.insertText || bestSystemCompletion.label;
-            bestSystemCompletion.label = starDisplay === STAR_DISPLAY.LEFT ? "⭐" + bestSystemCompletion.label : (starDisplay === STAR_DISPLAY.RIGHT ? bestSystemCompletion.label + "⭐" : bestSystemCompletion.label);
-            bestSystemCompletion.sortText = ".0." + insertedRank++;
-            bestSystemCompletion.command = { ...telemetryCommand, arguments: telemetryCommand.arguments.concat([single]) };
-            if (bestSystemCompletion.kind === vscode.CompletionItemKind.Function && insertText.indexOf("(") === -1) {
-                bestSystemCompletion.insertText = new vscode.SnippetString(insertText).appendText("(").appendTabstop().appendText(")");
-            }
-        }
-        if (!found && single.options && single.options.forced) {
-            l.push({
-                label: starDisplay === STAR_DISPLAY.LEFT ? "⭐" + single.word : (starDisplay === STAR_DISPLAY.RIGHT ? single.word + "⭐" : single.word),
-                filterText: single.word,
-                insertText: single.word,
-                sortText: ".0." + insertedRank++,
-                command: { ...telemetryCommand, arguments: telemetryCommand.arguments.concat([single]) },
-                kind: vscode.CompletionItemKind.Variable,
-            });
         }
     }
+
+    for (const singleWord in sortResultsMap) {
+        if (sortResultsMap.hasOwnProperty(singleWord)) {
+            const [single, rank] = sortResultsMap[singleWord];
+            const rankText = rank.toString().padStart(3, "0");
+            if (sortResultCompletions.hasOwnProperty(singleWord)) {
+                const bestSystemCompletion = sortResultCompletions[singleWord][1];
+                let insertText = bestSystemCompletion.insertText || bestSystemCompletion.label;
+                if (typeof (insertText) !== "string") {
+                    insertText = insertText.value;
+                }
+                bestSystemCompletion.filterText = bestSystemCompletion.filterText || bestSystemCompletion.label;
+                bestSystemCompletion.insertText = bestSystemCompletion.insertText || bestSystemCompletion.label;
+                bestSystemCompletion.label = starDisplay === STAR_DISPLAY.LEFT ? "⭐" + bestSystemCompletion.label : (starDisplay === STAR_DISPLAY.RIGHT ? bestSystemCompletion.label + "⭐" : bestSystemCompletion.label);
+                bestSystemCompletion.sortText = ".0." + rankText;
+                bestSystemCompletion.command = { ...telemetryCommand, arguments: telemetryCommand.arguments.concat([single]) };
+                if (bestSystemCompletion.kind === vscode.CompletionItemKind.Function && insertText.indexOf("(") === -1) {
+                    bestSystemCompletion.insertText = new vscode.SnippetString(insertText).appendText("(").appendTabstop().appendText(")");
+                }
+            } else {
+                if (single.options && single.options.forced) {
+                    l.push({
+                        label: starDisplay === STAR_DISPLAY.LEFT ? "⭐" + single.word : (starDisplay === STAR_DISPLAY.RIGHT ? single.word + "⭐" : single.word),
+                        filterText: single.word,
+                        insertText: single.word,
+                        sortText: ".0." + rankText,
+                        command: { ...telemetryCommand, arguments: telemetryCommand.arguments.concat([single]) },
+                        kind: vscode.CompletionItemKind.Variable,
+                    });
+                }
+            }
+        }
+    }
+
+    // for (const single of sortResults.list) {
+    //     if (single.word.match(/^<.+>$/)) {
+    //         continue;
+    //     }
+    //     let found = false;
+    //     let bestSystemCompletion = null;
+    //     let bestSystemCompletionRank = 999;
+    //     for (const systemCompletion of l) {
+    //         if (systemCompletion.sortText == null) {
+    //             systemCompletion.sortText = systemCompletion.filterText;
+    //         }
+    //         let realInsertText = systemCompletion.label || systemCompletion.insertText;
+    //         if (typeof (realInsertText) !== "string") {
+    //             realInsertText = realInsertText.value;
+    //         }
+    //         if (realInsertText.match("^" + escapeRegExp(single.word) + "\\b") && !systemCompletion.label.startsWith("⭐")) {
+    //             let rank = 998;
+    //             if (systemCompletion.label.indexOf(" - ") >= 0 && single.options && single.options.filters && single.options.filters.length > 0) {
+    //                 for (let i = 0; i < single.options.filters.length; i++) {
+    //                     let filter = single.options.filters[i];
+    //                     if (filter.endsWith("." + single.word)) {
+    //                         filter = filter.substring(0, filter.length - single.word.length - 1);
+    //                     }
+    //                     if (systemCompletion.label.indexOf(filter) >= 0) {
+    //                         rank = i;
+    //                         break;
+    //                     }
+    //                 }
+    //             }
+    //             if (rank < bestSystemCompletionRank) {
+    //                 bestSystemCompletionRank = rank;
+    //                 bestSystemCompletion = systemCompletion;
+    //             }
+    //             found = true;
+    //         }
+    //     }
+
+    //     if (found) {
+    //         if (bestSystemCompletion == null) {
+    //             log("bestSystemCompletion is null!");
+    //         }
+    //         let insertText = bestSystemCompletion.insertText || bestSystemCompletion.label;
+    //         if (typeof (insertText) !== "string") {
+    //             insertText = insertText.value;
+    //         }
+    //         bestSystemCompletion.filterText = bestSystemCompletion.filterText || bestSystemCompletion.label;
+    //         bestSystemCompletion.insertText = bestSystemCompletion.insertText || bestSystemCompletion.label;
+    //         bestSystemCompletion.label = starDisplay === STAR_DISPLAY.LEFT ? "⭐" + bestSystemCompletion.label : (starDisplay === STAR_DISPLAY.RIGHT ? bestSystemCompletion.label + "⭐" : bestSystemCompletion.label);
+    //         bestSystemCompletion.sortText = ".0." + insertedRank++;
+    //         bestSystemCompletion.command = { ...telemetryCommand, arguments: telemetryCommand.arguments.concat([single]) };
+    //         if (bestSystemCompletion.kind === vscode.CompletionItemKind.Function && insertText.indexOf("(") === -1) {
+    //             bestSystemCompletion.insertText = new vscode.SnippetString(insertText).appendText("(").appendTabstop().appendText(")");
+    //         }
+    //     }
+    //     if (!found && single.options && single.options.forced) {
+    //         l.push({
+    //             label: starDisplay === STAR_DISPLAY.LEFT ? "⭐" + single.word : (starDisplay === STAR_DISPLAY.RIGHT ? single.word + "⭐" : single.word),
+    //             filterText: single.word,
+    //             insertText: single.word,
+    //             sortText: ".0." + insertedRank++,
+    //             command: { ...telemetryCommand, arguments: telemetryCommand.arguments.concat([single]) },
+    //             kind: vscode.CompletionItemKind.Variable,
+    //         });
+    //     }
+    // }
     if (sortResults.longResults) {
         l.push(...sortResults.longResults);
     }

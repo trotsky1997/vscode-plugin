@@ -1,6 +1,16 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.1.15] - 2019-09-09
+
+### Added
+### Changed
+- 优化了短结果的处理逻辑，现在响应速度应该会快了一些。
+
+### Fixed
+- 修复了一些情况下会把前一次的预测结果重复显示的问题。
+- 修复了一个导致html里script标签下预测变差的问题。
+
 ## [0.1.14] - 2019-09-02
 ### Added
 - 在Windows上安装到系统目录时发生权限问题时提示用户使用管理员权限重启。

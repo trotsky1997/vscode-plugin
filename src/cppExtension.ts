@@ -86,9 +86,9 @@ export async function activateCPP(context: vscode.ExtensionContext) {
             try {
                 // return ll;
                 const { offsetID } = getReqText(document, position);
-                const sortResults = await syncer.get(offsetID);
-                if (sortResults == null) { return ll; }
                 const items = Array.isArray(ll) ? ll : ll.items;
+                const sortResults = await syncer.get(offsetID, items.length === 0);
+                if (sortResults == null) { return ll; }
                 const { ext, fetchTime } = sortResults;
                 mergeSortResult(items, sortResults, document, "cpp", ext, STAR_DISPLAY.LEFT);
                 if (!token.isCancellationRequested) {
