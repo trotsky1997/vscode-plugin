@@ -58,7 +58,7 @@ export async function activatePhp(context: vscode.ExtensionContext) {
                 if (msphp || intelephense) {
                     syncer.put(offsetID, { ...sortResults, ext, fetchTime, current });
                 } else {
-                    const sortLabels = formatSortData(sortResults, getInstance("php"), document, ext);
+                    const sortLabels = formatSortData(sortResults, getInstance("php"), document, ext, current);
                     longResults.push(...sortLabels);
                 }
                 if (!token.isCancellationRequested) {

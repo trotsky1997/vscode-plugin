@@ -52,7 +52,7 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
                 if (msts && hooked) {
                     syncer.put(offsetID, { ...sortResults, ext, fetchTime, current });
                 } else {
-                    const sortLabels = formatSortData(sortResults, getInstance("js"), document, ext);
+                    const sortLabels = formatSortData(sortResults, getInstance("js"), document, ext, current);
                     longResults.push(...sortLabels);
                 }
                 if (!token.isCancellationRequested) {
@@ -78,7 +78,7 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
                 if (msts && hooked) {
                     syncer.put(offsetID, { ...sortResults, ext, fetchTime, current });
                 } else {
-                    const sortLabels = formatSortData(sortResults, getInstance("ts"), document, ext);
+                    const sortLabels = formatSortData(sortResults, getInstance("ts"), document, ext, current);
                     longResults.push(...sortLabels);
                 }
                 if (!token.isCancellationRequested) {
@@ -130,7 +130,7 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
                 if (msts && hooked) {
                     syncer.put(offsetID, { ...sortResults, ext, fetchTime, current });
                 } else {
-                    const sortLabels = formatSortData(sortResults, getInstance("ts"), document, ext);
+                    const sortLabels = formatSortData(sortResults, getInstance("ts"), document, ext, current);
                     longResults.push(...sortLabels);
                 }
                 if (!token.isCancellationRequested) {
@@ -177,7 +177,7 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
                 if (mshtml && htmlhooked) {
                     syncer.put(offsetID, { ...sortResults, ext, fetchTime, current });
                 } else {
-                    const sortLabels = formatSortData(sortResults, getInstance("ts"), document, ext);
+                    const sortLabels = formatSortData(sortResults, getInstance("ts"), document, ext, current);
                     longResults.push(...sortLabels);
                 }
                 if (!token.isCancellationRequested) {
@@ -221,7 +221,7 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
                     if (msts && hooked) {
                         syncer.put(offsetID, { ...sortResults, ext, fetchTime, current });
                     } else {
-                        const sortLabels = formatSortData(sortResults, getInstance(lang), document, ext);
+                        const sortLabels = formatSortData(sortResults, getInstance(lang), document, ext, current);
                         longResults.push(...sortLabels);
                     }
                     if (!token.isCancellationRequested) {

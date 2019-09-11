@@ -211,7 +211,7 @@ function formatResData(results: PredictResult, langUtil: LangUtil, document: vsc
     return r;
 }
 
-export function formatSortData(results: SortResult | null, langUtil: LangUtil, document: vscode.TextDocument, ext: string) {
+export function formatSortData(results: SortResult | null, langUtil: LangUtil, document: vscode.TextDocument, ext: string, current: string) {
     if (results == null) { return []; }
     const star = vscode.workspace.getConfiguration().get("aiXcoder.symbol");
     const r: vscode.CompletionItem[] = [];
@@ -227,7 +227,7 @@ export function formatSortData(results: SortResult | null, langUtil: LangUtil, d
         }
         const z: AiXCompletionItem = {
             label: star + single.word,
-            filterText: single.word,
+            filterText: current + single.word.substring(current.length),
             insertText: single.word,
             kind: vscode.CompletionItemKind.Variable,
             sortText: "0." + insertedRank++,

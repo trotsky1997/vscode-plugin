@@ -60,7 +60,7 @@ export async function activateCPP(context: vscode.ExtensionContext) {
                 if (mscpp && hooked) {
                     syncer.put(offsetID, { ...sortResults, ext, fetchTime, current });
                 } else {
-                    const sortLabels = formatSortData(sortResults, getInstance("cpp"), document, ext);
+                    const sortLabels = formatSortData(sortResults, getInstance("cpp"), document, ext, current);
                     longResults.push(...sortLabels);
                 }
                 if (!token.isCancellationRequested) {

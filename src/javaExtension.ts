@@ -71,8 +71,8 @@ export function activateJava(context: vscode.ExtensionContext) {
                     }
                     return new vscode.CompletionList(longResults, true);
                 } else {
-                    const { longResults, sortResults, fetchTime } = await fetchResults(document, position, ext, "java");
-                    const sortLabels = formatSortData(sortResults, getInstance("java"), document, ext);
+                    const { longResults, sortResults, fetchTime, current } = await fetchResults(document, position, ext, "java");
+                    const sortLabels = formatSortData(sortResults, getInstance("java"), document, ext, current);
                     longResults.push(...sortLabels);
                     if (!token.isCancellationRequested) {
                         sendPredictTelemetryLong(ext, fetchTime, longResults);

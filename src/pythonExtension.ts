@@ -59,7 +59,7 @@ export function activatePython(context: vscode.ExtensionContext) {
                 if (mspythonExtension) {
                     syncer.put(offsetID, { ...sortResults, ext, fetchTime, current });
                 } else {
-                    const sortLabels = formatSortData(sortResults, getInstance("python"), document, ext);
+                    const sortLabels = formatSortData(sortResults, getInstance("python"), document, ext, current);
                     longResults.push(...sortLabels);
                 }
                 if (!token.isCancellationRequested) {
