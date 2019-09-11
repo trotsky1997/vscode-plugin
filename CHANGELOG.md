@@ -1,6 +1,14 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.1.16] - %DATE%
+
+### Added
+- 可以在设置里面修改预测前面的符号了，默认是⭐。
+
+### Changed
+### Fixed
+
 ## [0.1.15] - 2019-09-09
 
 ### Added

@@ -122,6 +122,11 @@
                         "Long to short"
                     ],
                     "description": "The order of shorter results"
+                },
+                "aiXcoder.symbol": {
+                    "type": "string",
+                    "default": "⭐",
+                    "description": "The symbol used to mark aiXcoder predictions"
                 }
             }
         },

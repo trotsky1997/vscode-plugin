@@ -165,6 +165,7 @@ export enum STAR_DISPLAY {
 
 // 处理返回的值，最终变成放入提示框的内容
 function formatResData(results: PredictResult, langUtil: LangUtil, document: vscode.TextDocument, ext: string, starDisplay = STAR_DISPLAY.LEFT): AiXCompletionItem[] {
+    const star = vscode.workspace.getConfiguration().get("aiXcoder.symbol");
     const r: AiXCompletionItem[] = [];
     const command: vscode.Command = {
         title: "AiXTelemetry",
@@ -189,7 +190,7 @@ function formatResData(results: PredictResult, langUtil: LangUtil, document: vsc
                 rendered += template + rCompletionText;
                 title += (template + rCompletionText).replace(/\$\{0:([^}]+)\}/, "$1").replace(/\$\{0\}/, "...");
             }
-            const label = starDisplay === STAR_DISPLAY.LEFT ? "⭐" + title : (starDisplay === STAR_DISPLAY.RIGHT ? title + "⭐" : title);
+            const label = starDisplay === STAR_DISPLAY.LEFT ? star + title : (starDisplay === STAR_DISPLAY.RIGHT ? title + star : title);
             if (!unique.has(label)) {
                 const z: AiXCompletionItem = {
                     label,
@@ -210,6 +211,7 @@ function formatResData(results: PredictResult, langUtil: LangUtil, document: vsc
 
 export function formatSortData(results: SortResult | null, langUtil: LangUtil, document: vscode.TextDocument, ext: string) {
     if (results == null) { return []; }
+    const star = vscode.workspace.getConfiguration().get("aiXcoder.symbol");
     const r: vscode.CompletionItem[] = [];
     const command: vscode.Command = {
         title: "AiXTelemetry",
@@ -222,7 +224,7 @@ export function formatSortData(results: SortResult | null, langUtil: LangUtil, d
             continue;
         }
         const z: AiXCompletionItem = {
-            label: "⭐" + single.word,
+            label: star + single.word,
             filterText: single.word,
             insertText: single.word,
             kind: vscode.CompletionItemKind.Variable,
@@ -459,6 +461,7 @@ export async function JSHooker(aixHookedString: string, distjsPath: string, exte
 
 export function mergeSortResult(l: vscode.CompletionItem[], sortResults: SortResult, document: vscode.TextDocument, lang: string, ext: string, starDisplay = STAR_DISPLAY.LEFT) {
     if (sortResults == null) { return; }
+    const star = vscode.workspace.getConfiguration().get("aiXcoder.symbol");
     if (l.length === 0) {
         l.push(...formatSortData(sortResults, getInstance(lang), document, ext));
     }
@@ -520,7 +523,7 @@ export function mergeSortResult(l: vscode.CompletionItem[], sortResults: SortRes
                 }
                 bestSystemCompletion.filterText = bestSystemCompletion.filterText || bestSystemCompletion.label;
                 bestSystemCompletion.insertText = bestSystemCompletion.insertText || bestSystemCompletion.label;
-                bestSystemCompletion.label = starDisplay === STAR_DISPLAY.LEFT ? "⭐" + bestSystemCompletion.label : (starDisplay === STAR_DISPLAY.RIGHT ? bestSystemCompletion.label + "⭐" : bestSystemCompletion.label);
+                bestSystemCompletion.label = starDisplay === STAR_DISPLAY.LEFT ? star + bestSystemCompletion.label : (starDisplay === STAR_DISPLAY.RIGHT ? bestSystemCompletion.label + star : bestSystemCompletion.label);
                 bestSystemCompletion.sortText = ".0." + rankText;
                 bestSystemCompletion.command = { ...telemetryCommand, arguments: telemetryCommand.arguments.concat([single]) };
                 if (bestSystemCompletion.kind === vscode.CompletionItemKind.Function && insertText.indexOf("(") === -1) {
@@ -529,7 +532,7 @@ export function mergeSortResult(l: vscode.CompletionItem[], sortResults: SortRes
             } else {
                 if (single.options && single.options.forced) {
                     l.push({
-                        label: starDisplay === STAR_DISPLAY.LEFT ? "⭐" + single.word : (starDisplay === STAR_DISPLAY.RIGHT ? single.word + "⭐" : single.word),
+                        label: starDisplay === STAR_DISPLAY.LEFT ? star + single.word : (starDisplay === STAR_DISPLAY.RIGHT ? single.word + star : single.word),
                         filterText: single.word,
                         insertText: single.word,
                         sortText: ".0." + rankText,
@@ -540,72 +543,6 @@ export function mergeSortResult(l: vscode.CompletionItem[], sortResults: SortRes
             }
         }
     }
-
-    // for (const single of sortResults.list) {
-    //     if (single.word.match(/^<.+>$/)) {
-    //         continue;
-    //     }
-    //     let found = false;
-    //     let bestSystemCompletion = null;
-    //     let bestSystemCompletionRank = 999;
-    //     for (const systemCompletion of l) {
-    //         if (systemCompletion.sortText == null) {
-    //             systemCompletion.sortText = systemCompletion.filterText;
-    //         }
-    //         let realInsertText = systemCompletion.label || systemCompletion.insertText;
-    //         if (typeof (realInsertText) !== "string") {
-    //             realInsertText = realInsertText.value;
-    //         }
-    //         if (realInsertText.match("^" + escapeRegExp(single.word) + "\\b") && !systemCompletion.label.startsWith("⭐")) {
-    //             let rank = 998;
-    //             if (systemCompletion.label.indexOf(" - ") >= 0 && single.options && single.options.filters && single.options.filters.length > 0) {
-    //                 for (let i = 0; i < single.options.filters.length; i++) {
-    //                     let filter = single.options.filters[i];
-    //                     if (filter.endsWith("." + single.word)) {
-    //                         filter = filter.substring(0, filter.length - single.word.length - 1);
-    //                     }
-    //                     if (systemCompletion.label.indexOf(filter) >= 0) {
-    //                         rank = i;
-    //                         break;
-    //                     }
-    //                 }
-    //             }
-    //             if (rank < bestSystemCompletionRank) {
-    //                 bestSystemCompletionRank = rank;
-    //                 bestSystemCompletion = systemCompletion;
-    //             }
-    //             found = true;
-    //         }
-    //     }
-
-    //     if (found) {
-    //         if (bestSystemCompletion == null) {
-    //             log("bestSystemCompletion is null!");
-    //         }
-    //         let insertText = bestSystemCompletion.insertText || bestSystemCompletion.label;
-    //         if (typeof (insertText) !== "string") {
-    //             insertText = insertText.value;
-    //         }
-    //         bestSystemCompletion.filterText = bestSystemCompletion.filterText || bestSystemCompletion.label;
-    //         bestSystemCompletion.insertText = bestSystemCompletion.insertText || bestSystemCompletion.label;
-    //         bestSystemCompletion.label = starDisplay === STAR_DISPLAY.LEFT ? "⭐" + bestSystemCompletion.label : (starDisplay === STAR_DISPLAY.RIGHT ? bestSystemCompletion.label + "⭐" : bestSystemCompletion.label);
-    //         bestSystemCompletion.sortText = ".0." + insertedRank++;
-    //         bestSystemCompletion.command = { ...telemetryCommand, arguments: telemetryCommand.arguments.concat([single]) };
-    //         if (bestSystemCompletion.kind === vscode.CompletionItemKind.Function && insertText.indexOf("(") === -1) {
-    //             bestSystemCompletion.insertText = new vscode.SnippetString(insertText).appendText("(").appendTabstop().appendText(")");
-    //         }
-    //     }
-    //     if (!found && single.options && single.options.forced) {
-    //         l.push({
-    //             label: starDisplay === STAR_DISPLAY.LEFT ? "⭐" + single.word : (starDisplay === STAR_DISPLAY.RIGHT ? single.word + "⭐" : single.word),
-    //             filterText: single.word,
-    //             insertText: single.word,
-    //             sortText: ".0." + insertedRank++,
-    //             command: { ...telemetryCommand, arguments: telemetryCommand.arguments.concat([single]) },
-    //             kind: vscode.CompletionItemKind.Variable,
-    //         });
-    //     }
-    // }
     if (sortResults.longResults) {
         l.push(...sortResults.longResults);
     }
