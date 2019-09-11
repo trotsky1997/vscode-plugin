@@ -9,6 +9,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 ### Changed
 ### Fixed
 - 大小写混写的时候能正确地把概率高的结果排在前面了。
+- 不会出现重复的短结果了。
 
 ## [0.1.15] - 2019-09-09
 

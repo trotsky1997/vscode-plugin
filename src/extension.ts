@@ -476,7 +476,8 @@ export function mergeSortResult(l: vscode.CompletionItem[], sortResults: SortRes
     if (sortResults == null) { return; }
     const star = vscode.workspace.getConfiguration().get("aiXcoder.symbol");
     if (l.length === 0) {
-        l.push(...formatSortData(sortResults, getInstance(lang), document, ext));
+        l.push(...formatSortData(sortResults, getInstance(lang), document, ext, sortResults.current));
+        return;
     }
     const telemetryCommand: vscode.Command = {
         title: "AiXTelemetry",
