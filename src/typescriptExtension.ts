@@ -48,9 +48,9 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
             log("=====================");
             try {
                 const ext = "javascript(Javascript)";
-                const { offsetID, sortResults, fetchTime, longResults } = await fetchResults(document, position, ext, "js", syncer, STAR_DISPLAY.LEFT);
+                const { offsetID, sortResults, fetchTime, longResults, current } = await fetchResults(document, position, ext, "js", syncer, STAR_DISPLAY.LEFT);
                 if (msts && hooked) {
-                    syncer.put(offsetID, { ...sortResults, ext, fetchTime });
+                    syncer.put(offsetID, { ...sortResults, ext, fetchTime, current });
                 } else {
                     const sortLabels = formatSortData(sortResults, getInstance("js"), document, ext);
                     longResults.push(...sortLabels);
@@ -74,9 +74,9 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
             log("=====================");
             try {
                 const ext = "typescript(Typescript)";
-                const { offsetID, sortResults, fetchTime, longResults } = await fetchResults(document, position, ext, "ts", syncer, STAR_DISPLAY.LEFT);
+                const { offsetID, sortResults, fetchTime, longResults, current } = await fetchResults(document, position, ext, "ts", syncer, STAR_DISPLAY.LEFT);
                 if (msts && hooked) {
-                    syncer.put(offsetID, { ...sortResults, ext, fetchTime });
+                    syncer.put(offsetID, { ...sortResults, ext, fetchTime, current });
                 } else {
                     const sortLabels = formatSortData(sortResults, getInstance("ts"), document, ext);
                     longResults.push(...sortLabels);
@@ -125,10 +125,10 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
                     }
                     return [];
                 }
-                const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, ext, "ts", document, STAR_DISPLAY.LEFT);
+                const { longResults, sortResults, fetchTime, current } = await fetchResults2(text, remainingText, document.fileName, ext, "ts", document, STAR_DISPLAY.LEFT);
                 log("< fetch took " + (Date.now() - startTime) + "ms");
                 if (msts && hooked) {
-                    syncer.put(offsetID, { ...sortResults, ext, fetchTime });
+                    syncer.put(offsetID, { ...sortResults, ext, fetchTime, current });
                 } else {
                     const sortLabels = formatSortData(sortResults, getInstance("ts"), document, ext);
                     longResults.push(...sortLabels);
@@ -172,10 +172,10 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
                     }
                     return [];
                 }
-                const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, ext, "ts", document, STAR_DISPLAY.LEFT);
+                const { longResults, sortResults, fetchTime, current } = await fetchResults2(text, remainingText, document.fileName, ext, "ts", document, STAR_DISPLAY.LEFT);
                 log("< fetch took " + (Date.now() - startTime) + "ms");
                 if (mshtml && htmlhooked) {
-                    syncer.put(offsetID, { ...sortResults, ext, fetchTime });
+                    syncer.put(offsetID, { ...sortResults, ext, fetchTime, current });
                 } else {
                     const sortLabels = formatSortData(sortResults, getInstance("ts"), document, ext);
                     longResults.push(...sortLabels);
@@ -216,10 +216,10 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
                         }
                         return [];
                     }
-                    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, ext, lang, document, STAR_DISPLAY.LEFT);
+                    const { longResults, sortResults, fetchTime, current } = await fetchResults2(text, remainingText, document.fileName, ext, lang, document, STAR_DISPLAY.LEFT);
                     log("< fetch took " + (Date.now() - startTime) + "ms");
                     if (msts && hooked) {
-                        syncer.put(offsetID, { ...sortResults, ext, fetchTime });
+                        syncer.put(offsetID, { ...sortResults, ext, fetchTime, current });
                     } else {
                         const sortLabels = formatSortData(sortResults, getInstance(lang), document, ext);
                         longResults.push(...sortLabels);

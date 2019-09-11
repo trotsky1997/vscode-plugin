@@ -98,6 +98,7 @@ export interface SortResult {
 export interface SortResultEx extends SortResult {
     ext: string;
     fetchTime: number;
+    current: string;
 }
 
 let lastText = "";
@@ -164,7 +165,7 @@ export enum STAR_DISPLAY {
 }
 
 // 处理返回的值，最终变成放入提示框的内容
-function formatResData(results: PredictResult, langUtil: LangUtil, document: vscode.TextDocument, ext: string, starDisplay = STAR_DISPLAY.LEFT): AiXCompletionItem[] {
+function formatResData(results: PredictResult, langUtil: LangUtil, document: vscode.TextDocument, ext: string, text: string, starDisplay = STAR_DISPLAY.LEFT): AiXCompletionItem[] {
     const star = vscode.workspace.getConfiguration().get("aiXcoder.symbol");
     const r: AiXCompletionItem[] = [];
     const command: vscode.Command = {
@@ -181,6 +182,7 @@ function formatResData(results: PredictResult, langUtil: LangUtil, document: vsc
                 continue;
             }
             const mergedTokens = [result.current + result.tokens[0], ...result.tokens.slice(1)];
+            const filterTextMergedTokens = [text.substring(text.length - result.current.length) + result.tokens[0], ...result.tokens.slice(1)];
             let title = langUtil.render(mergedTokens, 0);
             let rendered = title.replace(/(?=\$)/g, "\\");
             if (result.r_completion && result.r_completion.length > 0) {
@@ -194,7 +196,7 @@ function formatResData(results: PredictResult, langUtil: LangUtil, document: vsc
             if (!unique.has(label)) {
                 const z: AiXCompletionItem = {
                     label,
-                    filterText: title,
+                    filterText: langUtil.render(filterTextMergedTokens, 0),
                     insertText: new vscode.SnippetString(rendered),
                     kind: vscode.CompletionItemKind.Snippet,
                     sortText: Preference.getLongResultRankSortText() + "." + (sortL2S ? 1 - title.length / 100 : title.length / 100),
@@ -240,6 +242,7 @@ export async function fetchResults2(text: string, remainingText: string, fileNam
     longResults: AiXCompletionItem[],
     sortResults: SortResult,
     fetchTime: number,
+    current: string,
 }> {
     let fetchBody: string = null;
     let queryUUID: number;
@@ -261,8 +264,15 @@ export async function fetchResults2(text: string, remainingText: string, fileNam
         if (predictResults.data == null) {
             predictResults = { data: predictResults as any };
         }
+        let current = "";
+        for (const lr of predictResults.data) {
+            if (lr.current) {
+                current = lr.current;
+                break;
+            }
+        }
         const langUtil = getInstance(lang);
-        let strLabels = formatResData(predictResults, langUtil, document, ext, starDisplay);
+        let strLabels = formatResData(predictResults, langUtil, document, ext, text, starDisplay);
         // log("predict result:");
         // log(strLabels);
         const results = {
@@ -289,6 +299,7 @@ export async function fetchResults2(text: string, remainingText: string, fileNam
             longResults: strLabels,
             sortResults: mappedResults,
             fetchTime,
+            current,
         };
     } catch (e) {
         if (!(e instanceof Error)) {
@@ -303,6 +314,7 @@ export async function fetchResults2(text: string, remainingText: string, fileNam
                 list: [],
             },
             fetchTime,
+            current: "",
         };
     }
 }
@@ -311,13 +323,14 @@ export async function fetchResults<T>(document: vscode.TextDocument, position: v
     const startTime = Date.now();
     const { text, remainingText, offsetID } = getReqText(document, position);
     if (syncer) { syncer.notify(offsetID); }
-    const { longResults, sortResults, fetchTime } = await fetchResults2(text, remainingText, document.fileName, ext, lang, document, starDisplay);
+    const { longResults, sortResults, fetchTime, current } = await fetchResults2(text, remainingText, document.fileName, ext, lang, document, starDisplay);
     log("< fetch took " + (Date.now() - startTime) + "ms");
     return {
         longResults,
         sortResults,
         offsetID,
         fetchTime,
+        current: text.substring(text.length - current.length),
     };
 }
 
@@ -459,7 +472,7 @@ export async function JSHooker(aixHookedString: string, distjsPath: string, exte
     return false;
 }
 
-export function mergeSortResult(l: vscode.CompletionItem[], sortResults: SortResult, document: vscode.TextDocument, lang: string, ext: string, starDisplay = STAR_DISPLAY.LEFT) {
+export function mergeSortResult(l: vscode.CompletionItem[], sortResults: SortResultEx, document: vscode.TextDocument, lang: string, ext: string, starDisplay = STAR_DISPLAY.LEFT) {
     if (sortResults == null) { return; }
     const star = vscode.workspace.getConfiguration().get("aiXcoder.symbol");
     if (l.length === 0) {
@@ -522,6 +535,7 @@ export function mergeSortResult(l: vscode.CompletionItem[], sortResults: SortRes
                     insertText = insertText.value;
                 }
                 bestSystemCompletion.filterText = bestSystemCompletion.filterText || bestSystemCompletion.label;
+                bestSystemCompletion.filterText = sortResults.current + bestSystemCompletion.filterText.substring(sortResults.current.length);
                 bestSystemCompletion.insertText = bestSystemCompletion.insertText || bestSystemCompletion.label;
                 bestSystemCompletion.label = starDisplay === STAR_DISPLAY.LEFT ? star + bestSystemCompletion.label : (starDisplay === STAR_DISPLAY.RIGHT ? bestSystemCompletion.label + star : bestSystemCompletion.label);
                 bestSystemCompletion.sortText = ".0." + rankText;

@@ -53,10 +53,10 @@ export async function activatePhp(context: vscode.ExtensionContext) {
             log("=====================");
             try {
                 const ext = "php(Php)";
-                const { longResults, sortResults, offsetID, fetchTime } = await fetchResults(document, position, ext, "php", syncer, STAR_DISPLAY.RIGHT);
+                const { longResults, sortResults, offsetID, fetchTime, current } = await fetchResults(document, position, ext, "php", syncer, STAR_DISPLAY.RIGHT);
 
                 if (msphp || intelephense) {
-                    syncer.put(offsetID, { ...sortResults, ext, fetchTime });
+                    syncer.put(offsetID, { ...sortResults, ext, fetchTime, current });
                 } else {
                     const sortLabels = formatSortData(sortResults, getInstance("php"), document, ext);
                     longResults.push(...sortLabels);

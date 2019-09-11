@@ -54,10 +54,10 @@ export function activatePython(context: vscode.ExtensionContext) {
             log("=====================");
             try {
                 const ext = "python(Python)";
-                const { longResults, sortResults, offsetID, fetchTime } = await fetchResults(document, position, ext, "python", syncer);
+                const { longResults, sortResults, offsetID, fetchTime, current } = await fetchResults(document, position, ext, "python", syncer);
                 lastTime = Date.now();
                 if (mspythonExtension) {
-                    syncer.put(offsetID, { ...sortResults, ext, fetchTime });
+                    syncer.put(offsetID, { ...sortResults, ext, fetchTime, current });
                 } else {
                     const sortLabels = formatSortData(sortResults, getInstance("python"), document, ext);
                     longResults.push(...sortLabels);
