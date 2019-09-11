@@ -54,12 +54,12 @@ export function activatePython(context: vscode.ExtensionContext) {
             log("=====================");
             try {
                 const ext = vscode.workspace.getConfiguration().get("aiXcoder.model.python") as string;
-                const { longResults, sortResults, offsetID, fetchTime } = await fetchResults(document, position, ext, "python", syncer);
+                const { longResults, sortResults, offsetID, fetchTime, current } = await fetchResults(document, position, ext, "python", syncer);
                 lastTime = Date.now();
                 if (mspythonExtension) {
-                    syncer.put(offsetID, { ...sortResults, ext, fetchTime });
+                    syncer.put(offsetID, { ...sortResults, ext, fetchTime, current });
                 } else {
-                    const sortLabels = formatSortData(sortResults, getInstance("python"), document, ext);
+                    const sortLabels = formatSortData(sortResults, getInstance("python"), document, ext, current);
                     longResults.push(...sortLabels);
                 }
                 if (!token.isCancellationRequested) {

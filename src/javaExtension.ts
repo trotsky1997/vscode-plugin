@@ -62,17 +62,17 @@ export function activateJava(context: vscode.ExtensionContext) {
                         position,
                         completionContext,
                     });
-                    const { longResults, sortResults, fetchTime } = await fetchPromise;
+                    const { longResults, sortResults, fetchTime, current } = await fetchPromise;
                     const l = await redhatPromise as vscode.CompletionItem[];
-                    mergeSortResult(l, sortResults, document, "java", ext);
+                    mergeSortResult(l, {...sortResults, ext, fetchTime, current}, document, "java", ext);
                     longResults.push(...l);
                     if (!token.isCancellationRequested) {
                         sendPredictTelemetryLong(ext, fetchTime, longResults);
                     }
                     return new vscode.CompletionList(longResults, true);
                 } else {
-                    const { longResults, sortResults, fetchTime } = await fetchResults(document, position, ext, "java");
-                    const sortLabels = formatSortData(sortResults, getInstance("java"), document, ext);
+                    const { longResults, sortResults, fetchTime, current } = await fetchResults(document, position, ext, "java");
+                    const sortLabels = formatSortData(sortResults, getInstance("java"), document, ext, current);
                     longResults.push(...sortLabels);
                     if (!token.isCancellationRequested) {
                         sendPredictTelemetryLong(ext, fetchTime, longResults);

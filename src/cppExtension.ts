@@ -56,11 +56,11 @@ export async function activateCPP(context: vscode.ExtensionContext) {
             const ext = vscode.workspace.getConfiguration().get("aiXcoder.model.cpp") as string;
             // log("=====================");
             try {
-                const { longResults, sortResults, offsetID, fetchTime } = await fetchResults(document, position, ext, "cpp", syncer, STAR_DISPLAY.LEFT);
+                const { longResults, sortResults, offsetID, fetchTime, current } = await fetchResults(document, position, ext, "cpp", syncer, STAR_DISPLAY.LEFT);
                 if (mscpp && hooked) {
-                    syncer.put(offsetID, { ...sortResults, ext, fetchTime });
+                    syncer.put(offsetID, { ...sortResults, ext, fetchTime, current });
                 } else {
-                    const sortLabels = formatSortData(sortResults, getInstance("cpp"), document, ext);
+                    const sortLabels = formatSortData(sortResults, getInstance("cpp"), document, ext, current);
                     longResults.push(...sortLabels);
                 }
                 if (!token.isCancellationRequested) {

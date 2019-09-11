@@ -53,12 +53,12 @@ export async function activatePhp(context: vscode.ExtensionContext) {
             log("=====================");
             try {
                 const ext = vscode.workspace.getConfiguration().get("aiXcoder.model.php") as string;
-                const { longResults, sortResults, offsetID, fetchTime } = await fetchResults(document, position, ext, "php", syncer, STAR_DISPLAY.RIGHT);
+                const { longResults, sortResults, offsetID, fetchTime, current } = await fetchResults(document, position, ext, "php", syncer, STAR_DISPLAY.RIGHT);
 
                 if (msphp || intelephense) {
-                    syncer.put(offsetID, { ...sortResults, ext, fetchTime });
+                    syncer.put(offsetID, { ...sortResults, ext, fetchTime, current });
                 } else {
-                    const sortLabels = formatSortData(sortResults, getInstance("php"), document, ext);
+                    const sortLabels = formatSortData(sortResults, getInstance("php"), document, ext, current);
                     longResults.push(...sortLabels);
                 }
                 if (!token.isCancellationRequested) {
