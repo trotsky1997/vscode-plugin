@@ -6,7 +6,8 @@ import { PhpLangUtil } from "./php";
 import { PythonLangUtil } from "./python";
 import { TypeScriptLangUtil } from "./typescript";
 
-export function getInstance(lang: string): LangUtil {
+const instances = new Map();
+function _getInstance(lang: string): LangUtil {
     switch (lang) {
         case "python":
             return new PythonLangUtil();
@@ -23,4 +24,13 @@ export function getInstance(lang: string): LangUtil {
         default:
             throw new Error(`unsuppored language ${lang}`);
     }
+}
+
+export function getInstance(lang: string): LangUtil {
+    if (instances.has(lang)) {
+        return instances.get(lang);
+    }
+    const instance = _getInstance(lang);
+    instances.set(lang, instance);
+    return instance;
 }

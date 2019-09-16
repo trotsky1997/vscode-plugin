@@ -14,17 +14,6 @@
             // "preLaunchTask": "npm: watch"
         },
         {
-            "name": "Launch Tests",
-            "type": "extensionHost",
-            "request": "launch",
-            "runtimeExecutable": "${execPath}",
-            "args": ["--extensionDevelopmentPath=${workspaceRoot}", "--extensionTestsPath=${workspaceRoot}/out/test" ],
-            "stopOnEntry": false,
-            "sourceMaps": true,
-            "outFiles": [ "${workspaceRoot}/out/test/**/*.js" ],
-            "preLaunchTask": "npm: watch"
-        },
-        {
             "name": "Extension Tests",
             "type": "extensionHost",
             "request": "launch",
@@ -33,6 +22,7 @@
               "--extensionDevelopmentPath=${workspaceFolder}",
               "--extensionTestsPath=${workspaceFolder}/out/test/suite/index"
             ],
+            "sourceMaps": true,
             "outFiles": ["${workspaceFolder}/out/test/**/*.js"]
           }
     ]

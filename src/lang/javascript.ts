@@ -1,33 +1,15 @@
 import { ID_REGEX, LangUtil } from "./langUtil";
 
+const keywords = new Set<string>();
+["for", "in", "while", "do", "break", "return", "continue", "switch", "case", "default", "if", "else",
+    "throw", "try", "catch", "finally", "new", "delete", "typeof", "instanceof", "void", "yield", "this", "of",
+    "var", "let", "with", "function", "abstract", "boolean", "byte", "char", "class", "const", "debugger",
+    "double", "enum", "export", "extends", "final", "float", "goto", "implements", "import", "int", "interface",
+    "long", "native", "package", "private", "protected", "public", "short", "static", "super", "synchronized",
+    "throws", "transient", "volatile", "true", "false", "null", "NaN", "Infinity", "undefined"].map(keywords.add.bind(keywords));
 export class JavaScriptLangUtil extends LangUtil {
-
-    public hasSpaceBetween(tokens: string[], nextI: number): boolean {
-        const left = nextI === 0 ? "" : tokens[nextI - 1];
-        const right = tokens[nextI];
-        if (left === "" || right === "") { return false; }
-        if (left === "." || right === ".") { return false; }
-        if (right === ",") { return false; }
-        if (left === "==" || right === "===") { return true; }
-        if (left === "<ENTER>" || right === "<ENTER>") { return false; }
-        if (left === "=" || right === "(") { return true; }
-        if (left === ";" || right === "}") { return true; }
-        if (left === "(" || right === ")") { return false; }
-        if (left === "[" || right === "]") { return false; }
-        if (right === "<str>" || right === "<int>") { return true; }
-        if (right === "[") { return false; }
-        if (left === "for" || left === "while" || left === "if") { return true; }
-        if (!left.match(ID_REGEX) && right === "{") { return true; }
-        if (left === ")" && right === "=>") { return true; }
-        if (right === ":") { return false; }
-        if (left === ":") { return true; }
-        if (left.match(ID_REGEX) && right === "(") { return false; }
-        if (right === ";") { return false; }
-        if (!left.match(ID_REGEX) && !right.match(ID_REGEX)) { return false; }
-        if (left === "++" || right === "++") { return false; }
-        if (left === "--" || right === "--") { return false; }
-
-        return true;
+    public getKeywords(): Set<string> {
+        return keywords;
     }
 
     public datamask(s: string, trivialLiterals: Set<string>): string {
