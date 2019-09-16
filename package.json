@@ -113,14 +113,16 @@
         "vscode:prepublish": "webpack --mode production",
         "compile": "webpack --mode none",
         "watch": "webpack --mode none --watch",
-        "postinstall": "node ./node_modules/vscode/bin/install",
         "test": "npm run compile && node ./node_modules/vscode/bin/test"
     },
     "devDependencies": {
+        "@types/chai": "^4.2.2",
         "@types/mocha": "^5.2.7",
         "@types/node": "^12.7.2",
         "@types/request-promise": "^4.1.44",
         "@types/uuid": "^3.4.5",
+        "@types/vscode": "^1.38.0",
+        "chai": "^4.2.0",
         "eslint": "^6.2.0",
         "eslint-config-standard": "^13.0.1",
         "eslint-plugin-import": "^2.18.2",
@@ -131,12 +133,13 @@
         "ts-loader": "^6.0.4",
         "tslint": "^5.18.0",
         "typescript": "^3.5.3",
-        "vscode": "^1.1.36",
+        "vscode-test": "^1.2.0",
         "webpack": "^4.39.2",
         "webpack-cli": "^3.3.7"
     },
     "dependencies": {
         "agentkeepalive": "^4.0.2",
+        "request": "^2.88.0",
         "request-promise": "^4.2.4",
         "uuid": "^3.3.3"
     }

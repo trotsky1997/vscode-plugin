@@ -46,6 +46,8 @@ export class TypeScriptLangUtil extends LangUtil {
         if (left === "==" || right === "===") { return true; }
         if (left === "(" || right === ")") { return false; }
         if (left === "[" || right === "]") { return false; }
+        if (left === "=" || right === "(") { return true; }
+        if (left === ";" || right === "}") { return true; }
         if (right === "<str>" || right === "<int>") { return true; }
         if (right === "[") { return false; }
         if (left === "for" || left === "while" || left === "if") { return true; }

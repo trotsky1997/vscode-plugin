@@ -1,7 +1,7 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
-## [0.1.16] - %DATE%
+## [0.1.16] - 2019-09-11
 
 ### Added
 - 可以在设置里面修改预测前面的符号了，默认是⭐。
@@ -10,6 +10,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 ### Fixed
 - 大小写混写的时候能正确地把概率高的结果排在前面了。
 - 不会出现重复的短结果了。
+- 空格问题。
 
 ## [0.1.15] - 2019-09-09
 
