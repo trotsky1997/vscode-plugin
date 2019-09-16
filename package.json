@@ -112,7 +112,9 @@
     "scripts": {
         "vscode:prepublish": "webpack --mode production",
         "compile": "webpack --mode none",
-        "watch": "webpack --mode none --watch",
+        "watch-webpack": "webpack --mode none --watch",
+        "watch-tsc": "tsc --watch",
+        "watch": "npx concurrently 'npm:watch-*'",
         "test": "npm run compile && node ./node_modules/vscode/bin/test"
     },
     "devDependencies": {
@@ -123,6 +125,7 @@
         "@types/uuid": "^3.4.5",
         "@types/vscode": "^1.38.0",
         "chai": "^4.2.0",
+        "concurrently": "^4.1.2",
         "eslint": "^6.2.0",
         "eslint-config-standard": "^13.0.1",
         "eslint-plugin-import": "^2.18.2",
