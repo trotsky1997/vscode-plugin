@@ -1,4 +1,5 @@
 import { CppLangUtil } from "./cpp";
+import { GoLangUtil } from "./go";
 import { JavaLangUtil } from "./java";
 import { JavaScriptLangUtil } from "./javascript";
 import { LangUtil } from "./langUtil";
@@ -21,6 +22,8 @@ function _getInstance(lang: string): LangUtil {
             return new JavaScriptLangUtil();
         case "ts":
             return new TypeScriptLangUtil();
+        case "go":
+            return new GoLangUtil();
         default:
             throw new Error(`unsuppored language ${lang}`);
     }

@@ -60,7 +60,7 @@ export abstract class LangUtil {
     };
     protected defaultSupplier = new Map<boolean, SpaceSupplier>();
     protected hasSpaceBetweenMap = new Map<string, Map<string, SpaceSupplier>>();
-    public constructor() {
+    public constructor(initSpacingOptions = true) {
         this.defaultSupplier.set(true, () => true);
         this.defaultSupplier.set(false, () => false);
         this.addSpacingOptionAround(LangUtil.SpacingKeyALL, LangUtil.SpacingKeyALL, true);
@@ -70,7 +70,9 @@ export abstract class LangUtil {
         this.addSpacingOptionAround("<IND>", LangUtil.SpacingKeyALL, false);
         this.addSpacingOptionAround("<UNIND>", LangUtil.SpacingKeyALL, false);
         this.addSpacingOptionAround("\t", LangUtil.SpacingKeyALL, false);
-        this.initSpacingOptions();
+        if (initSpacingOptions) {
+            this.initSpacingOptions();
+        }
     }
 
     public initSpacingOptions() {
