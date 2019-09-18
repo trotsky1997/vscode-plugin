@@ -6,12 +6,13 @@ import { after } from "mocha";
 import * as vscode from "vscode";
 import { getInstance } from "../../src/lang/commons";
 
-suite("Extension Test Suite", () => {
+suite("CPP Language Test Suite", () => {
+  const langUtil = getInstance("cpp");
   after(() => {
     vscode.window.showInformationMessage("All tests done!");
   });
 
-  test("cpp format", () => {
+  test("format", () => {
     const sourceTokens = `const int kStateFoo = 0 ;
     typedef struct linked_list LinkedList ;
     typedef enum {
@@ -175,7 +176,6 @@ suite("Extension Test Suite", () => {
       sample->second_parameter |= local_variable;
     }`;
 
-    const langUtil = getInstance("cpp");
     const sourceTokensLines = sourceTokens.split("\n").map((_) => _.trim());
     const sourceExpectLines = sourceExpect.split("\n").map((_) => _.trim());
     expect(sourceTokensLines.length).to.equal(sourceExpectLines.length, "test code line counts don't match");

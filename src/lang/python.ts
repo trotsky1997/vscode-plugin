@@ -1,4 +1,4 @@
-import { LangUtil } from "./langUtil";
+import { ID_REGEX, LangUtil } from "./langUtil";
 
 const keywords = new Set<string>();
 ["False", "None", "True", "and", "as", "assert", "break", "class", "continue", "def", "del", "elif", "else",
@@ -13,7 +13,20 @@ export class PythonLangUtil extends LangUtil {
         this.addSpacingOption(LangUtil.SpacingKeyALL, ":", (tokens, nextI) => {
             return tokens[nextI - 1] !== "<str>";
         });
+        this.addSpacingOption("<str>", "<str>", true);
+        this.addSpacingOption(")", ":", false);
+        this.addSpacingOptionAround("=", LangUtil.SpacingKeyALL, (tokens, nextI) => {
+            const lpar = tokens.indexOf("(");
+            return lpar <= 0 || lpar > nextI || tokens[lpar - 1].match(ID_REGEX) == null;
+        });
+        this.hasSpaceBetweenMap.delete(":");
         this.addSpacingOption(":", LangUtil.SpacingKeyALL, true);
+        this.addSpacingOption(LangUtil.SpacingKeyALL, ":", (tokens, nextI) => {
+            const lpar = tokens.indexOf("[");
+            if (lpar < 0) { return false; }
+            const rpar = tokens.indexOf("]", lpar);
+            return rpar > nextI;
+        });
     }
 
     public getKeywords(): Set<string> {

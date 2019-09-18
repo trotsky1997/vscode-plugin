@@ -6,12 +6,13 @@ import { after } from "mocha";
 import * as vscode from "vscode";
 import { getInstance } from "../../src/lang/commons";
 
-suite("Extension Test Suite", () => {
+suite("Java Language Test Suite", () => {
+  const langUtil = getInstance("java");
   after(() => {
     vscode.window.showInformationMessage("All tests done!");
   });
 
-  test("java format", () => {
+  test("format", () => {
     const sourceTokens = `import java . util . regex . Matcher ;
     import java . util . regex . Pattern ;
     public class RegexMatches {
@@ -47,7 +48,6 @@ suite("Extension Test Suite", () => {
         }
     }`;
 
-    const langUtil = getInstance("java");
     const sourceTokensLines = sourceTokens.split("\n").map((_) => _.trim());
     const sourceExpectLines = sourceExpect.split("\n").map((_) => _.trim());
     expect(sourceTokensLines.length).to.equal(sourceExpectLines.length, "test code line counts don't match");
@@ -55,7 +55,7 @@ suite("Extension Test Suite", () => {
       const tokens = sourceTokensLines[i].split(" ");
       const expectedValue = sourceExpectLines[i];
       const rendered = langUtil.render(tokens, 0);
-      expect(rendered).to.equal(expectedValue);
+      expect(rendered, sourceTokensLines[i]).to.equal(expectedValue);
     }
   });
 });
