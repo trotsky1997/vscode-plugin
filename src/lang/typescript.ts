@@ -25,6 +25,11 @@ export class TypeScriptLangUtil extends LangUtil {
             return !this.isGenericTypeBracket(tokens, nextI - 1);
         });
         this.addSpacingOption(">", LangUtil.SpacingKeyALL, true);
+        this.addSpacingOption(":", LangUtil.SpacingKeyALL, true);
+        this.hasSpaceBetweenMap.get(LangUtil.SpacingKeyALL).delete(":");
+        this.addSpacingOption(LangUtil.SpacingKeyALL, ":", false);
+        this.addSpacingOption("...", LangUtil.SpacingKeyALL, false);
+        this.addSpacingOption("import", LangUtil.SpacingKeyALL, true);
     }
 
     public getKeywords(): Set<string> {

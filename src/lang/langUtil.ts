@@ -151,6 +151,15 @@ export abstract class LangUtil {
 
     public abstract getKeywords(): Set<string>;
 
+    public getBaseTag(token: string) {
+        for (const tag of this.tags) {
+            if (token.startsWith(tag)) {
+                return tag;
+            }
+        }
+        return token;
+    }
+
     public renderToken(token: string): string {
         for (const tag of this.tags) {
             if (token.startsWith(tag)) {
@@ -196,9 +205,9 @@ export abstract class LangUtil {
     protected tags2str(token: string, value?: string): string {
         switch (token) {
             case "<str>":
-                return "\"" + value + "\"";
+                return "\"" + value.replace("<str_space>", " ") + "\"";
             case "<char>":
-                return "'" + value + "'";
+                return "'" + value.replace("<str_space>", " ") + "'";
             case "<float>":
                 return value || "0.0";
             case "<int>":
@@ -299,6 +308,8 @@ export abstract class LangUtil {
     }
 
     private getHasSpaceBetweenGetter(previousToken: string, nextToken: string): SpaceSupplier {
+        previousToken = this.getBaseTag(previousToken);
+        nextToken = this.getBaseTag(nextToken);
         const prevID = previousToken.match(ID_REGEX) ? LangUtil.SpacingKeyID : LangUtil.SpacingKeyNoID;
         const nextID = nextToken.match(ID_REGEX) ? LangUtil.SpacingKeyID : LangUtil.SpacingKeyNoID;
         // Checking order:
