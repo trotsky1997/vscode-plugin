@@ -33,6 +33,15 @@ export abstract class LangUtil {
         "^",
         "&&",
         "||",
+        "==",
+        "===",
+        "!=",
+        "!==",
+        ">",
+        ">=",
+        "<",
+        "<=",
+        "<>",
     ];
 
     protected myTags2str = {
@@ -104,6 +113,7 @@ export abstract class LangUtil {
         this.addSpacingOption(":", LangUtil.SpacingKeyTag, true);
         this.addSpacingOption(LangUtil.SpacingKeyBinOp, "-", true);
         this.addSpacingOption(LangUtil.SpacingKeyBinOp, "+", true);
+        this.addSpacingOptionAround(LangUtil.SpacingKeyBinOp, LangUtil.SpacingKeyALL, true);
         const posNeg: SpaceSupplier = (tokens, nextI) => {
             return tokens.length > nextI - 2 && (tokens[nextI - 2].match(ID_REGEX) != null || tokens[nextI - 2].match(/^<.+>/) != null);
         };

@@ -15,15 +15,15 @@ suite("JavaScript Language Test Suite", () => {
   test("format", () => {
     const sourceTokens = `import assert from <str>assert ;
     import { path } from <str>os ;
-    let number = 42 ;
+    let number = <int>42 ;
     var opposite = true ;
     if ( opposite ) {
-    number = - 42 ;
+    number = - <int>42 ;
     }
     square = function ( x ) {
     return x * x ;
     } ;
-    const list = [ 1 , 2 , 3 , 4 , 5 ] ;
+    const list = [ <int>1 , <int>2 , <int>3 , <int>4 , <int>5 ] ;
     math = {
     root : Math . sqrt ,
     square : square ,
@@ -43,7 +43,7 @@ suite("JavaScript Language Test Suite", () => {
     }
     cubes = ( function ( ) {
     const results = [ ] ;
-    for ( let i = 0 , len = list . length ; i < len ; i ++ ) {
+    for ( let i = <int>0 , len = list . length ; i < len ; i ++ ) {
     num = list [ i ] ;
     results . push ( math . cube ( num ) ) ;
     }

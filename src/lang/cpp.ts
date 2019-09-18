@@ -13,6 +13,7 @@ export class CppLangUtil extends LangUtil {
 
     public constructor() {
         super();
+        this.addSpacingOption("*", ")", false);
         this.addSpacingOption("*", LangUtil.SpacingKeyID, false);
         this.addSpacingOption("*", "*", false);
         this.addSpacingOptionAround("::", LangUtil.SpacingKeyALL, false);

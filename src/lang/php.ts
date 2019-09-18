@@ -14,8 +14,13 @@ export class PhpLangUtil extends LangUtil {
     public constructor() {
         super();
         this.addSpacingOption(LangUtil.SpacingKeyALL, ":", false);
-        this.addSpacingOption("$", LangUtil.SpacingKeyALL, true);
-        this.addSpacingOption("!", LangUtil.SpacingKeyALL, true);
+        this.addSpacingOption("$", LangUtil.SpacingKeyALL, false);
+        this.addSpacingOption("@", LangUtil.SpacingKeyALL, false);
+        this.addSpacingOption("!", LangUtil.SpacingKeyALL, false);
+        this.addSpacingOption(")", "or", true);
+        this.addSpacingOption(")", "and", true);
+        this.addSpacingOptionAround("or", LangUtil.SpacingKeyALL, true);
+        this.addSpacingOptionAround("and", LangUtil.SpacingKeyALL, true);
     }
 
     public getKeywords(): Set<string> {
