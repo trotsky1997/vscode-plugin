@@ -1,5 +1,6 @@
 import * as API from "../API";
 import { getInstance } from "../lang/commons";
+import { LangUtil } from "../lang/langUtil";
 
 /**
  * 数据脱敏
@@ -16,14 +17,18 @@ export default class DataMasking {
      * @param s 原始字符串
      * @return 脱敏后字符串
      */
-    public static async mask(s: string, ext: string): Promise<string> {
+    public static async mask(langUtil: LangUtil, s: string, ext: string): Promise<string> {
         if (DataMasking.trivialLiterals == null) {
             try {
                 DataMasking.trivialLiterals = new Set<string>();
                 const literals: string[] = JSON.parse(await API.getTrivialLiterals(ext));
                 for (const lit of literals) {
                     if (lit.startsWith("<str>")) {
-                        DataMasking.trivialLiterals.add(lit.substring("<str>".length).replace("<str_space>", " "));
+                        let raw = lit.substring("<str>".length).replace("<str_space>", " ");
+                        if (raw.startsWith("\"")) {
+                            raw = raw.substring(1, raw.length - 1);
+                        }
+                        DataMasking.trivialLiterals.add(raw);
                     }
                 }
             } catch (e) {
@@ -31,7 +36,7 @@ export default class DataMasking {
             }
             return s;
         } else {
-            return getInstance("java").datamask(s, DataMasking.trivialLiterals);
+            return langUtil.datamask(s, DataMasking.trivialLiterals);
         }
     }
 }

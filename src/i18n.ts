@@ -162,6 +162,18 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "en": "Please restart Visual Studio Code with Administrator Priviledges to finish the integration (you only need to do it once).",
         "zh-cn": "请使用管理员权限启动Visual Studio Code以完成集成（您只需要做一次）。",
     },
+    "go.fail": {
+        "en": "Go integration failed. Please ensure you have latest version of aiXcoder and VS Code.",
+        "zh-cn": "Go 集成失败。请确保您安装了最新版本的aiXcoder插件和VS Code。",
+    },
+    "go.reload": {
+        "en": "AiXCoder requires a reload to integrate with Go extension.",
+        "zh-cn": "AiXCoder需要重新加载以便与 GO 集成。",
+    },
+    "msgoExtension.install": {
+        "en": "AiXCoder: Go Extension is not installed or enabled. Please install Go Extension for the best experience.",
+        "zh-cn": "AiXCoder: Go 插件没有安装或启用。请安装 Go 插件以获得最佳体验。",
+    },
 };
 export function localize(key: string, ...params: any[]) {
     return localizeMessages[key] ? util.format(localizeMessages[key][vscode.env.language] || localizeMessages[key].en, ...params) : key;

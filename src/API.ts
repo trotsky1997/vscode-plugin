@@ -3,6 +3,7 @@ import * as request from "request-promise";
 import * as vscode from "vscode";
 import { compareVersion, myVersion } from "./extension";
 import { localize } from "./i18n";
+import { LangUtil } from "./lang/langUtil";
 import log from "./logger";
 import Preference from "./Preference";
 import CodeStore from "./utils/CodeStore";
@@ -49,9 +50,9 @@ function myRequest(options: request.OptionsWithUrl, endpoint?: string) {
     return request(options);
 }
 
-export async function predict(text: string, ext: string, remainingText: string, lastQueryUUID: number, fileID: string, retry = true) {
-    const maskedText = await DataMasking.mask(text, ext);
-    const maskedRemainingText = await DataMasking.mask(remainingText, ext);
+export async function predict(langUtil: LangUtil, text: string, ext: string, remainingText: string, lastQueryUUID: number, fileID: string, retry = true) {
+    const maskedText = await DataMasking.mask(langUtil, text, ext);
+    const maskedRemainingText = await DataMasking.mask(langUtil, remainingText, ext);
     const u = vscode.window.activeTextEditor.document.uri;
     const proj = vscode.workspace.getWorkspaceFolder(u);
     const projName = proj ? proj.name : "_scratch";
@@ -73,6 +74,7 @@ export async function predict(text: string, ext: string, remainingText: string, 
                 offset,
                 md5,
                 sort: 1,
+                const: 1,
                 prob_th_ngram: 1,
                 prob_th_ngram_t: 1,
                 version: myVersion,
@@ -88,7 +90,7 @@ export async function predict(text: string, ext: string, remainingText: string, 
         if (retry && resp && resp.indexOf("Conflict") >= 0) {
             console.log("conflict");
             CodeStore.getInstance().invalidateFile(projName, fileID);
-            return predict(text, ext, remainingText, lastQueryUUID, fileID, false);
+            return predict(langUtil, text, ext, remainingText, lastQueryUUID, fileID, false);
         } else {
             console.log("resp=" + resp);
             CodeStore.getInstance().saveLastSent(projName, fileID, maskedText);
@@ -97,7 +99,7 @@ export async function predict(text: string, ext: string, remainingText: string, 
     } catch (e) {
         if (e.message && e.message.indexOf("Conflict") >= 0) {
             CodeStore.getInstance().invalidateFile(projName, fileID);
-            return predict(text, ext, remainingText, lastQueryUUID, fileID, false);
+            return predict(langUtil, text, ext, remainingText, lastQueryUUID, fileID, false);
         }
         log(e);
     }

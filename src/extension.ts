@@ -7,6 +7,7 @@ import * as util from "util";
 import * as vscode from "vscode";
 import * as API from "./API";
 import { activateCPP } from "./cppExtension";
+import { activateGo } from "./goExtension";
 import { localize, localizeMessages } from "./i18n";
 import { activateJava } from "./javaExtension";
 import { getInstance } from "./lang/commons";
@@ -40,6 +41,14 @@ export function compareVersion(v1: any, v2: any) {
         if (v1[i] < v2[i]) { return -1; }
     }
     return v1.length === v2.length ? 0 : (v1.length < v2.length ? -1 : 1);
+}
+
+const shownMessages = new Set();
+export async function showInformationMessageOnce(message: string, ...items: string[]): Promise<string | undefined> {
+    if (!shownMessages.has(message)) {
+        shownMessages.add(message);
+        return showInformationMessage(message, ...items);
+    }
 }
 
 export async function showInformationMessage(message: string, ...items: string[]): Promise<string | undefined> {
@@ -106,7 +115,7 @@ let lastPromise = null;
 let lastFetchTime = 0;
 let lastQueryUUID = 0;
 
-function fetch(ext: string, text: string, remainingText: string, fileID: string) {
+function fetch(langUtil: LangUtil, ext: string, text: string, remainingText: string, fileID: string) {
     if (lastText === text && lastPromise != null) {
         return { body: lastPromise, queryUUID: lastQueryUUID, remote: false };
     } else {
@@ -115,7 +124,7 @@ function fetch(ext: string, text: string, remainingText: string, fileID: string)
         lastFetchTime = new Date().getTime();
         const queryUUID = Math.floor(Math.random() * 10000);
         lastQueryUUID = queryUUID;
-        lastPromise = API.predict(text, ext, remainingText, lastQueryUUID, fileID).catch((err) => {
+        lastPromise = API.predict(langUtil, text, ext, remainingText, lastQueryUUID, fileID).catch((err) => {
             log(err);
             if (lastQueryUUID === queryUUID) {
                 lastQueryUUID = null;
@@ -247,8 +256,9 @@ export async function fetchResults2(text: string, remainingText: string, fileNam
     let fetchBody: string = null;
     let queryUUID: number;
     let fetchTime: number;
+    const langUtil = getInstance(lang);
     if (Preference.shouldTrigger(lastModifedTime, document)) {
-        const fetched = fetch(ext, text, remainingText, fileName);
+        const fetched = fetch(langUtil, ext, text, remainingText, fileName);
         fetchBody = await fetched.body;
         queryUUID = fetched.queryUUID;
         fetchTime = fetched.fetchTime;
@@ -271,7 +281,6 @@ export async function fetchResults2(text: string, remainingText: string, fileNam
                 break;
             }
         }
-        const langUtil = getInstance(lang);
         let strLabels = formatResData(predictResults, langUtil, document, ext, text, starDisplay);
         // log("predict result:");
         // log(strLabels);
@@ -293,7 +302,10 @@ export async function fetchResults2(text: string, remainingText: string, fileNam
         // log("mina result:");
         const mappedResults = {
             ...results,
-            list: results.list.map(([prob, word, options]) => ({ prob, word: langUtil.renderToken(word), options })),
+            list: results.list.map(([prob, word, options]) => {
+                options = options || {};
+                return { prob, word: langUtil.renderToken(word, options), options };
+            }),
         };
         return {
             longResults: strLabels,
@@ -684,6 +696,7 @@ export async function activate(context: vscode.ExtensionContext) {
             cpp: await activateCPP(context),
             php: await activatePhp(context),
             typescript: await activateTypeScript(context),
+            go: await activateGo(context),
         };
         log("AiX: aiXcoder activated");
         return {

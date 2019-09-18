@@ -1,8 +1,40 @@
 import { ID_REGEX, LangUtil } from "./langUtil";
 
+const keywords = new Set<string>();
+["for", "in", "while", "do", "break", "return", "continue", "switch", "case", "default", "if", "else",
+    "throw", "try", "catch", "finally", "new", "delete", "typeof", "instanceof", "void", "this", "var", "let",
+    "with", "function", "abstract", "boolean", "byte", "char", "class", "const", "debugger", "double", "enum",
+    "export", "extends", "final", "float", "goto", "implements", "import", "int", "interface", "long", "native",
+    "package", "private", "protected", "public", "short", "static", "super", "synchronized", "throws",
+    "transient", "volatile", "true", "false", "null", "NaN", "Infinity", "undefined", "module", "string",
+    "bool", "number", "constructor", "declare", "interface", "as", "AS", "super"].map(keywords.add.bind(keywords));
+
 export class TypeScriptLangUtil extends LangUtil {
 
     public genericTypeRegex = /^([a-zA-Z0-9_$]+|<|>|,|\[\])$/;
+
+    public constructor() {
+        super();
+        this.addSpacingOption(LangUtil.SpacingKeyALL, ">", (tokens, nextI) => {
+            return !this.isGenericTypeBracket(tokens, nextI);
+        });
+        this.addSpacingOption(LangUtil.SpacingKeyALL, "<", (tokens, nextI) => {
+            return !this.isGenericTypeBracket(tokens, nextI);
+        });
+        this.addSpacingOption("<", LangUtil.SpacingKeyALL, (tokens, nextI) => {
+            return !this.isGenericTypeBracket(tokens, nextI - 1);
+        });
+        this.addSpacingOption(">", LangUtil.SpacingKeyALL, true);
+        this.addSpacingOption(":", LangUtil.SpacingKeyALL, true);
+        this.hasSpaceBetweenMap.get(LangUtil.SpacingKeyALL).delete(":");
+        this.addSpacingOption(LangUtil.SpacingKeyALL, ":", false);
+        this.addSpacingOption("...", LangUtil.SpacingKeyALL, false);
+        this.addSpacingOption("import", LangUtil.SpacingKeyALL, true);
+    }
+
+    public getKeywords(): Set<string> {
+        return keywords;
+    }
 
     public isGenericTypeBracket(tokens: string[], i: number): boolean {
         if (tokens[i] === "<") {
@@ -34,38 +66,6 @@ export class TypeScriptLangUtil extends LangUtil {
         } else {
             return false;
         }
-    }
-
-    public hasSpaceBetween(tokens: string[], nextI: number): boolean {
-        const left = nextI === 0 ? "" : tokens[nextI - 1];
-        const right = tokens[nextI];
-        if (left === "" || right === "") { return false; }
-        if (left === "." || right === ".") { return false; }
-        if (left === "<ENTER>" || right === "<ENTER>") { return false; }
-        if (right === ",") { return false; }
-        if (left === "==" || right === "===") { return true; }
-        if (left === "(" || right === ")") { return false; }
-        if (left === "[" || right === "]") { return false; }
-        if (right === "<str>" || right === "<int>") { return true; }
-        if (right === "[") { return false; }
-        if (left === "for" || left === "while" || left === "if") { return true; }
-        if (!left.match(ID_REGEX) && right === "{") { return true; }
-        if (left === ")" && right === "=>") { return true; }
-        if (right === ":") { return false; }
-        if (left === ":") { return true; }
-        if (left.match(ID_REGEX) && right === "(") { return false; }
-        if (right === ";") { return false; }
-        if (!left.match(ID_REGEX) && !right.match(ID_REGEX)) { return false; }
-        if (left === "++" || right === "++") { return false; }
-        if (left === "--" || right === "--") { return false; }
-
-        if (right === "<" || right === ">") {
-            return !this.isGenericTypeBracket(tokens, nextI);
-        }
-        if (left === "<" || left === ">") {
-            return !this.isGenericTypeBracket(tokens, nextI - 1);
-        }
-        return true;
     }
 
     public datamask(s: string, trivialLiterals: Set<string>): string {
