@@ -97,6 +97,7 @@ export abstract class LangUtil {
         this.addSpacingOption("{", LangUtil.SpacingKeyTag, true);
         this.addSpacingOption(LangUtil.SpacingKeyALL, "{", true);
         this.addSpacingOption(LangUtil.SpacingKeyTag, ":", false);
+        this.addSpacingOption(LangUtil.SpacingKeyTag, ":", false);
         this.addSpacingOption(LangUtil.SpacingKeyTag, ";", false);
         this.addSpacingOption(LangUtil.SpacingKeyTag, ".", false);
         this.addSpacingOption(LangUtil.SpacingKeyTag, ")", false);

@@ -21,6 +21,7 @@ export class PythonLangUtil extends LangUtil {
         });
         this.hasSpaceBetweenMap.delete(":");
         this.addSpacingOption(":", LangUtil.SpacingKeyALL, true);
+        this.hasSpaceBetweenMap.get(LangUtil.SpacingKeyALL).delete(":");
         this.addSpacingOption(LangUtil.SpacingKeyALL, ":", (tokens, nextI) => {
             const lpar = tokens.indexOf("[");
             if (lpar < 0) { return false; }

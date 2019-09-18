@@ -7,7 +7,17 @@ const keywords = new Set<string>();
     "double", "enum", "export", "extends", "final", "float", "goto", "implements", "import", "int", "interface",
     "long", "native", "package", "private", "protected", "public", "short", "static", "super", "synchronized",
     "throws", "transient", "volatile", "true", "false", "null", "NaN", "Infinity", "undefined"].map(keywords.add.bind(keywords));
+
 export class JavaScriptLangUtil extends LangUtil {
+    constructor() {
+        super();
+        this.hasSpaceBetweenMap.delete(":");
+        this.addSpacingOption(":", LangUtil.SpacingKeyALL, true);
+        this.hasSpaceBetweenMap.get(LangUtil.SpacingKeyALL).delete(":");
+        this.addSpacingOption(LangUtil.SpacingKeyALL, ":", false);
+        this.addSpacingOption("...", LangUtil.SpacingKeyALL, false);
+    }
+
     public getKeywords(): Set<string> {
         return keywords;
     }
