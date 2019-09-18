@@ -25,7 +25,8 @@
         "onLanguage:javascript",
         "onLanguage:javascriptreact",
         "onLanguage:vue",
-        "onLanguage:html"
+        "onLanguage:html",
+        "onLanguage:go"
     ],
     "main": "./dist/extension",
     "contributes": {
@@ -101,9 +102,9 @@
             }
         },
         "commands": [{
-            "command": "aiXcoder.resetMessage",
-            "title": "Reset messages",
-            "category": "aiXcoder"
+                "command": "aiXcoder.resetMessage",
+                "title": "Reset messages",
+                "category": "aiXcoder"
         }],
         "javaExtensions": [
             "dist/aixjdtls.jar"

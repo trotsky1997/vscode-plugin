@@ -1,7 +1,7 @@
 import * as path from "path";
 import * as vscode from "vscode";
 import { TelemetryType } from "./API";
-import { fetchResults, formatSortData, getReqText, JSHooker, mergeSortResult, myID, sendPredictTelemetryLong, sendPredictTelemetryShort, showInformationMessage, SortResultEx, STAR_DISPLAY } from "./extension";
+import { fetchResults, formatSortData, getReqText, JSHooker, mergeSortResult, myID, sendPredictTelemetryLong, sendPredictTelemetryShort, showInformationMessageOnce, SortResultEx, STAR_DISPLAY } from "./extension";
 import { localize } from "./i18n";
 import { getInstance } from "./lang/commons";
 import log from "./logger";
@@ -40,7 +40,7 @@ export async function activatePhp(context: vscode.ExtensionContext) {
                 return distjs;
             });
         } else {
-            showInformationMessage("intelephense.install", "action.install").then((selection) => {
+            showInformationMessageOnce("intelephense.install", "action.install").then((selection) => {
                 if (selection === localize("action.install")) {
                     vscode.commands.executeCommand("vscode.open", vscode.Uri.parse(intelephenseId));
                 }

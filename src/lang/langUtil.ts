@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 
-import { Rescue } from "../extension";
+import { CompletionOptions, Rescue } from "../extension";
 
 export const ID_REGEX = /^[a-zA-Z$_][a-zA-Z_$0-9]*$/;
 
@@ -172,9 +172,12 @@ export abstract class LangUtil {
         return token;
     }
 
-    public renderToken(token: string): string {
+    public renderToken(token: string, options?: CompletionOptions): string {
         for (const tag of this.tags) {
             if (token.startsWith(tag)) {
+                if (options) {
+                    options.forced = true;
+                }
                 return this.tags2str(tag, token.substring(tag.length));
             }
         }
@@ -195,7 +198,29 @@ export abstract class LangUtil {
     }
 
     public datamask(s: string, trivialLiterals: Set<string>): string {
-        return s;
+        let stringBuilder = "";
+        for (let i = 0; i < s.length; i++) {
+            const c = s.charAt(i);
+            stringBuilder += (c);
+            if (c === '"' || c === "'") {
+                i++;
+                const strStart = i;
+                for (; i < s.length; i++) {
+                    if (s.charAt(i) === c) {
+                        break;
+                    }
+                    if (s.charAt(i) === "\\") {
+                        i++;
+                    }
+                }
+                const strContent = s.substring(strStart, i);
+                if (trivialLiterals.has(strContent)) {
+                    stringBuilder += strContent;
+                }
+                stringBuilder += c;
+            }
+        }
+        return stringBuilder;
     }
 
     /**
@@ -217,8 +242,14 @@ export abstract class LangUtil {
     protected tags2str(token: string, value?: string): string {
         switch (token) {
             case "<str>":
+                if (value[0] === "\"" && value[value.length - 1] === "\"") {
+                    value = value.substring(1, value.length - 1);
+                }
                 return "\"" + value.replace("<str_space>", " ") + "\"";
             case "<char>":
+                if (value[0] === "'" && value[value.length - 1] === "'") {
+                    value = value.substring(1, value.length - 1);
+                }
                 return "'" + value.replace("<str_space>", " ") + "'";
             case "<float>":
                 return value || "0.0";

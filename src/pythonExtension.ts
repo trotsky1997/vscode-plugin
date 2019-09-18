@@ -1,14 +1,14 @@
 import * as path from "path";
 import * as vscode from "vscode";
 import { TelemetryType } from "./API";
-import { fetchResults, formatSortData, getReqText, JSHooker, mergeSortResult, myID, sendPredictTelemetryLong, sendPredictTelemetryShort, showInformationMessage, SortResultEx, STAR_DISPLAY } from "./extension";
+import { fetchResults, formatSortData, getReqText, JSHooker, mergeSortResult, myID, sendPredictTelemetryLong, sendPredictTelemetryShort, showInformationMessageOnce, SortResultEx, STAR_DISPLAY } from "./extension";
 import { localize } from "./i18n";
 import { getInstance } from "./lang/commons";
 import log from "./logger";
 import { Syncer } from "./Syncer";
 import { SafeStringUtil } from "./utils/SafeStringUtil";
 
-export function activatePython(context: vscode.ExtensionContext) {
+export async function activatePython(context: vscode.ExtensionContext) {
     const mspythonExtension = vscode.extensions.getExtension("ms-python.python");
     const syncer = new Syncer<SortResultEx>();
     let activated = false;
@@ -40,7 +40,7 @@ export function activatePython(context: vscode.ExtensionContext) {
                 return distjs;
             });
         } else {
-            showInformationMessage("mspythonExtension.install", "action.install").then((selection) => {
+            showInformationMessageOnce("mspythonExtension.install", "action.install").then((selection) => {
                 if (selection === localize("action.install")) {
                     vscode.commands.executeCommand("vscode.open", vscode.Uri.parse("vscode:extension/ms-python.python"));
                 }

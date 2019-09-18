@@ -1,11 +1,11 @@
 import * as vscode from "vscode";
 import { TelemetryType } from "./API";
-import { fetchResults, formatSortData, mergeSortResult, onDeactivateHandlers, sendPredictTelemetryLong, sendPredictTelemetryShort, showInformationMessage } from "./extension";
+import { fetchResults, formatSortData, mergeSortResult, onDeactivateHandlers, sendPredictTelemetryLong, sendPredictTelemetryShort, showInformationMessageOnce } from "./extension";
 import { localize } from "./i18n";
 import { getInstance } from "./lang/commons";
 import log from "./logger";
 
-export function activateJava(context: vscode.ExtensionContext) {
+export async function activateJava(context: vscode.ExtensionContext) {
     const redhatjavaExtension = vscode.extensions.getExtension("redhat.java");
     const msintellicode = vscode.extensions.getExtension("visualstudioexptteam.vscodeintellicode");
     let activated = false;
@@ -40,7 +40,7 @@ export function activateJava(context: vscode.ExtensionContext) {
                 log("AiX: visualstudioexptteam.vscodeintellicode detected");
             }
         } else {
-            showInformationMessage("redhatjavaExtension.install", "action.install").then((selection) => {
+            showInformationMessageOnce("redhatjavaExtension.install", "action.install").then((selection) => {
                 if (selection === localize("action.install")) {
                     vscode.commands.executeCommand("vscode.open", vscode.Uri.parse("vscode:extension/redhat.java"));
                 }

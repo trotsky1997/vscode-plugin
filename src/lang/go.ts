@@ -28,30 +28,4 @@ export class GoLangUtil extends LangUtil {
     public getKeywords(): Set<string> {
         return keywords;
     }
-
-    public datamask(s: string, trivialLiterals: Set<string>): string {
-        let stringBuilder = "";
-        for (let i = 0; i < s.length; i++) {
-            const c = s.charAt(i);
-            stringBuilder += (c);
-            if (c === '"' || c === "'" || c === "`") {
-                i++;
-                const strStart = i;
-                for (; i < s.length; i++) {
-                    if (s.charAt(i) === c) {
-                        break;
-                    }
-                    if (s.charAt(i) === "\\") {
-                        i++;
-                    }
-                }
-                const strContent = s.substring(strStart, i);
-                if (trivialLiterals.has(strContent)) {
-                    stringBuilder += strContent;
-                }
-                stringBuilder += c;
-            }
-        }
-        return stringBuilder;
-    }
 }
