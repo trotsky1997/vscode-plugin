@@ -30,6 +30,7 @@ export class TypeScriptLangUtil extends LangUtil {
         this.addSpacingOption(LangUtil.SpacingKeyALL, ":", false);
         this.addSpacingOption("...", LangUtil.SpacingKeyALL, false);
         this.addSpacingOption("import", LangUtil.SpacingKeyALL, true);
+        this.addSpacingOption(LangUtil.SpacingKeyALL, "=>", true);
     }
 
     public getKeywords(): Set<string> {

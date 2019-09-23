@@ -16,6 +16,7 @@ export class JavaScriptLangUtil extends LangUtil {
         this.hasSpaceBetweenMap.get(LangUtil.SpacingKeyALL).delete(":");
         this.addSpacingOption(LangUtil.SpacingKeyALL, ":", false);
         this.addSpacingOption("...", LangUtil.SpacingKeyALL, false);
+        this.addSpacingOption(LangUtil.SpacingKeyALL, "=>", true);
     }
 
     public getKeywords(): Set<string> {

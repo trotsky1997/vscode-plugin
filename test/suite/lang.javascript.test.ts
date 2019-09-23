@@ -49,7 +49,8 @@ suite("JavaScript Language Test Suite", () => {
     }
     return results ;
     } ) ( ) ;
-    if ( ! m ) ;`;
+    if ( ! m ) ;
+    rl . on ( <str>line , ( line ) => { } ) ;`;
     const sourceExpect = `import assert from "assert";
     import { path } from "os";
     let number = 42;
@@ -86,7 +87,8 @@ suite("JavaScript Language Test Suite", () => {
       }
       return results;
     })();
-    if (!m);`;
+    if (!m);
+    rl.on("line", (line) => { });`;
 
     const sourceTokensLines = sourceTokens.split("\n").map((_) => _.trim());
     const sourceExpectLines = sourceExpect.split("\n").map((_) => _.trim());

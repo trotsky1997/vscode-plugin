@@ -8,6 +8,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 ### Changed
 ### Fixed
 - 去掉了!后面的空格。
+- (JavaScript/TypeScript)在=>前加上了空格。
 
 ## [0.1.16] - 2019-09-18
 
