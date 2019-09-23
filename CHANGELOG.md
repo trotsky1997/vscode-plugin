@@ -1,6 +1,14 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.1.17] - %DATE%
+
+### Added
+
+### Changed
+### Fixed
+- 去掉了!后面的空格。
+
 ## [0.1.16] - 2019-09-18
 
 ### Added

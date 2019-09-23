@@ -27,6 +27,7 @@ suite("Java Language Test Suite", () => {
     System . out . println ( <str> + m . group ( <int> ) ) ;
     } else {
     System . out . println ( <str> ) ;
+    if ( ! m ) ;
     }
     }
     }`;
@@ -44,6 +45,7 @@ suite("Java Language Test Suite", () => {
                 System.out.println("" + m.group(0));
             } else {
                 System.out.println("");
+                if (!m);
             }
         }
     }`;

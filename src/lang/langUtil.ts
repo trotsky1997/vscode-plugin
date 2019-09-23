@@ -119,6 +119,7 @@ export abstract class LangUtil {
         const posNeg: SpaceSupplier = (tokens, nextI) => {
             return tokens.length > nextI - 2 && (tokens[nextI - 2].match(ID_REGEX) != null || tokens[nextI - 2].match(/^<.+>/) != null);
         };
+        this.addSpacingOption("!", LangUtil.SpacingKeyALL, false);
         this.addSpacingOption("-", "+", posNeg);
         this.addSpacingOption("-", "<int>", posNeg);
         this.addSpacingOption("+", "<int>", posNeg);

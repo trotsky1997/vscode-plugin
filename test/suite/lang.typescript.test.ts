@@ -31,7 +31,8 @@ suite("TypeScript Language Test Suite", () => {
     return <str>Hello,<str_space> + person . firstName + <str><str_space> + person . lastName ;
     }
     let user = new Student ( <str>Jane , <str>M. , <str>User ) ;
-    document . body . textContent = greeter ( user ) ;`;
+    document . body . textContent = greeter ( user ) ;
+    if ( ! m ) ;`;
     const sourceExpect = `import { expect } from "chai";
     import { after } from "mocha";
     import * as vscode from "vscode";
@@ -50,7 +51,8 @@ suite("TypeScript Language Test Suite", () => {
         return "Hello, " + person.firstName + " " + person.lastName;
     }
     let user = new Student("Jane", "M.", "User");
-    document.body.textContent = greeter(user);`;
+    document.body.textContent = greeter(user);
+    if (!m);`;
 
     const sourceTokensLines = sourceTokens.split("\n").map((_) => _.trim());
     const sourceExpectLines = sourceExpect.split("\n").map((_) => _.trim());

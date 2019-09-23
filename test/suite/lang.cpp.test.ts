@@ -93,7 +93,8 @@ suite("CPP Language Test Suite", () => {
     }
     sample -> first_parameter += another_parameter ;
     sample -> second_parameter |= local_variable ;
-    }`;
+    }
+    if ( ! m ) ;`;
     const sourceExpect = `const int kStateFoo = 0;
     typedef struct linked_list LinkedList;
     typedef enum {
@@ -174,7 +175,8 @@ suite("CPP Language Test Suite", () => {
       }
       sample->first_parameter += another_parameter;
       sample->second_parameter |= local_variable;
-    }`;
+    }
+    if (!m);`;
 
     const sourceTokensLines = sourceTokens.split("\n").map((_) => _.trim());
     const sourceExpectLines = sourceExpect.split("\n").map((_) => _.trim());

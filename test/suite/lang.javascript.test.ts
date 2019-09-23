@@ -48,7 +48,8 @@ suite("JavaScript Language Test Suite", () => {
     results . push ( math . cube ( num ) ) ;
     }
     return results ;
-    } ) ( ) ;`;
+    } ) ( ) ;
+    if ( ! m ) ;`;
     const sourceExpect = `import assert from "assert";
     import { path } from "os";
     let number = 42;
@@ -84,7 +85,8 @@ suite("JavaScript Language Test Suite", () => {
         results.push(math.cube(num));
       }
       return results;
-    })();`;
+    })();
+    if (!m);`;
 
     const sourceTokensLines = sourceTokens.split("\n").map((_) => _.trim());
     const sourceExpectLines = sourceExpect.split("\n").map((_) => _.trim());
