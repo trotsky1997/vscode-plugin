@@ -13,6 +13,7 @@ export class PhpLangUtil extends LangUtil {
 
     public constructor() {
         super();
+        this.constants.push("<mstr>");
         this.addSpacingOption(LangUtil.SpacingKeyALL, ":", false);
         this.addSpacingOption("$", LangUtil.SpacingKeyALL, false);
         this.addSpacingOption("@", LangUtil.SpacingKeyALL, false);

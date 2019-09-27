@@ -9,9 +9,17 @@ export abstract class LangUtil {
     protected static readonly SpacingKeyALL = "#All#";
     protected static readonly SpacingKeyID = "#ID#";
     protected static readonly SpacingKeyNoID = "#NoID#";
-    protected static readonly SpacingKeyTag = "#Tag#";
+    protected static readonly SpacingKeyConstants = "#Constant#";
+    protected static readonly SpacingKeyTags = "#Tag#";
     protected static readonly SpacingKeyBinOp = "#BinOp#";
     protected tags = [
+        "<ENTER>",
+        "<IND>",
+        "<UNIND>",
+        "<BREAK>",
+    ];
+
+    protected constants = [
         "<str>",
         "<char>",
         "<float>",
@@ -65,10 +73,8 @@ export abstract class LangUtil {
         this.defaultSupplier.set(false, () => false);
         this.addSpacingOptionAround(LangUtil.SpacingKeyALL, LangUtil.SpacingKeyALL, true);
         this.addSpacingOptionAround(LangUtil.SpacingKeyID, LangUtil.SpacingKeyID, true);
-        this.addSpacingOptionAround("<ENTER>", LangUtil.SpacingKeyALL, false);
         this.addSpacingOptionAround("\n", LangUtil.SpacingKeyALL, false);
-        this.addSpacingOptionAround("<IND>", LangUtil.SpacingKeyALL, false);
-        this.addSpacingOptionAround("<UNIND>", LangUtil.SpacingKeyALL, false);
+        this.addSpacingOptionAround(LangUtil.SpacingKeyTags, LangUtil.SpacingKeyALL, false);
         this.addSpacingOptionAround("\t", LangUtil.SpacingKeyALL, false);
         if (initSpacingOptions) {
             this.initSpacingOptions();
@@ -80,20 +86,19 @@ export abstract class LangUtil {
         this.addSpacingOptionAround(".", LangUtil.SpacingKeyALL, false);
         this.addSpacingOption(",", LangUtil.SpacingKeyALL, true);
         this.addSpacingOption(LangUtil.SpacingKeyALL, ",", false);
-        this.addSpacingOptionAround("<ENTER>", LangUtil.SpacingKeyALL, false);
         this.addSpacingOptionAround("=", LangUtil.SpacingKeyALL, true);
         this.addSpacingOptionAround("(", LangUtil.SpacingKeyALL, false);
         this.addSpacingOptionAround(LangUtil.SpacingKeyID, ")", false);
-        this.addSpacingOption(LangUtil.SpacingKeyTag, LangUtil.SpacingKeyALL, false);
+        this.addSpacingOption(LangUtil.SpacingKeyConstants, LangUtil.SpacingKeyALL, false);
         this.addSpacingOptionAround("[", LangUtil.SpacingKeyALL, false);
         this.addSpacingOption(";", LangUtil.SpacingKeyALL, true);
-        this.addSpacingOption(LangUtil.SpacingKeyALL, LangUtil.SpacingKeyTag, true);
+        this.addSpacingOption(LangUtil.SpacingKeyALL, LangUtil.SpacingKeyConstants, true);
         this.addSpacingOption("while", "(", true);
         this.addSpacingOption("for", "(", true);
         this.addSpacingOption("if", "(", true);
         this.addSpacingOptionRightKeywords("{", true);
         this.addSpacingOptionRightKeywords(LangUtil.SpacingKeyID, true);
-        this.addSpacingOptionRightKeywords(LangUtil.SpacingKeyTag, true);
+        this.addSpacingOptionRightKeywords(LangUtil.SpacingKeyConstants, true);
         this.addSpacingOptionRightKeywords(LangUtil.SpacingKeyALL, false);
         this.addSpacingOption(LangUtil.SpacingKeyID, "(", false);
         this.addSpacingOption(LangUtil.SpacingKeyALL, ";", false);
@@ -102,17 +107,17 @@ export abstract class LangUtil {
         this.addSpacingOptionAround("++", LangUtil.SpacingKeyALL, false);
         this.addSpacingOptionAround("--", LangUtil.SpacingKeyALL, false);
         this.addSpacingOption(LangUtil.SpacingKeyALL, "}", true);
-        this.addSpacingOption(LangUtil.SpacingKeyTag, "}", true);
+        this.addSpacingOption(LangUtil.SpacingKeyConstants, "}", true);
         this.addSpacingOption(LangUtil.SpacingKeyALL, "]", false);
-        this.addSpacingOption(LangUtil.SpacingKeyTag, "]", false);
-        this.addSpacingOption("{", LangUtil.SpacingKeyTag, true);
+        this.addSpacingOption(LangUtil.SpacingKeyConstants, "]", false);
+        this.addSpacingOption("{", LangUtil.SpacingKeyConstants, true);
         this.addSpacingOption(LangUtil.SpacingKeyALL, "{", true);
-        this.addSpacingOption(LangUtil.SpacingKeyTag, ":", false);
-        this.addSpacingOption(LangUtil.SpacingKeyTag, ":", false);
-        this.addSpacingOption(LangUtil.SpacingKeyTag, ";", false);
-        this.addSpacingOption(LangUtil.SpacingKeyTag, ".", false);
-        this.addSpacingOption(LangUtil.SpacingKeyTag, ")", false);
-        this.addSpacingOption(":", LangUtil.SpacingKeyTag, true);
+        this.addSpacingOption(LangUtil.SpacingKeyConstants, ":", false);
+        this.addSpacingOption(LangUtil.SpacingKeyConstants, ":", false);
+        this.addSpacingOption(LangUtil.SpacingKeyConstants, ";", false);
+        this.addSpacingOption(LangUtil.SpacingKeyConstants, ".", false);
+        this.addSpacingOption(LangUtil.SpacingKeyConstants, ")", false);
+        this.addSpacingOption(":", LangUtil.SpacingKeyConstants, true);
         this.addSpacingOption(LangUtil.SpacingKeyBinOp, "-", true);
         this.addSpacingOption(LangUtil.SpacingKeyBinOp, "+", true);
         this.addSpacingOptionAround(LangUtil.SpacingKeyBinOp, LangUtil.SpacingKeyALL, true);
@@ -129,9 +134,9 @@ export abstract class LangUtil {
         this.addSpacingOption("+", "<double>", posNeg);
         this.addSpacingOption("-", LangUtil.SpacingKeyID, posNeg);
         this.addSpacingOption("+", LangUtil.SpacingKeyID, posNeg);
-        this.addSpacingOption(LangUtil.SpacingKeyTag, ",", false);
-        this.addSpacingOption(LangUtil.SpacingKeyID, LangUtil.SpacingKeyTag, true);
-        this.addSpacingOption(LangUtil.SpacingKeyTag, LangUtil.SpacingKeyNoID, true);
+        this.addSpacingOption(LangUtil.SpacingKeyConstants, ",", false);
+        this.addSpacingOption(LangUtil.SpacingKeyID, LangUtil.SpacingKeyConstants, true);
+        this.addSpacingOption(LangUtil.SpacingKeyConstants, LangUtil.SpacingKeyNoID, true);
     }
 
     /**
@@ -165,7 +170,7 @@ export abstract class LangUtil {
     public abstract getKeywords(): Set<string>;
 
     public getBaseTag(token: string) {
-        for (const tag of this.tags) {
+        for (const tag of this.constants) {
             if (token.startsWith(tag)) {
                 return tag;
             }
@@ -174,13 +179,16 @@ export abstract class LangUtil {
     }
 
     public renderToken(token: string, options?: CompletionOptions): string {
-        for (const tag of this.tags) {
-            if (token.startsWith(tag)) {
+        for (const constant of this.constants) {
+            if (token.startsWith(constant)) {
                 if (options) {
                     options.forced = true;
                 }
-                return this.tags2str(tag, token.substring(tag.length));
+                return this.constants2str(constant, token.substring(constant.length));
             }
+        }
+        if (this.tags.indexOf(token) >= 0) {
+            return this.tags2str(token);
         }
         return token;
     }
@@ -240,7 +248,7 @@ export abstract class LangUtil {
         return getter(tokens, nextI);
     }
 
-    protected tags2str(token: string, value?: string): string {
+    protected constants2str(token: string, value?: string): string {
         switch (token) {
             case "<str>":
                 if (value[0] === "\"" && value[value.length - 1] === "\"") {
@@ -270,6 +278,22 @@ export abstract class LangUtil {
         return token;
     }
 
+    protected tags2str(token: string): string {
+        switch (token) {
+            case "<ENTER>":
+                return "\n";
+            case "<IND>":
+                return "";
+            case "<UNIND>":
+                return "";
+            case "<BREAK>":
+                return "";
+            default:
+                break;
+        }
+        return token;
+    }
+
     protected addSpacingOptionAround(token: string, otherToken: string, hasSpace: boolean | SpaceSupplier) {
         if (typeof (hasSpace) === "boolean") {
             this.addSpacingOption(token, otherToken, this.defaultSupplier.get(hasSpace));
@@ -281,17 +305,21 @@ export abstract class LangUtil {
     }
 
     protected isGenericToken(t: string) {
-        return t === LangUtil.SpacingKeyTag || t === LangUtil.SpacingKeyBinOp;
+        return t === LangUtil.SpacingKeyConstants || t === LangUtil.SpacingKeyBinOp || t === LangUtil.SpacingKeyTags;
     }
 
     protected *iterateGenericToken(t: string) {
-        if (t === LangUtil.SpacingKeyTag) {
-            for (const tag of this.tags) {
-                yield tag;
+        if (t === LangUtil.SpacingKeyConstants) {
+            for (const constant of this.constants) {
+                yield constant;
             }
         } else if (t === LangUtil.SpacingKeyBinOp) {
             for (const binOp of this.binops) {
                 yield binOp;
+            }
+        } else if (t === LangUtil.SpacingKeyTags) {
+            for (const tag of this.tags) {
+                yield tag;
             }
         }
     }
