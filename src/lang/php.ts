@@ -13,6 +13,7 @@ export class PhpLangUtil extends LangUtil {
 
     public constructor() {
         super();
+        this.constants.push("<mstr>");
         this.addSpacingOption(LangUtil.SpacingKeyALL, ":", false);
         this.addSpacingOption("$", LangUtil.SpacingKeyALL, false);
         this.addSpacingOption("@", LangUtil.SpacingKeyALL, false);
@@ -27,7 +28,20 @@ export class PhpLangUtil extends LangUtil {
         return keywords;
     }
 
-    public datamask(s: string, trivialLiterals: Set<string>): string {
-        return s;
+    public shouldPredict(text: string) {
+        // in string
+        text = this.datamask(text, new Set());
+        if (this.betweenPair(text, "\"", "\"") || this.betweenPair(text, "'", "'")) {
+            return false;
+        }
+        // in comment
+        if (this.betweenPair(text, "/*", "*/")) {
+            return false;
+        }
+        const lineStart = text.lastIndexOf("\n") + 1;
+        if (text.indexOf("//", lineStart) >= 0 || text.indexOf("#", lineStart) >= 0) {
+            return false;
+        }
+        return true;
     }
 }

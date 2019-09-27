@@ -27,9 +27,10 @@ suite("Java Language Test Suite", () => {
     System . out . println ( <str> + m . group ( <int> ) ) ;
     } else {
     System . out . println ( <str> ) ;
+    if ( ! m ) ;
     }
     }
-    }`;
+    } <ENTER>`;
     const sourceExpect = `import java.util.regex.Matcher;
     import java.util.regex.Pattern;
     public class RegexMatches {
@@ -44,12 +45,13 @@ suite("Java Language Test Suite", () => {
                 System.out.println("" + m.group(0));
             } else {
                 System.out.println("");
+                if (!m);
             }
         }
-    }`;
+    }↵`;
 
     const sourceTokensLines = sourceTokens.split("\n").map((_) => _.trim());
-    const sourceExpectLines = sourceExpect.split("\n").map((_) => _.trim());
+    const sourceExpectLines = sourceExpect.split("\n").map((_) => _.trim().replace("↵", "\n"));
     expect(sourceTokensLines.length).to.equal(sourceExpectLines.length, "test code line counts don't match");
     for (let i = 0; i < sourceTokensLines.length; i++) {
       const tokens = sourceTokensLines[i].split(" ");

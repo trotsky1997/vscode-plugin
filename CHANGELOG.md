@@ -1,6 +1,16 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.1.17] - 2019-09-27
+
+### Added
+### Changed
+### Fixed
+- 去掉了!后面的空格。
+- (JavaScript/TypeScript)在=>前加上了空格。
+- 修复了会出现奇怪的标签的bug
+- 不会在字符串，注释里面发起提示了
+
 ## [0.1.16] - 2019-09-18
 
 ### Added

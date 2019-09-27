@@ -85,7 +85,7 @@ export async function activateCPP(context: vscode.ExtensionContext) {
         async aixHook(ll: vscode.CompletionList | vscode.CompletionItem[], document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, completioContext: vscode.CompletionContext): Promise<vscode.CompletionList | vscode.CompletionItem[]> {
             try {
                 // return ll;
-                const { offsetID } = getReqText(document, position);
+                const { offsetID } = getReqText(document, position, "cpp");
                 const items = Array.isArray(ll) ? ll : ll.items;
                 const sortResults = await syncer.get(offsetID, items.length === 0);
                 if (sortResults == null) { return ll; }
