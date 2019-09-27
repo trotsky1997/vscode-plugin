@@ -106,7 +106,8 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
             try {
                 let ext = "javascript(Javascript)";
                 const startTime = Date.now();
-                const { text: t, remainingText, offsetID } = getReqText(document, position);
+                const { text: t, remainingText, offsetID } = getReqText(document, position, "ts");
+                if (t == null) { return []; }
                 let text: string;
                 const lastScriptTag = Math.max(t.lastIndexOf("<script "), t.lastIndexOf("<script>"));
                 const lastScriptEndTag = Math.max(t.lastIndexOf("</script "), t.lastIndexOf("</script>"));
@@ -153,7 +154,8 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
             try {
                 let ext = "javascript(Javascript)";
                 const startTime = Date.now();
-                const { text: t, remainingText, offsetID } = getReqText(document, position);
+                const { text: t, remainingText, offsetID } = getReqText(document, position, "ts");
+                if (t == null) { return []; }
                 let text: string;
                 const lastScriptTag = Math.max(t.lastIndexOf("<script "), t.lastIndexOf("<script>"));
                 const lastScriptEndTag = Math.max(t.lastIndexOf("</script "), t.lastIndexOf("</script>"));
@@ -204,7 +206,8 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
                 await _activate();
                 try {
                     const startTime = Date.now();
-                    const { text: t, remainingText, offsetID } = getReqText(document, position);
+                    const { text: t, remainingText, offsetID } = getReqText(document, position, "ts");
+                    if (t == null) { return []; }
                     let text = t;
                     if (t.match(/<\s*([a-zA-Z_$][a-zA-Z_$0-9]*)[^>]*>(.(?!\1))*?$/s)) {
                         // inside react tag. Using regex to match react tags is faulty.
@@ -250,7 +253,7 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
         async aixHook(ll: vscode.CompletionList | vscode.CompletionItem[], document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, completionContext: vscode.CompletionContext): Promise<vscode.CompletionList | vscode.CompletionItem[]> {
             try {
                 // return ll;
-                const { offsetID } = getReqText(document, position);
+                const { offsetID } = getReqText(document, position, "ts");
                 const items = ll == null ? [] : (Array.isArray(ll) ? ll : ll.items);
                 const sortResults = await syncer.get(offsetID, items.length === 0);
                 if (sortResults == null) { return ll; }

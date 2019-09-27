@@ -101,7 +101,7 @@ export async function activateGo(context: vscode.ExtensionContext) {
         async aixHook(ll: vscode.CompletionList | vscode.CompletionItem[], document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, completioContext: vscode.CompletionContext): Promise<vscode.CompletionList | vscode.CompletionItem[]> {
             try {
                 // return ll;
-                const { offsetID } = getReqText(document, position);
+                const { offsetID } = getReqText(document, position, "go");
                 const items = Array.isArray(ll) ? ll : ll.items;
                 if (items.length > 0) {
                     items[0].preselect = false;

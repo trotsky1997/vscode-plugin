@@ -137,6 +137,8 @@ export abstract class LangUtil {
         this.addSpacingOption(LangUtil.SpacingKeyConstants, ",", false);
         this.addSpacingOption(LangUtil.SpacingKeyID, LangUtil.SpacingKeyConstants, true);
         this.addSpacingOption(LangUtil.SpacingKeyConstants, LangUtil.SpacingKeyNoID, true);
+        this.addSpacingOption("return", LangUtil.SpacingKeyALL, true);
+        this.addSpacingOption("return", ";", false);
     }
 
     /**
@@ -246,6 +248,54 @@ export abstract class LangUtil {
         }
         const getter = this.getHasSpaceBetweenGetter(previousToken, nextToken);
         return getter(tokens, nextI);
+    }
+
+    public shouldPredict(text: string) {
+        // in string
+        text = this.datamask(text, new Set());
+        if (this.betweenPair(text, "\"", "\"")) {
+            return false;
+        }
+        // in comment
+        if (this.betweenPair(text, "/*", "*/")) {
+            return false;
+        }
+        const lineStart = text.lastIndexOf("\n") + 1;
+        if (text.indexOf("//", lineStart) >= 0) {
+            return false;
+        }
+        return true;
+    }
+
+    protected occurrences(s: string, subString: string, allowOverlapping = false) {
+        s += "";
+        subString += "";
+        if (subString.length <= 0) { return (s.length + 1); }
+
+        let n = 0;
+        let pos = 0;
+        const step = allowOverlapping ? 1 : subString.length;
+
+        while (true) {
+            pos = s.indexOf(subString, pos);
+            if (pos >= 0) {
+                ++n;
+                pos += step;
+            } else { break; }
+        }
+        return n;
+    }
+
+    protected betweenPair(text: string, start: string, end: string) {
+        if (start === end) {
+            return this.occurrences(text, start) % 2 === 1;
+        }
+        const s = text.lastIndexOf(start);
+        const e = text.lastIndexOf(end);
+        if (s < 0 || e > s) {
+            return false;
+        }
+        return true;
     }
 
     protected constants2str(token: string, value?: string): string {

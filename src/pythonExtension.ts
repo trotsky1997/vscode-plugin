@@ -81,7 +81,7 @@ export async function activatePython(context: vscode.ExtensionContext) {
     return {
         async aixHook(ll: vscode.CompletionList | vscode.CompletionItem[], document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, completionContext: vscode.CompletionContext): Promise<vscode.CompletionList | vscode.CompletionItem[]> {
             try {
-                const { offsetID } = getReqText(document, position);
+                const { offsetID } = getReqText(document, position, "python");
                 const items = Array.isArray(ll) ? ll : ll.items;
                 const sortResults = await syncer.get(offsetID, items.length === 0);
                 if (sortResults == null) { return ll; }

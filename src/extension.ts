@@ -147,12 +147,20 @@ function hashCode(s: string) {
     return hash;
 }
 
-export function getReqText(document: vscode.TextDocument, position: vscode.Position) {
+export function getReqText(document: vscode.TextDocument, position: vscode.Position, lang: string) {
+    const langUtil = getInstance(lang);
     const offset = document.offsetAt(position);
     const lineEnd = document.lineAt(position).range.end;
     const lineEndOffset = document.offsetAt(lineEnd);
     const text = document.getText();   // 获取编辑器上面已有的文字
     const partialText = text.substring(0, offset);
+    if (!langUtil.shouldPredict(partialText)) {
+        return {
+            text: null,
+            remainingText: null,
+            offsetID: 0,
+        };
+    }
     return {
         text: partialText,
         remainingText: text.substring(offset, lineEndOffset),
@@ -333,7 +341,20 @@ export async function fetchResults2(text: string, remainingText: string, fileNam
 
 export async function fetchResults<T>(document: vscode.TextDocument, position: vscode.Position, ext: string, lang: string, syncer?: Syncer<T>, starDisplay: STAR_DISPLAY = STAR_DISPLAY.LEFT) {
     const startTime = Date.now();
-    const { text, remainingText, offsetID } = getReqText(document, position);
+    const { text, remainingText, offsetID } = getReqText(document, position, lang);
+    if (text == null) {
+        return {
+            longResults: [],
+            sortResults: {
+                queryUUID: "",
+                list: [],
+                longResults: [],
+            },
+            offsetID,
+            fetchTime: startTime,
+            current: "",
+        };
+    }
     if (syncer) { syncer.notify(offsetID); }
     const { longResults, sortResults, fetchTime, current } = await fetchResults2(text, remainingText, document.fileName, ext, lang, document, starDisplay);
     log("< fetch took " + (Date.now() - startTime) + "ms");

@@ -83,7 +83,7 @@ export async function activatePhp(context: vscode.ExtensionContext) {
                 return ll;
             }
             try {
-                const { offsetID } = getReqText(document, position);
+                const { offsetID } = getReqText(document, position, "php");
                 const items = Array.isArray(ll) ? ll : ll.items;
                 const sortResults = await syncer.get(offsetID, items.length === 0);
                 if (sortResults == null) { return ll; }
