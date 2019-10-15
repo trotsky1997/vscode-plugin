@@ -139,6 +139,7 @@ export abstract class LangUtil {
         this.addSpacingOption(LangUtil.SpacingKeyConstants, LangUtil.SpacingKeyNoID, true);
         this.addSpacingOption("return", LangUtil.SpacingKeyALL, true);
         this.addSpacingOption("return", ";", false);
+        this.addSpacingOption("@", LangUtil.SpacingKeyALL, false);
     }
 
     /**
