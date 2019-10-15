@@ -683,9 +683,15 @@ export async function activate(context: vscode.ExtensionContext) {
 
     const commandHandler = async () => {
         const langs = { cpp: "C++/C", python: "Python", java: "Java", php: "Php", javascript: "JavaScript", typescript: "TypeScript", go: "Go" };
+        const models = await API.getModels();
+        const availableLangs = new Set<string>();
+        for (const ext of models) {
+            const lang = ext.substring(ext.indexOf("(") + 1, ext.length - 1).toLowerCase();
+            availableLangs.add(lang);
+        }
         const selectedLang = await vscode.window.showQuickPick((async () => {
             const displays: ModelQuickPickItem[] = [];
-            for (const lang of Object.keys(langs)) {
+            for (const lang of availableLangs) {
                 const configKey = "aiXcoder.model." + lang;
                 const configValue = vscode.workspace.getConfiguration().get(configKey);
                 displays.push({
@@ -699,13 +705,13 @@ export async function activate(context: vscode.ExtensionContext) {
 
         if (selectedLang) {
             const selectedModel = await vscode.window.showQuickPick((async () => {
-                const models = await API.getModels();
                 const filtered = models.filter((model) => model.toLowerCase().endsWith(`(${selectedLang.lang})`));
                 return filtered;
             })());
-
-            vscode.workspace.getConfiguration().update("aiXcoder.model." + selectedLang.lang, selectedModel);
-            vscode.window.showInformationMessage(util.format(localize("model.switch"), langs[selectedLang.lang], selectedModel));
+            if (selectedModel != null) {
+                vscode.workspace.getConfiguration().update("aiXcoder.model." + selectedLang.lang, selectedModel);
+                vscode.window.showInformationMessage(util.format(localize("model.switch"), langs[selectedLang.lang], selectedModel));
+            }
         }
     };
 
