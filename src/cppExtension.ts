@@ -57,7 +57,7 @@ export async function activateCPP(context: vscode.ExtensionContext) {
             // log("=====================");
             try {
                 const { longResults, sortResults, offsetID, fetchTime, current } = await fetchResults(document, position, ext, "cpp", syncer, STAR_DISPLAY.LEFT);
-                if (mscpp && hooked) {
+                if (!document.isUntitled && mscpp && hooked) {
                     syncer.put(offsetID, { ...sortResults, ext, fetchTime, current });
                 } else {
                     const sortLabels = formatSortData(sortResults, getInstance("cpp"), document, ext, current);

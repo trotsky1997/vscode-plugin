@@ -50,6 +50,12 @@ function myRequest(options: request.OptionsWithUrl, endpoint?: string) {
     return request(options);
 }
 
+const realExtension = {
+    python: "py",
+    javascript: "js",
+    typescript: "ts",
+};
+
 export async function predict(langUtil: LangUtil, text: string, ext: string, remainingText: string, lastQueryUUID: number, fileID: string, retry = true) {
     const maskedText = await DataMasking.mask(langUtil, text, ext);
     const maskedRemainingText = await DataMasking.mask(langUtil, remainingText, ext);
@@ -60,6 +66,10 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
     const md5 = md5Hash(maskedText);
 
     try {
+        if (fileID.match(/^Untitled-\d+$/)) {
+            const lang = ext.substring(ext.indexOf("(") + 1, ext.length - 1).toLowerCase();
+            fileID += "." + (realExtension[lang] || lang);
+        }
         const resp = await myRequest({
             method: "post",
             url: "predict",

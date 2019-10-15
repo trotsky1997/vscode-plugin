@@ -6,7 +6,8 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 ### Added
 ### Changed
 ### Fixed
-- 去掉了@后面的多余的空格
+- 去掉了@后面的多余的空格。
+- 在未保存的c/c++文件中也有预测了。
 
 ## [0.1.17] - 2019-09-27
 
