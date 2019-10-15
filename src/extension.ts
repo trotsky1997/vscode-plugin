@@ -2,6 +2,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as fs from "fs";
+import * as os from "os";
 import * as path from "path";
 import * as util from "util";
 import * as vscode from "vscode";
@@ -608,6 +609,14 @@ const lastModifedTime: { [uri: string]: number } = {};
 // your extension is activated the very first time the command is executed
 export async function activate(context: vscode.ExtensionContext) {
     log("AiX: aiXcoder activating");
+
+    if (os.platform() === "win32" && compareVersion(os.release(), "10") < 0) {
+        const star = vscode.workspace.getConfiguration().get("aiXcoder.symbol");
+        if (star === myPackageJSON.contributes.configuration.properties["aiXcoder.symbol"].default) {
+            // Emoji ⭐ does not display under < win7
+            vscode.workspace.getConfiguration().set("aiXcoder.symbol", "★");
+        }
+    }
 
     const endpoint = vscode.workspace.getConfiguration().get("aiXcoder.endpoint");
     if (!endpoint) {
