@@ -126,7 +126,7 @@
         "@types/node": "^12.7.12",
         "@types/request-promise": "^4.1.44",
         "@types/uuid": "^3.4.5",
-        "@types/vscode": "^1.39.0",
+        "@types/vscode": "^1.18.0",
         "chai": "^4.2.0",
         "concurrently": "^5.0.0",
         "eslint": "^6.5.1",
