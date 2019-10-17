@@ -1,5 +1,6 @@
 import * as crypto from "crypto";
 import * as request from "request-promise";
+import { URL } from "url";
 import * as vscode from "vscode";
 import { compareVersion, myVersion } from "./extension";
 import { localize } from "./i18n";
@@ -126,28 +127,40 @@ export function getTrivialLiterals(ext: string) {
 
 export async function checkUpdate() {
     try {
-        const updateURL = "download/installtool/aixcoderinstaller_aixcoder.json";
-        const versionJson = await myRequest({
+        let endpoint = vscode.workspace.getConfiguration().get("aiXcoder.endpoint") as string;
+        const enterprisePort = vscode.workspace.getConfiguration().get("aiXcoder.enterprise.endpoint") as number;
+        endpoint = endpoint.replace(/:\d+/, ":" + enterprisePort);
+        if (!endpoint.endsWith("/")) {
+            endpoint += "/";
+        }
+        const updateURL = "plugins/vscode";
+        const filesHtml = await myRequest({
             method: "get",
             url: updateURL,
-        }, "https://www.aixcoder.com");
-        let newVersions = JSON.parse(versionJson);
-        newVersions = process.platform === "win32" ? newVersions.win : newVersions.mac;
+        }, endpoint) as string;
+        const regex = /<a href="([^\"]+)">vscode-aixcoder-([0-9.]+)-enterprise.vsix<\/a>/g;
         const ignoredVersion = Preference.context.globalState.get("aiXcoder.ignoredUpdateVersion");
-        const v = newVersions.vscode.version;
-        if (ignoredVersion === v) {
-            return;
-        }
-        if (compareVersion(myVersion, v) < 0) {
-            log("New aiXCoder version is available: " + v);
-            const select = await vscode.window.showInformationMessage(localize("newVersion", v), localize("download"), localize("ignoreThisVersion"));
-            if (select === localize("download")) {
-                await vscode.commands.executeCommand("vscode.open", vscode.Uri.parse("https://www.aixcoder.com/download/installtool"));
-            } else if (select === localize("ignoreThisVersion")) {
-                Preference.context.globalState.update("aiXcoder.ignoredUpdateVersion", v);
+        while (true) {
+            const m = regex.exec(filesHtml);
+            if (m == null) {
+                break;
             }
-        } else {
-            log("AiXCoder is up to date");
+            const href = m[1];
+            const v = m[2];
+            if (ignoredVersion === v) {
+                return;
+            }
+            if (compareVersion(myVersion, v) < 0) {
+                log("New aiXCoder version is available: " + v);
+                const select = await vscode.window.showInformationMessage(localize("newVersion", v), localize("download"), localize("ignoreThisVersion"));
+                if (select === localize("download")) {
+                    await vscode.commands.executeCommand("vscode.open", vscode.Uri.parse(new URL(href, endpoint).href));
+                } else if (select === localize("ignoreThisVersion")) {
+                    Preference.context.globalState.update("aiXcoder.ignoredUpdateVersion", v);
+                }
+            } else {
+                log("AiXCoder is up to date");
+            }
         }
     } catch (e) {
         log(e);
