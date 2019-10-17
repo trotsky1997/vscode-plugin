@@ -140,6 +140,8 @@ export async function checkUpdate() {
         }, endpoint) as string;
         const regex = /<a href="([^\"]+)">vscode-aixcoder-([0-9.]+)-enterprise.vsix<\/a>/g;
         const ignoredVersion = Preference.context.globalState.get("aiXcoder.ignoredUpdateVersion");
+        let bestHref = "";
+        let bestV = "0";
         while (true) {
             const m = regex.exec(filesHtml);
             if (m == null) {
@@ -150,17 +152,21 @@ export async function checkUpdate() {
             if (ignoredVersion === v) {
                 return;
             }
-            if (compareVersion(myVersion, v) < 0) {
-                log("New aiXCoder version is available: " + v);
-                const select = await vscode.window.showInformationMessage(localize("newVersion", v), localize("download"), localize("ignoreThisVersion"));
-                if (select === localize("download")) {
-                    await vscode.commands.executeCommand("vscode.open", vscode.Uri.parse(new URL(href, endpoint).href));
-                } else if (select === localize("ignoreThisVersion")) {
-                    Preference.context.globalState.update("aiXcoder.ignoredUpdateVersion", v);
-                }
-            } else {
-                log("AiXCoder is up to date");
+            if (compareVersion(bestV, v) < 0) {
+                bestV = v;
+                bestHref = href;
             }
+        }
+        if (compareVersion(myVersion, bestV) < 0) {
+            log("New aiXCoder version is available: " + bestV);
+            const select = await vscode.window.showInformationMessage(localize("newVersion", bestV), localize("download"), localize("ignoreThisVersion"));
+            if (select === localize("download")) {
+                await vscode.commands.executeCommand("vscode.open", vscode.Uri.parse(new URL(bestHref, endpoint).href));
+            } else if (select === localize("ignoreThisVersion")) {
+                Preference.context.globalState.update("aiXcoder.ignoredUpdateVersion", bestV);
+            }
+        } else {
+            log("AiXCoder is up to date");
         }
     } catch (e) {
         log(e);
