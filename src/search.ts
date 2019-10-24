@@ -76,7 +76,7 @@ export async function doSearch(context: vscode.ExtensionContext, uri: vscode.Uri
         const { area, language } = languageId2Model[document.languageId];
         const searchUrl = searchEndpoint + `?c=${encodeURIComponent(selected)}&area=${area}&language=${language}&from=vscode&theme=Dark`;
         if (!vscode.workspace.getConfiguration().get("aiXcoder.searchIntegratedWindow")) {
-            if (vscode.workspace.getConfiguration().get("aiXcoder.searchDefaultBrowser") === "<default browser>") {
+            if (vscode.workspace.getConfiguration().get("aiXcoder.searchDefaultBrowser") === "-") {
                 await vscode.commands.executeCommand("vscode.open", vscode.Uri.parse(searchUrl));
             } else {
                 exec(vscode.workspace.getConfiguration().get("aiXcoder.searchDefaultBrowser") + " " + searchUrl);
