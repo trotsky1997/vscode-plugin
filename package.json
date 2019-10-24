@@ -26,7 +26,8 @@
         "onLanguage:javascriptreact",
         "onLanguage:vue",
         "onLanguage:html",
-        "onLanguage:go"
+        "onLanguage:go",
+        "onWebviewPanel:aixsearch"
     ],
     "main": "./dist/extension",
     "contributes": {
@@ -38,6 +39,21 @@
                     "type": "string",
                     "default": "https://api.aixcoder.com/",
                     "description": "Specifies the endpoint for code suggestion server."
+                },
+                "aiXcoder.searchEndpoint": {
+                    "type": "string",
+                    "default": "https://search.aixcoder.com/",
+                    "description": "Specifies the endpoint for code search server."
+                },
+                "aiXcoder.searchIntegratedWindow": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether to use integrated webview for code search or not."
+                },
+                "aiXcoder.searchDefaultBrowser": {
+                    "type": "string",
+                    "default": "<default browser>",
+                    "description": "Specifies the default browser executable, launched like <browser_executable> <url>. It is also possible to specify additional arguments, E.g. %ProgramFiles%\\Mozilla Firefox\\firefox.exe -new-tab."
                 },
                 "aiXcoder.enableTelemetry": {
                     "type": "boolean",
@@ -106,8 +122,19 @@
                 "command": "aiXcoder.resetMessage",
                 "title": "Reset messages",
                 "category": "aiXcoder"
+            }, {
+                "command": "aiXcoder.search",
+                "title": "Search with aiXcoder...",
+                "category": "aiXcoder"
             }
         ],
+        "menus": {
+            "editor/context": [{
+                "when": "editorLangId == python || editorLangId == java || editorLangId == c || editorLangId == cpp",
+                "command": "aiXcoder.search",
+                "group": "4_search"
+          }]
+        },
         "javaExtensions": [
             "dist/aixjdtls.jar"
         ]
