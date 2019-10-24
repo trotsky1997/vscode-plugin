@@ -10,13 +10,6 @@ call git merge master
 call git stash pop
 call vsce package -o enterprise.vsix
 
-echo "STEP 3: BUILD ENTERPRISE-baidu"
-call git stash
-call git checkout enterprise-baidu
-call git merge enterprise
-call git stash pop
-call vsce package -o enterprise-baidu.vsix
-
 echo "STEP 4: BACK TO MASTER BRANCH"
 call git checkout master
 
