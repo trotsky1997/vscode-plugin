@@ -120,12 +120,12 @@
         "commands": [
             {
                 "command": "aiXcoder.resetMessage",
-                "title": "%aixcoder.command.resetMessages.title%",
+                "title": "%aiXcoder.command.resetMessages.title%",
                 "category": "aiXcoder"
             },
             {
                 "command": "aiXcoder.search",
-                "title": "%aixcoder.command.search.title%",
+                "title": "%aiXcoder.command.search.title%",
                 "category": "aiXcoder"
             }
         ],
