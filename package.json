@@ -26,7 +26,8 @@
         "onLanguage:javascriptreact",
         "onLanguage:vue",
         "onLanguage:html",
-        "onLanguage:go"
+        "onLanguage:go",
+        "onWebviewPanel:aixsearch"
     ],
     "main": "./dist/extension",
     "contributes": {
@@ -37,7 +38,22 @@
                 "aiXcoder.endpoint": {
                     "type": "string",
                     "default": "",
-                    "description": "Specifies the endpoint for code suggestion server."
+                    "description": "%aiXcoder.configuration.endpoint%"
+                },
+                "aiXcoder.searchEndpoint": {
+                    "type": "string",
+                    "default": "",
+                    "description": "%aiXcoder.configuration.searchEndpoint%"
+                },
+                "aiXcoder.searchIntegratedWindow": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "%aiXcoder.configuration.searchIntegratedWindow%"
+                },
+                "aiXcoder.searchDefaultBrowser": {
+                    "type": "string",
+                    "default": "-",
+                    "markdownDescription": "%aiXcoder.configuration.searchDefaultBrowser%"
                 },
                 "aiXcoder.enterprise.endpoint": {
                     "type": "integer",
@@ -84,74 +100,91 @@
                 "aiXcoder.enableTelemetry": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Send anonoymous usage data and errors to aiXcoder telemetry service."
+                    "description": "%aiXcoder.configuration.enableTelemetry%"
                 },
                 "aiXcoder.additionalParameters": {
                     "type": "string",
                     "default": "",
-                    "description": "(Only for advanced usages) URL encoded params."
+                    "description": "%aiXcoder.configuration.additionalParameters%"
                 },
                 "aiXcoder.alwaysTrigger": {
                     "type": "boolean",
                     "default": true,
-                    "description": "If set to true, aiXcoder suggestions are always triggered as you type. Otherwise, it only triggers explictly with e.g. `Ctrl+Space`."
+                    "markdownDescription": "%aiXcoder.configuration.alwaysTrigger%"
                 },
                 "aiXcoder.autoImport": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Automatically import missing packages in completions."
+                    "description": "%aiXcoder.configuration.autoImport%"
                 },
                 "aiXcoder.sortOnly": {
                     "type": "boolean",
                     "default": false,
-                    "description": "No long completion, only sorts the completions (will decrease delay)."
+                    "description": "%aiXcoder.configuration.sortOnly%"
                 },
                 "aiXcoder.longResultRank": {
                     "type": "integer",
                     "default": 1,
                     "minimum": 1,
                     "maximum": 5,
-                    "description": "The prefered rank of long completion result."
+                    "description": "%aiXcoder.configuration.longResultRank%"
                 },
                 "aiXcoder.longResultCuts": {
                     "type": "string",
                     "default": "Auto",
                     "enum": [
-                        "Auto",
-                        "0-None",
+                        "aiXcoder.configuration.longResultCuts.auto",
+                        "aiXcoder.configuration.longResultCuts.none",
                         "1",
                         "2",
                         "3",
                         "4",
                         "5"
                     ],
-                    "description": "Number of shorter results"
+                    "description": "%aiXcoder.configuration.longResultCuts%"
                 },
                 "aiXcoder.longResultCutSort": {
                     "type": "string",
-                    "default": "Long to short",
+                    "default": "%aiXcoder.configuration.longResultCutSort.long2short%",
                     "enum": [
-                        "Short to long",
-                        "Long to short"
+                        "%aiXcoder.configuration.longResultCutSort.short2long%",
+                        "%aiXcoder.configuration.longResultCutSort.long2short%"
                     ],
-                    "description": "The order of shorter results"
+                    "description": "%aiXcoder.configuration.longResultCutSort%"
                 },
                 "aiXcoder.symbol": {
                     "type": "string",
-                    "default": "⭐",
-                    "description": "The symbol used to mark aiXcoder predictions"
+                    "default": "?",
+                    "description": "%aiXcoder.configuration.symbol%"
                 }
             }
         },
-        "commands": [{
+        "commands": [
+            {
             "command": "aixcoder.switchModel",
             "title": "Switch Model",
             "category": "aiXcoder"
-        }, {
-            "command": "aiXcoder.resetMessage",
-            "title": "Reset messages",
-            "category": "aiXcoder"
-        }],
+            },
+            {
+                "command": "aiXcoder.resetMessage",
+                "title": "%aixcoder.command.resetMessages.title%",
+                "category": "aiXcoder"
+            },
+            {
+                "command": "aiXcoder.search",
+                "title": "%aixcoder.command.search.title%",
+                "category": "aiXcoder"
+            }
+        ],
+        "menus": {
+            "editor/context": [
+                {
+                    "when": "editorLangId == python || editorLangId == java || editorLangId == c || editorLangId == cpp",
+                    "command": "aiXcoder.search",
+                    "group": "4_search"
+                }
+            ]
+        },
         "javaExtensions": [
             "dist/aixjdtls.jar"
         ]

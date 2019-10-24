@@ -174,6 +174,10 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "en": "AiXCoder: Go Extension is not installed or enabled. Please install Go Extension for the best experience.",
         "zh-cn": "AiXCoder: Go 插件没有安装或启用。请安装 Go 插件以获得最佳体验。",
     },
+    "msgsearchfirsttime": {
+        "en": "You can have search results displayed in an external browser by specifying it in the settings.",
+        "zh-cn": "您可以在一个外部浏览器窗口中显示搜索结果，只需要在设置中进行设置。",
+    },
 };
 export function localize(key: string, ...params: any[]) {
     return localizeMessages[key] ? util.format(localizeMessages[key][vscode.env.language] || localizeMessages[key].en, ...params) : key;

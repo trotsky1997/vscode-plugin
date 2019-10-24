@@ -1,0 +1,21 @@
+{
+	"aiXcoder.configuration.endpoint": "代码推荐服务器的地址。",
+	"aiXcoder.configuration.searchEndpoint": "代码搜索服务器地址。",
+	"aiXcoder.configuration.searchIntegratedWindow": "是否使用VS Code集成的网页控件显示搜索结果。",
+	"aiXcoder.configuration.searchDefaultBrowser": "默认的浏览器可执行文件。启动命令为 <浏览器可执行文件> <url>。可以同时指定额外的启动参数，比如 `%ProgramFiles%\\Mozilla Firefox\\firefox.exe -new-tab`。默认：操作系统的默认浏览器。",
+	"aiXcoder.configuration.enableTelemetry": "发送匿名的使用数据和错误信息到aiXcoder信息采集服务。",
+	"aiXcoder.configuration.additionalParameters": "（高级功能）URL 编码的额外参数。",
+	"aiXcoder.configuration.alwaysTrigger": "如果设置成真，aiXcoder预测服务会在敲键时被自动触发。否则只在快捷键时被触发，比如`Ctrl+Space`。",
+	"aiXcoder.configuration.autoImport": "自动引入提示中缺失的包。",
+	"aiXcoder.configuration.sortOnly": "不提供长推荐，只对已有推荐进行排序（会略微降低延迟）。",
+	"aiXcoder.configuration.longResultRank": "长推荐结果出现的位置。",
+	"aiXcoder.configuration.longResultCuts": "短推荐出现的个数。",
+	"aiXcoder.configuration.longResultCutSort": "短推荐的顺序。",
+	"aiXcoder.configuration.symbol": "标记aiXcoder结果的符号。",
+	"aixcoder.command.resetMessages.title": "重置信息。",
+	"aixcoder.command.search.title": "使用aiXcoder搜索...",
+	"aiXcoder.configuration.longResultCutSort.short2long": "从短到长",
+	"aiXcoder.configuration.longResultCutSort.long2short": "从长到短",
+	"aiXcoder.configuration.longResultCuts.auto": "自动",
+	"aiXcoder.configuration.longResultCuts.none": "0-无"
+}
