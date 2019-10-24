@@ -60,42 +60,42 @@
                     "default": 80,
                     "minimum": 1,
                     "maximum": 65535,
-                    "description": "Specifies the port for enterprise aiXcoder welcome site. Default: 80."
+                    "description": "%aiXcoder.configuration.enterprise.endpoint%"
                 },
                 "aiXcoder.model.java": {
                     "type": "string",
                     "default": "java(Java)",
-                    "markdownDescription": "The model name to be used in Java. Default: `java(Java)`."
+                    "markdownDescription": "%aiXcoder.configuration.aiXcoder.model.java%"
                 },
                 "aiXcoder.model.python": {
                     "type": "string",
                     "default": "python(Python)",
-                    "markdownDescription": "The model name to be used in Python. Default: `python(Python)`."
+                    "markdownDescription": "%aiXcoder.configuration.aiXcoder.model.python%"
                 },
                 "aiXcoder.model.cpp": {
                     "type": "string",
                     "default": "cpp(Cpp)",
-                    "markdownDescription": "The model name to be used in C++/C. Default: `cpp(Cpp)`."
+                    "markdownDescription": "%aiXcoder.configuration.aiXcoder.model.cpp%"
                 },
                 "aiXcoder.model.php": {
                     "type": "string",
                     "default": "php(Php)",
-                    "markdownDescription": "The model name to be used in Php. Default: `php(Php)`."
+                    "markdownDescription": "%aiXcoder.configuration.aiXcoder.model.php%"
                 },
                 "aiXcoder.model.javascript": {
                     "type": "string",
                     "default": "javascript(JavaScript)",
-                    "markdownDescription": "The model name to be used in JavaScript. Default: `javascript(JavaScript)`."
+                    "markdownDescription": "%aiXcoder.configuration.aiXcoder.model.javascript%"
                 },
                 "aiXcoder.model.typescript": {
                     "type": "string",
                     "default": "typescript(TypeScript)",
-                    "markdownDescription": "The model name to be used in TypeScript. Default: `typescript(TypeScript)`."
+                    "markdownDescription": "%aiXcoder.configuration.aiXcoder.model.typescript%"
                 },
                 "aiXcoder.model.go": {
                     "type": "string",
                     "default": "go(Go)",
-                    "markdownDescription": "The model name to be used in Go. Default: `go(Go)`."
+                    "markdownDescription": "%aiXcoder.configuration.aiXcoder.model.go%"
                 },
                 "aiXcoder.enableTelemetry": {
                     "type": "boolean",
@@ -161,9 +161,9 @@
         },
         "commands": [
             {
-            "command": "aixcoder.switchModel",
-            "title": "Switch Model",
-            "category": "aiXcoder"
+                "command": "aixcoder.switchModel",
+                "title": "%aixcoder.command.switchModel.title%",
+                "category": "aiXcoder"
             },
             {
                 "command": "aiXcoder.resetMessage",
