@@ -5,6 +5,7 @@ import { compareVersion, myVersion } from "./extension";
 import { localize } from "./i18n";
 import { LangUtil } from "./lang/langUtil";
 import log from "./logger";
+import NetworkController from "./NetworkController";
 import Preference from "./Preference";
 import CodeStore from "./utils/CodeStore";
 import DataMasking from "./utils/DataMasking";
@@ -56,7 +57,12 @@ const realExtension = {
     typescript: "ts",
 };
 
+const networkController = new NetworkController();
+
 export async function predict(langUtil: LangUtil, text: string, ext: string, remainingText: string, lastQueryUUID: number, fileID: string, retry = true) {
+    if (!networkController.shouldPredict()) {
+        return null;
+    }
     const maskedText = await DataMasking.mask(langUtil, text, ext);
     const maskedRemainingText = await DataMasking.mask(langUtil, remainingText, ext);
     const u = vscode.window.activeTextEditor.document.uri;
@@ -105,11 +111,18 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
             console.log("resp=" + resp);
             CodeStore.getInstance().saveLastSent(projName, fileID, maskedText);
         }
+        networkController.onSuccess();
         return resp;
     } catch (e) {
+        networkController.onFailure();
         if (e.message && e.message.indexOf("Conflict") >= 0) {
             CodeStore.getInstance().invalidateFile(projName, fileID);
             return predict(langUtil, text, ext, remainingText, lastQueryUUID, fileID, false);
+        }
+        if (local) {
+            local = null;
+        } else {
+            readFile();
         }
         log(e);
     }

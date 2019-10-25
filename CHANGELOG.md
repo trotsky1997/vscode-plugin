@@ -6,6 +6,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 ### Added
 - 新增了搜索功能。在 Java/Python/C/C++ 代码里选中一部分文本，然后右键点击Search with aiXcoder...。
 - 设置项有了中文显示。将VS Code默认显示语言改为中文简体时启用。
+- 在网络服务不顺畅的时候，会合理地阻止网络调用以避免干扰正常使用。
 
 ### Changed
 - Windows 7 及之前版本中，预测前面的符号默认为★。因为Emoji⭐会显示成方块。Mac不受影响。
