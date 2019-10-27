@@ -28,19 +28,19 @@ export default class NetworkController {
         }
     }
 
-    public onFailure() {
+    public onFailure(cb?: () => any) {
         if (this.status === 0) {
             // 0:正常状态 + 连续5个错误 = 1:错误状态
             this.networkErrors += 1;
             if (this.networkErrors >= 5) {
                 this.status = 1;
-                this.errorCountDown();
+                this.errorCountDown(cb);
             }
         } else if (this.status === 2) {
             // 2:尝试状态 + 失败 = 1:错误状态 + 等待时间翻倍
             this.status = 1;
             this.waitTime *= 2;
-            this.errorCountDown();
+            this.errorCountDown(cb);
         }
     }
 
@@ -54,7 +54,10 @@ export default class NetworkController {
         }
     }
 
-    private errorCountDown() {
+    private errorCountDown(cb?: () => any) {
+        if (cb) {
+            cb();
+        }
         // 1:错误状态 + 等待(默认10s) = 2:尝试状态
         this.lastErrorEndTime = Date.now() + this.waitTime;
         setTimeout(() => {

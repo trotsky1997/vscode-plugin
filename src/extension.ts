@@ -68,6 +68,21 @@ export async function showInformationMessage(message: string, ...items: string[]
     }
 }
 
+export async function showWarningMessage(message: string, ...items: string[]): Promise<string | undefined> {
+    if (!Preference.context.globalState.get("hide:" + message)) {
+        const localizedItems = [];
+        for (const item of items) {
+            localizedItems.push(localize(item));
+        }
+        const select = await vscode.window.showWarningMessage(localize(message), ...localizedItems, localize("nevershowagain"));
+        if (select === localize("nevershowagain")) {
+            Preference.context.globalState.update("hide:" + message, true);
+            return;
+        }
+        return select;
+    }
+}
+
 export interface Rescue {
     type: string;
     value: string;
