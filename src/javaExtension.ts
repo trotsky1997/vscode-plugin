@@ -39,8 +39,8 @@ export async function activateJava(context: vscode.ExtensionContext) {
             });
 
             if (msintellicode) {
-                const distjsPath = path.join(msintellicode.extensionPath, "dist", "intellicode.js");
-                hooked = await JSHooker("/**AiXHooked-1**/", distjsPath, msintellicode, "java.reload", "java.fail", (distjs) => {
+                const intellicodeDistjsPath = path.join(msintellicode.extensionPath, "dist", "intellicode.js");
+                hooked = await JSHooker("/**AiXHooked-1**/", intellicodeDistjsPath, msintellicode, "java.reload", "java.fail", (distjs) => {
                     const s = SafeStringUtil.indexOf(distjs, "i.languages.registerCompletionItemProvider");
                     const s1 = SafeStringUtil.indexOf(distjs, "provideCompletionItems:", s);
                     const e = SafeStringUtil.indexOf(distjs, ",resolveCompletionItem:", s1);
