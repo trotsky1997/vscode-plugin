@@ -178,6 +178,14 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "en": "You can have search results displayed in an external browser by specifying it in the settings.",
         "zh-cn": "您可以在一个外部浏览器窗口中显示搜索结果，只需要在设置中进行设置。",
     },
+    "localServerDown": {
+        "en": "The local aiXcoder server is not responding. Please open the aiXcoder app and make sure the local server is running on %s.",
+        "zh-cn": "本地aiXcoder服务器没有响应。请打开aiXcoder应用并确保本地服务器运行在 %s 上。",
+    },
+    "serverDown": {
+        "en": "The aiXcoder server is not responding. Please make sure you have a stable network connection to %s.",
+        "zh-cn": "本地aiXcoder服务器没有响应。请确保您有一个稳定的可以访问%s的网络。",
+    },
 };
 export function localize(key: string, ...params: any[]) {
     return localizeMessages[key] ? util.format(localizeMessages[key][vscode.env.language] || localizeMessages[key].en, ...params) : key;

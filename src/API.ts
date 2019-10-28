@@ -1,11 +1,15 @@
 import * as crypto from "crypto";
+import * as fs from "fs";
+import * as os from "os";
+import * as path from "path";
 import * as request from "request-promise";
 import { URL } from "url";
 import * as vscode from "vscode";
-import { compareVersion, myVersion } from "./extension";
+import { compareVersion, myVersion, showWarningMessage } from "./extension";
 import { localize } from "./i18n";
 import { LangUtil } from "./lang/langUtil";
 import log from "./logger";
+import NetworkController from "./NetworkController";
 import Preference from "./Preference";
 import CodeStore from "./utils/CodeStore";
 import DataMasking from "./utils/DataMasking";
@@ -14,14 +18,47 @@ function md5Hash(s: string) {
     return crypto.createHash("md5").update(s).digest("hex");
 }
 
-// const HttpsAgent = require("agentkeepalive").HttpsAgent;
+const homedir = os.homedir();
+const localserver = path.join(homedir, "aiXcoder", "localserver.json");
+let models = {};
+let lastCheckLocalTime = 0;
+function readFile() {
+    if (Date.now() - lastCheckLocalTime < 1000 * 5) {
+        return;
+    }
+    lastCheckLocalTime = Date.now();
+    fs.readFile(localserver, "utf-8", (err, data) => {
+        if (!err) {
+            const d = JSON.parse(data);
+            models = {};
+            for (const model of d.models) {
+                models[model.name] = model;
+            }
+        }
+    });
+}
 
-// const keepaliveAgent = new HttpsAgent();
-function myRequest(options: request.OptionsWithUrl, endpoint?: string) {
+readFile();
+setInterval(readFile, 1000 * 60 * 5);
+async function initWatch() {
+    try {
+        await fs.promises.stat(localserver);
+    } catch (e) {
+        await fs.promises.writeFile(localserver, "{}", "utf-8");
+    }
+    fs.watch(localserver, (event, filename) => {
+        readFile();
+    });
+}
+initWatch();
+
+async function myRequest(options: request.OptionsWithUrl, endpoint?: string) {
     const proxyUrl: string = vscode.workspace.getConfiguration().get("http.proxy");
     const proxyAuth: string = vscode.workspace.getConfiguration().get("http.proxyAuthorization");
     const proxyStrictSSL: boolean = vscode.workspace.getConfiguration().get("http.proxyStrictSSL");
-    endpoint = endpoint || vscode.workspace.getConfiguration().get("aiXcoder.endpoint");
+    if (!endpoint) {
+        endpoint = vscode.workspace.getConfiguration().get("aiXcoder.endpoint");
+    }
     let host = proxyUrl || endpoint.substring(endpoint.indexOf("://") + 3);
     if (host.indexOf("/") >= 0) {
         host = host.substr(0, host.indexOf("/"));
@@ -57,7 +94,26 @@ const realExtension = {
     typescript: "ts",
 };
 
+const networkController = new NetworkController();
+const localNetworkController = new NetworkController();
+
 export async function predict(langUtil: LangUtil, text: string, ext: string, remainingText: string, lastQueryUUID: number, fileID: string, retry = true) {
+    let localRequest = false;
+    let endpoint: string | undefined;
+    if (models[ext] && models[ext].active && models[ext].url) {
+        endpoint = models[ext].url;
+        localRequest = true;
+        log("LOCAL!");
+        if (!localNetworkController.shouldPredict()) {
+            return null;
+        }
+    } else {
+        localRequest = false;
+        endpoint = vscode.workspace.getConfiguration().get("aiXcoder.endpoint");
+        if (!networkController.shouldPredict()) {
+            return null;
+        }
+    }
     const maskedText = await DataMasking.mask(langUtil, text, ext);
     const maskedRemainingText = await DataMasking.mask(langUtil, remainingText, ext);
     const u = vscode.window.activeTextEditor.document.uri;
@@ -71,6 +127,7 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
             const lang = ext.substring(ext.indexOf("(") + 1, ext.length - 1).toLowerCase();
             fileID += "." + (realExtension[lang] || lang);
         }
+
         const resp = await myRequest({
             method: "post",
             url: "predict",
@@ -97,7 +154,7 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
                 uuid: Preference.uuid,
             },
             timeout: 2000,
-        });
+        }, endpoint);
         if (retry && resp && resp.indexOf("Conflict") >= 0) {
             console.log("conflict");
             CodeStore.getInstance().invalidateFile(projName, fileID);
@@ -106,11 +163,22 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
             console.log("resp=" + resp);
             CodeStore.getInstance().saveLastSent(projName, fileID, maskedText);
         }
+        if (localRequest) {
+            localNetworkController.onSuccess();
+        } else {
+            networkController.onSuccess();
+        }
         return resp;
     } catch (e) {
         if (e.message && e.message.indexOf("Conflict") >= 0) {
             CodeStore.getInstance().invalidateFile(projName, fileID);
             return predict(langUtil, text, ext, remainingText, lastQueryUUID, fileID, false);
+        }
+        if (localRequest) {
+            localNetworkController.onFailure(() => showWarningMessage(localize("localServerDown", endpoint)));
+            readFile();
+        } else {
+            networkController.onFailure(() => showWarningMessage(localize("serverDown", endpoint)));
         }
         log(e);
     }
