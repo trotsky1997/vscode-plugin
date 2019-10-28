@@ -80,11 +80,11 @@ export async function activateJava(context: vscode.ExtensionContext) {
             // log("=====================");
             const ext = "java(Java)";
             try {
-                const { longResults, sortResults, offsetID, fetchTime, current } = await fetchResults(document, position, ext, "go", syncer, STAR_DISPLAY.LEFT);
+                const { longResults, sortResults, offsetID, fetchTime, current } = await fetchResults(document, position, ext, "java", syncer, STAR_DISPLAY.LEFT);
                 if (redhatjavaExtension.isActive && hooked) {
                     syncer.put(offsetID, { ...sortResults, ext, fetchTime, current });
                 } else {
-                    const sortLabels = formatSortData(sortResults, getInstance("go"), document, ext, current);
+                    const sortLabels = formatSortData(sortResults, getInstance("java"), document, ext, current);
                     longResults.push(...sortLabels);
                 }
                 if (!token.isCancellationRequested) {
