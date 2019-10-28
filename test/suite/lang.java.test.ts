@@ -31,7 +31,8 @@ suite("Java Language Test Suite", () => {
     }
     }
     } <ENTER>
-    @ TestClass SS { }`;
+    @ TestClass SS { }
+    String [ ] split = line . split ( <str> )`;
     const sourceExpect = `import java.util.regex.Matcher;
     import java.util.regex.Pattern;
     public class RegexMatches {
@@ -50,7 +51,8 @@ suite("Java Language Test Suite", () => {
             }
         }
     }↵
-    @TestClass SS { }`;
+    @TestClass SS { }
+    String[] split = line.split("")`;
 
     const sourceTokensLines = sourceTokens.split("\n").map((_) => _.trim());
     const sourceExpectLines = sourceExpect.split("\n").map((_) => _.trim().replace("↵", "\n"));
