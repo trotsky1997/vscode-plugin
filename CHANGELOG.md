@@ -18,6 +18,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 - （企业版）切换模型的功能菜单不能使用的bug。
 - （企业版）现在可以自动检查插件更新了，默认检查地址是http://<预测地址ip的>:80/plugins/vscode。
 - 修复了一个新版本intellicode导致的重复补全结果的bug。
+- 修复了定义数组时[]附近的空格问题。
 
 ## [0.1.17] - 2019-09-27
 
