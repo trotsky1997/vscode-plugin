@@ -552,6 +552,9 @@ export function mergeSortResult(l: vscode.CompletionItem[], sortResults: SortRes
         if (typeof (realInsertText) !== "string") {
             realInsertText = realInsertText.value;
         }
+        if (realInsertText.startsWith("★ ")) {
+            realInsertText = realInsertText.substr(2);
+        }
         const m = realInsertText.match("^.+?\\b");
         if (m && sortResultsMap.hasOwnProperty(m[0])) {
             const single = sortResultsMap[m[0]][0];
@@ -717,10 +720,16 @@ export async function activate(context: vscode.ExtensionContext) {
         log("AiX: aiXcoder activated");
         return {
             async aixhook(lang: string, ll: vscode.CompletionList | vscode.CompletionItem[] | Promise<vscode.CompletionList | vscode.CompletionItem[]>, ...args: any): Promise<vscode.CompletionList | vscode.CompletionItem[]> {
+                let funcName = "aixHook";
+                const sep = lang.indexOf("-");
+                if (sep >= 0) {
+                    lang = lang.substr(0, sep);
+                    funcName = lang.substr(sep + 1);
+                }
                 const hookObj = aixHooks[lang];
                 if (hookObj && hookObj.aixHook) {
                     ll = await ll;
-                    return hookObj.aixHook(ll, ...args);
+                    return hookObj[funcName](ll, ...args);
                 }
                 return ll;
             },

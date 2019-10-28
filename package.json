@@ -137,10 +137,7 @@
                     "group": "4_search"
                 }
             ]
-        },
-        "javaExtensions": [
-            "dist/aixjdtls.jar"
-        ]
+        }
     },
     "scripts": {
         "vscode:prepublish": "webpack --mode production",

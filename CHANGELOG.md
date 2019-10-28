@@ -15,6 +15,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 ### Fixed
 - 去掉了@后面的多余的空格。
 - 在未保存的c/c++文件中也有预测了。
+- 修复了一个新版本intellicode导致的重复补全结果的bug。
 
 ## [0.1.17] - 2019-09-27
 
