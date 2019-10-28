@@ -1,7 +1,7 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
-## [0.1.18] - 2019-10-24
+## [0.1.18] - 2019-10-28
 
 ### Added
 - 新增了搜索功能。在 Java/Python/C/C++ 代码里选中一部分文本，然后右键点击Search with aiXcoder...。
