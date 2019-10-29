@@ -186,6 +186,14 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "en": "The aiXcoder server is not responding. Please make sure you have a stable network connection to %s.",
         "zh-cn": "本地aiXcoder服务器没有响应。请确保您有一个稳定的可以访问%s的网络。",
     },
+    "java.fail": {
+        "en": "Java integration failed. Please ensure you have latest version of aiXcoder and VS Code.",
+        "zh-cn": "Java 集成失败。请确保您安装了最新版本的aiXcoder插件和VS Code。",
+    },
+    "java.reload": {
+        "en": "AiXCoder requires a reload to integrate with Java extension.",
+        "zh-cn": "AiXCoder需要重新加载以便与 Java 集成。",
+    },
 };
 export function localize(key: string, ...params: any[]) {
     return localizeMessages[key] ? util.format(localizeMessages[key][vscode.env.language] || localizeMessages[key].en, ...params) : key;

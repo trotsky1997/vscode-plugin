@@ -104,9 +104,6 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
         endpoint = models[ext].url;
         localRequest = true;
         log("LOCAL!");
-        if (!localNetworkController.shouldPredict()) {
-            return null;
-        }
     } else {
         localRequest = false;
         endpoint = vscode.workspace.getConfiguration().get("aiXcoder.endpoint");
@@ -163,9 +160,7 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
             console.log("resp=" + resp);
             CodeStore.getInstance().saveLastSent(projName, fileID, maskedText);
         }
-        if (localRequest) {
-            localNetworkController.onSuccess();
-        } else {
+        if (!localRequest) {
             networkController.onSuccess();
         }
         return resp;
