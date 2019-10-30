@@ -1,6 +1,13 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.1.19] - %DATE%
+
+### Added
+### Changed
+### Fixed
+- 去掉了奇怪的`<UNK>`
+
 ## [0.1.18] - 2019-10-28
 
 ### Added

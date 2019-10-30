@@ -23,7 +23,8 @@ suite("Python Language Test Suite", () => {
     def g ( self , x , y = <int> ) :
     return y
     def f ( a ) :
-    return <int> + - + a [ <int> - x : y ** <int> ]`;
+    return <int> + - + a [ <int> - x : y ** <int> ]
+    new_version = <UNK>`;
     const sourceExpect = `x = { "": 0, "": 0, "": 0 }
     y = "" ""
     z = "" + ""
@@ -34,7 +35,8 @@ suite("Python Language Test Suite", () => {
         def g(self, x, y=0):
             return y
     def f(a):
-        return 0 + -+a[0 - x : y ** 0]`;
+        return 0 + -+a[0 - x : y ** 0]
+    new_version =`;
 
     const sourceTokensLines = sourceTokens.split("\n").map((_) => _.trim());
     const sourceExpectLines = sourceExpect.split("\n").map((_) => _.trim());
