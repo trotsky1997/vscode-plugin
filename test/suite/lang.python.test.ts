@@ -24,7 +24,8 @@ suite("Python Language Test Suite", () => {
     return y
     def f ( a ) :
     return <int> + - + a [ <int> - x : y ** <int> ]
-    new_version = <UNK>`;
+    new_version = <UNK>
+    with open ( path , <str>"rb" ) as f :`;
     const sourceExpect = `x = { "": 0, "": 0, "": 0 }
     y = "" ""
     z = "" + ""
@@ -36,7 +37,8 @@ suite("Python Language Test Suite", () => {
             return y
     def f(a):
         return 0 + -+a[0 - x : y ** 0]
-    new_version =`;
+    new_version =
+    with open(path, "rb") as f:`;
 
     const sourceTokensLines = sourceTokens.split("\n").map((_) => _.trim());
     const sourceExpectLines = sourceExpect.split("\n").map((_) => _.trim());

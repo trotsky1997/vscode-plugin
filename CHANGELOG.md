@@ -7,6 +7,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 ### Changed
 ### Fixed
 - 去掉了奇怪的`<UNK>`
+- (Python) `as`前面加上了空格
 
 ## [0.1.18] - 2019-10-28
 
