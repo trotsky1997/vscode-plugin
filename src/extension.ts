@@ -132,7 +132,7 @@ let lastPromise = null;
 let lastFetchTime = 0;
 let lastQueryUUID = 0;
 
-function fetch(langUtil: LangUtil, ext: string, text: string, remainingText: string, fileID: string) {
+function fetch(langUtil: LangUtil, ext: string, text: string, remainingText: string, laterCode: string, fileID: string) {
     if (lastText === text && lastPromise != null) {
         return { body: lastPromise, queryUUID: lastQueryUUID, remote: false };
     } else {
@@ -141,7 +141,7 @@ function fetch(langUtil: LangUtil, ext: string, text: string, remainingText: str
         lastFetchTime = new Date().getTime();
         const queryUUID = Math.floor(Math.random() * 10000);
         lastQueryUUID = queryUUID;
-        lastPromise = API.predict(langUtil, text, ext, remainingText, lastQueryUUID, fileID).catch((err) => {
+        lastPromise = API.predict(langUtil, text, ext, remainingText, laterCode, lastQueryUUID, fileID).catch((err) => {
             log(err);
             if (lastQueryUUID === queryUUID) {
                 lastQueryUUID = null;
@@ -182,6 +182,7 @@ export function getReqText(document: vscode.TextDocument, position: vscode.Posit
         text: partialText,
         remainingText: text.substring(offset, lineEndOffset),
         offsetID: hashCode(partialText),
+        laterCode: text.substring(lineEndOffset),
     };
 }
 
@@ -272,7 +273,7 @@ export function formatSortData(results: SortResult | null, langUtil: LangUtil, d
     return r;
 }
 
-export async function fetchResults2(text: string, remainingText: string, fileName: string, ext: string, lang: string, document: vscode.TextDocument, starDisplay = STAR_DISPLAY.LEFT): Promise<{
+export async function fetchResults2(text: string, remainingText: string, laterCode: string, fileName: string, ext: string, lang: string, document: vscode.TextDocument, starDisplay = STAR_DISPLAY.LEFT): Promise<{
     longResults: AiXCompletionItem[],
     sortResults: SortResult,
     fetchTime: number,
@@ -283,7 +284,7 @@ export async function fetchResults2(text: string, remainingText: string, fileNam
     let fetchTime: number;
     const langUtil = getInstance(lang);
     if (Preference.shouldTrigger(lastModifedTime, document)) {
-        const fetched = fetch(langUtil, ext, text, remainingText, fileName);
+        const fetched = fetch(langUtil, ext, text, remainingText, laterCode, fileName);
         fetchBody = await fetched.body;
         queryUUID = fetched.queryUUID;
         fetchTime = fetched.fetchTime;
@@ -358,7 +359,7 @@ export async function fetchResults2(text: string, remainingText: string, fileNam
 
 export async function fetchResults<T>(document: vscode.TextDocument, position: vscode.Position, ext: string, lang: string, syncer?: Syncer<T>, starDisplay: STAR_DISPLAY = STAR_DISPLAY.LEFT) {
     const startTime = Date.now();
-    const { text, remainingText, offsetID } = getReqText(document, position, lang);
+    const { text, remainingText, offsetID, laterCode } = getReqText(document, position, lang);
     if (text == null) {
         return {
             longResults: [],
@@ -373,7 +374,7 @@ export async function fetchResults<T>(document: vscode.TextDocument, position: v
         };
     }
     if (syncer) { syncer.notify(offsetID); }
-    const { longResults, sortResults, fetchTime, current } = await fetchResults2(text, remainingText, document.fileName, ext, lang, document, starDisplay);
+    const { longResults, sortResults, fetchTime, current } = await fetchResults2(text, remainingText, laterCode, document.fileName, ext, lang, document, starDisplay);
     log("< fetch took " + (Date.now() - startTime) + "ms");
     return {
         longResults,

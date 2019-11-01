@@ -1,6 +1,17 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.1.19] - 2019-11-01
+
+### Added
+### Changed
+- 优化了本地预测的结果。
+
+### Fixed
+- 修复了默认符号⭐显示为?的问题。
+- 去掉了奇怪的`<UNK>`。
+- (Python) `as`前面加上了空格。
+
 ## [0.1.18] - 2019-10-28
 
 ### Added

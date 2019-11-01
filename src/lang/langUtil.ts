@@ -17,6 +17,7 @@ export abstract class LangUtil {
         "<IND>",
         "<UNIND>",
         "<BREAK>",
+        "<UNK>",
     ];
 
     protected constants = [
@@ -338,6 +339,8 @@ export abstract class LangUtil {
             case "<UNIND>":
                 return "";
             case "<BREAK>":
+                return "";
+            case "<UNK>":
                 return "";
             default:
                 break;

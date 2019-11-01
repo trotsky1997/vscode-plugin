@@ -15,6 +15,7 @@ export class PythonLangUtil extends LangUtil {
         });
         this.addSpacingOption("<str>", "<str>", true);
         this.addSpacingOption(")", ":", false);
+        this.addSpacingOption(")", "as", true);
         this.addSpacingOptionAround("=", LangUtil.SpacingKeyALL, (tokens, nextI) => {
             const lpar = tokens.indexOf("(");
             return lpar <= 0 || lpar > nextI || tokens[lpar - 1].match(ID_REGEX) == null;
