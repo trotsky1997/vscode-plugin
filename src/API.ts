@@ -1,3 +1,4 @@
+import { exec } from "child_process";
 import * as crypto from "crypto";
 import * as fs from "fs";
 import * as os from "os";
@@ -98,6 +99,7 @@ const networkController = new NetworkController();
 const localNetworkController = new NetworkController();
 
 let lastLocalRequest = false;
+let firstLocalRequestAttempt = true;
 export async function predict(langUtil: LangUtil, text: string, ext: string, remainingText: string, laterCode: string, lastQueryUUID: number, fileID: string, retry = true) {
     let localRequest = false;
     let endpoint: string | undefined;
@@ -164,6 +166,8 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
         }
         if (!localRequest) {
             networkController.onSuccess();
+        } else {
+            firstLocalRequestAttempt = false;
         }
         return resp;
     } catch (e) {
@@ -172,6 +176,16 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
             return predict(langUtil, text, ext, remainingText, laterCode, lastQueryUUID, fileID, false);
         }
         if (localRequest) {
+            if (firstLocalRequestAttempt) {
+                const commands = {
+                    darwin: "open",
+                    win32: "cmd",
+                    default: "xdg-open",
+                };
+
+                exec(`${commands[process.platform]} aixcoder://localserver`);
+                firstLocalRequestAttempt = false;
+            }
             localNetworkController.onFailure(() => showWarningMessage(localize("localServerDown", endpoint)));
             readFile();
         } else {

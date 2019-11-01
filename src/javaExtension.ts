@@ -56,7 +56,7 @@ export async function activateJava(context: vscode.ExtensionContext) {
                 }) && hooked;
             }
 
-            if (!redhatjavaExtension.isActive) {
+            if (redhatjavaExtension && !redhatjavaExtension.isActive) {
                 try {
                     await redhatjavaExtension.activate();
                 } catch (error) {
@@ -81,7 +81,7 @@ export async function activateJava(context: vscode.ExtensionContext) {
             const ext = vscode.workspace.getConfiguration().get("aiXcoder.model.java") as string;
             try {
                 const { longResults, sortResults, offsetID, fetchTime, current } = await fetchResults(document, position, ext, "java", syncer, STAR_DISPLAY.LEFT);
-                if (redhatjavaExtension.isActive && hooked) {
+                if (redhatjavaExtension && redhatjavaExtension.isActive && hooked) {
                     syncer.put(offsetID, { ...sortResults, ext, fetchTime, current });
                 } else {
                     const sortLabels = formatSortData(sortResults, getInstance("java"), document, ext, current);
