@@ -194,6 +194,14 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "en": "AiXCoder requires a reload to integrate with Java extension.",
         "zh-cn": "AiXCoder需要重新加载以便与 Java 集成。",
     },
+    "manualTryStartLocalService": {
+        "en": "Restart Service",
+        "zh-cn": "重启服务",
+    },
+    "localServiceStarting" : {
+        "en": "Local service is starting. It will take up to a minute to warm up.",
+        "zh-cn": "本地服务正在启动。可能需要不超过一分钟的时间来预热。",
+    },
 };
 export function localize(key: string, ...params: any[]) {
     return localizeMessages[key] ? util.format(localizeMessages[key][vscode.env.language] || localizeMessages[key].en, ...params) : key;

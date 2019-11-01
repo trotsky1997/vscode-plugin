@@ -5,7 +5,7 @@ import * as os from "os";
 import * as path from "path";
 import * as request from "request-promise";
 import * as vscode from "vscode";
-import { compareVersion, myVersion, showWarningMessage } from "./extension";
+import { compareVersion, myVersion, showInformationMessage, showWarningMessage } from "./extension";
 import { localize } from "./i18n";
 import { LangUtil } from "./lang/langUtil";
 import log from "./logger";
@@ -175,17 +175,23 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
             return predict(langUtil, text, ext, remainingText, laterCode, lastQueryUUID, fileID, false);
         }
         if (localRequest) {
+            const commands = {
+                darwin: "open",
+                win32: "explorer.exe",
+                default: "xdg-open",
+            };
             if (firstLocalRequestAttempt) {
-                const commands = {
-                    darwin: "open",
-                    win32: "cmd",
-                    default: "xdg-open",
-                };
-
                 exec(`${commands[process.platform]} aixcoder://localserver`);
+                showInformationMessage("localServiceStarting");
                 firstLocalRequestAttempt = false;
+            } else {
+                localNetworkController.onFailure(() => showWarningMessage(localize("localServerDown", endpoint), "manualTryStartLocalService").then((selection) => {
+                    if (selection === "manualTryStartLocalService") {
+                        exec(`${commands[process.platform]} aixcoder://localserver`);
+                        showInformationMessage("localServiceStarting");
+                    }
+                }));
             }
-            localNetworkController.onFailure(() => showWarningMessage(localize("localServerDown", endpoint)));
             readFile();
         } else {
             networkController.onFailure(() => showWarningMessage(localize("serverDown", endpoint)));

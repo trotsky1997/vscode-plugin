@@ -68,7 +68,7 @@ export async function activateJava(context: vscode.ExtensionContext) {
             log("AiX: com.aixcoder.jdtls.extension.enable command success");
         } else {
             showInformationMessageOnce("redhatjavaExtension.install", "action.install").then((selection) => {
-                if (selection === localize("action.install")) {
+                if (selection === "action.install") {
                     vscode.commands.executeCommand("vscode.open", vscode.Uri.parse("vscode:extension/redhat.java"));
                 }
             });

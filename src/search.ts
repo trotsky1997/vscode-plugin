@@ -46,8 +46,8 @@ let searchPanel: vscode.WebviewPanel = null;
 
 export async function doSearch(context: vscode.ExtensionContext, uri: vscode.Uri) {
     if (!msgsearchfirsttimeShown) {
-        showInformationMessage(localize("msgsearchfirsttime"), localize("openSetting")).then((selected) => {
-            if (selected === localize("openSetting")) {
+        showInformationMessage(localize("msgsearchfirsttime"), "openSetting").then((selected) => {
+            if (selected === "openSetting") {
                 vscode.commands.executeCommand("workbench.action.openSettings", "aiXcoder: search");
             }
         });

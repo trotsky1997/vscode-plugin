@@ -25,6 +25,7 @@ export class JavaLangUtil extends LangUtil {
             return !this.isGenericTypeBracket(tokens, nextI - 1);
         });
         this.addSpacingOption(">", LangUtil.SpacingKeyALL, true);
+        this.addSpacingOption(">", "(", false);
         this.addSpacingOption("]", LangUtil.SpacingKeyID, true);
         this.addSpacingOption(LangUtil.SpacingKeyALL, "[", false);
     }

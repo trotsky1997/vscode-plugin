@@ -62,7 +62,7 @@ export async function activateGo(context: vscode.ExtensionContext) {
         }
         if (!msgo) {
             showInformationMessageOnce("msgoExtension.install", "action.install").then((selection) => {
-                if (selection === localize("action.install")) {
+                if (selection === "action.install") {
                     vscode.commands.executeCommand("vscode.open", vscode.Uri.parse("vscode:extension/ms-vscode.go"));
                 }
             });

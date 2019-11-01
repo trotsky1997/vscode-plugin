@@ -41,7 +41,7 @@ export async function activatePhp(context: vscode.ExtensionContext) {
             });
         } else {
             showInformationMessageOnce("intelephense.install", "action.install").then((selection) => {
-                if (selection === localize("action.install")) {
+                if (selection === "action.install") {
                     vscode.commands.executeCommand("vscode.open", vscode.Uri.parse(intelephenseId));
                 }
             });
