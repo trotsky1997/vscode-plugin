@@ -96,15 +96,16 @@ const realExtension = {
 const networkController = new NetworkController();
 const localNetworkController = new NetworkController();
 
-export async function predict(langUtil: LangUtil, text: string, ext: string, remainingText: string, lastQueryUUID: number, fileID: string, retry = true) {
+let lastLocalRequest = false;
+export async function predict(langUtil: LangUtil, text: string, ext: string, remainingText: string, laterCode: string, lastQueryUUID: number, fileID: string, retry = true) {
     let localRequest = false;
     let endpoint: string | undefined;
     if (models[ext] && models[ext].active && models[ext].url) {
         endpoint = models[ext].url;
-        localRequest = true;
+        lastLocalRequest = localRequest = true;
         log("LOCAL!");
     } else {
-        localRequest = false;
+        lastLocalRequest = localRequest = false;
         endpoint = vscode.workspace.getConfiguration().get("aiXcoder.endpoint");
         if (!networkController.shouldPredict()) {
             return null;
@@ -142,6 +143,7 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
                 prob_th_ngram: 1,
                 prob_th_ngram_t: 1,
                 version: myVersion,
+                laterCode: localRequest ? laterCode : "",
                 long_result_cuts: Preference.getLongResultCuts(),
                 ...Preference.getRequestParams(),
             },
@@ -154,7 +156,7 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
         if (retry && resp && resp.indexOf("Conflict") >= 0) {
             console.log("conflict");
             CodeStore.getInstance().invalidateFile(projName, fileID);
-            return predict(langUtil, text, ext, remainingText, lastQueryUUID, fileID, false);
+            return predict(langUtil, text, ext, remainingText, laterCode, lastQueryUUID, fileID, false);
         } else {
             console.log("resp=" + resp);
             CodeStore.getInstance().saveLastSent(projName, fileID, maskedText);
@@ -166,7 +168,7 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
     } catch (e) {
         if (e.message && e.message.indexOf("Conflict") >= 0) {
             CodeStore.getInstance().invalidateFile(projName, fileID);
-            return predict(langUtil, text, ext, remainingText, lastQueryUUID, fileID, false);
+            return predict(langUtil, text, ext, remainingText, laterCode, lastQueryUUID, fileID, false);
         }
         if (localRequest) {
             localNetworkController.onFailure(() => showWarningMessage(localize("localServerDown", endpoint)));
@@ -229,7 +231,7 @@ export enum TelemetryType {
 
 export async function sendTelemetry(ext: string, type: TelemetryType, tokenNum = 0, charNum = 0) {
     const telemetry = vscode.workspace.getConfiguration().get("aiXcoder.enableTelemetry");
-    if (telemetry) {
+    if (telemetry && !lastLocalRequest) {
         console.log("send telemetry: " + type + "/" + tokenNum + "/" + charNum);
         try {
             const updateURL = `user/predict/userUseInfo`;

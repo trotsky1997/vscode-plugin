@@ -106,7 +106,7 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
             try {
                 let ext = "javascript(Javascript)";
                 const startTime = Date.now();
-                const { text: t, remainingText, offsetID } = getReqText(document, position, "ts");
+                const { text: t, remainingText, offsetID, laterCode } = getReqText(document, position, "ts");
                 if (t == null) { return []; }
                 let text: string;
                 const lastScriptTag = Math.max(t.lastIndexOf("<script "), t.lastIndexOf("<script>"));
@@ -126,7 +126,7 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
                     }
                     return [];
                 }
-                const { longResults, sortResults, fetchTime, current } = await fetchResults2(text, remainingText, document.fileName, ext, "ts", document, STAR_DISPLAY.LEFT);
+                const { longResults, sortResults, fetchTime, current } = await fetchResults2(text, remainingText, document.fileName, ext, "ts", laterCode, document, STAR_DISPLAY.LEFT);
                 log("< fetch took " + (Date.now() - startTime) + "ms");
                 if (msts && hooked) {
                     syncer.put(offsetID, { ...sortResults, ext, fetchTime, current });
@@ -154,7 +154,7 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
             try {
                 let ext = "javascript(Javascript)";
                 const startTime = Date.now();
-                const { text: t, remainingText, offsetID } = getReqText(document, position, "ts");
+                const { text: t, remainingText, offsetID, laterCode } = getReqText(document, position, "ts");
                 if (t == null) { return []; }
                 let text: string;
                 const lastScriptTag = Math.max(t.lastIndexOf("<script "), t.lastIndexOf("<script>"));
@@ -174,7 +174,7 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
                     }
                     return [];
                 }
-                const { longResults, sortResults, fetchTime, current } = await fetchResults2(text, remainingText, document.fileName, ext, "ts", document, STAR_DISPLAY.LEFT);
+                const { longResults, sortResults, fetchTime, current } = await fetchResults2(text, remainingText, document.fileName, ext, "ts", laterCode, document, STAR_DISPLAY.LEFT);
                 log("< fetch took " + (Date.now() - startTime) + "ms");
                 if (mshtml && htmlhooked) {
                     syncer.put(offsetID, { ...sortResults, ext, fetchTime, current });
@@ -206,7 +206,7 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
                 await _activate();
                 try {
                     const startTime = Date.now();
-                    const { text: t, remainingText, offsetID } = getReqText(document, position, "ts");
+                    const { text: t, remainingText, offsetID, laterCode } = getReqText(document, position, "ts");
                     if (t == null) { return []; }
                     let text = t;
                     if (t.match(/<\s*([a-zA-Z_$][a-zA-Z_$0-9]*)[^>]*>(.(?!\1))*?$/s)) {
@@ -219,7 +219,7 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
                         }
                         return [];
                     }
-                    const { longResults, sortResults, fetchTime, current } = await fetchResults2(text, remainingText, document.fileName, ext, lang, document, STAR_DISPLAY.LEFT);
+                    const { longResults, sortResults, fetchTime, current } = await fetchResults2(text, remainingText, document.fileName, ext, lang, laterCode, document, STAR_DISPLAY.LEFT);
                     log("< fetch took " + (Date.now() - startTime) + "ms");
                     if (msts && hooked) {
                         syncer.put(offsetID, { ...sortResults, ext, fetchTime, current });

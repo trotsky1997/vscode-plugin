@@ -112,7 +112,7 @@
                 },
                 "aiXcoder.symbol": {
                     "type": "string",
-                    "default": "?",
+                    "default": "⭐",
                     "description": "%aiXcoder.configuration.symbol%"
                 }
             }
