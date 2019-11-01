@@ -41,7 +41,7 @@ export async function activatePython(context: vscode.ExtensionContext) {
             });
         } else {
             showInformationMessageOnce("mspythonExtension.install", "action.install").then((selection) => {
-                if (selection === localize("action.install")) {
+                if (selection === "action.install") {
                     vscode.commands.executeCommand("vscode.open", vscode.Uri.parse("vscode:extension/ms-python.python"));
                 }
             });

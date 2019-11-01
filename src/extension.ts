@@ -64,6 +64,10 @@ export async function showInformationMessage(message: string, ...items: string[]
             Preference.context.globalState.update("hide:" + message, true);
             return;
         }
+        const localizedSelection = localizedItems.indexOf(select);
+        if (localizedSelection >= 0) {
+            return items[localizedSelection];
+        }
         return select;
     }
 }
@@ -78,6 +82,10 @@ export async function showWarningMessage(message: string, ...items: string[]): P
         if (select === localize("nevershowagain")) {
             Preference.context.globalState.update("hide:" + message, true);
             return;
+        }
+        const localizedSelection = localizedItems.indexOf(select);
+        if (localizedSelection >= 0) {
+            return items[localizedSelection];
         }
         return select;
     }

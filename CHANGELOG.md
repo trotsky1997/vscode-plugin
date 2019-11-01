@@ -14,6 +14,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 - 去掉了奇怪的`<UNK>`。
 - (Python) `as`前面加上了空格。
 - 修复了一个在没有配套插件的情况下不能使用的bug。
+- (Java)去掉了<>()之间的空格。
 
 ## [0.1.18] - 2019-10-28
 
