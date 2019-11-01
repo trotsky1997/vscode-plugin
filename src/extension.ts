@@ -505,7 +505,7 @@ export async function JSHooker(aixHookedString: string, distjsPath: string, exte
             return false;
         }
         log(`${distjsPath} hooked`);
-        if (extension.isActive) {
+        if (extension && extension.isActive) {
             vscode.window.showWarningMessage(localize(reloadMsg), localize("reload")).then((select) => {
                 if (select === localize("reload")) {
                     vscode.commands.executeCommand("workbench.action.reloadWindow");
