@@ -17,6 +17,7 @@ export class JavaScriptLangUtil extends LangUtil {
         this.addSpacingOption(LangUtil.SpacingKeyALL, ":", false);
         this.addSpacingOption("...", LangUtil.SpacingKeyALL, false);
         this.addSpacingOption(LangUtil.SpacingKeyALL, "=>", true);
+        this.addSpacingOption("export", "=", true);
     }
 
     public getKeywords(): Set<string> {

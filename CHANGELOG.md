@@ -1,6 +1,15 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.1.20] - %DATE%
+
+### Added
+
+### Changed
+
+### Fixed
+- (JavaScript/TypeScript) `export`和`=`之间加上了空格。
+
 ## [0.1.19] - 2019-11-01
 
 ### Added
