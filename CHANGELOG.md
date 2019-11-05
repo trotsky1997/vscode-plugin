@@ -10,6 +10,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 ### Fixed
 - (JavaScript/TypeScript) `export`和`=`之间加上了空格。
 - `switch`后加上了空格。
+- 使用远程服务超时的提示文字写成了本地
 
 ## [0.1.19] - 2019-11-01
 

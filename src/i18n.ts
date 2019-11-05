@@ -184,7 +184,7 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
     },
     "serverDown": {
         "en": "The aiXcoder server is not responding. Please make sure you have a stable network connection to %s.",
-        "zh-cn": "本地aiXcoder服务器没有响应。请确保您有一个稳定的可以访问%s的网络。",
+        "zh-cn": "aiXcoder服务器没有响应。请确保您有一个稳定的可以访问%s的网络。",
     },
     "java.fail": {
         "en": "Java integration failed. Please ensure you have latest version of aiXcoder and VS Code.",
