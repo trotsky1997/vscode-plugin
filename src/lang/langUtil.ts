@@ -97,6 +97,7 @@ export abstract class LangUtil {
         this.addSpacingOption("while", "(", true);
         this.addSpacingOption("for", "(", true);
         this.addSpacingOption("if", "(", true);
+        this.addSpacingOption("switch", "(", true);
         this.addSpacingOptionRightKeywords("{", true);
         this.addSpacingOptionRightKeywords(LangUtil.SpacingKeyID, true);
         this.addSpacingOptionRightKeywords(LangUtil.SpacingKeyConstants, true);
