@@ -1,5 +1,6 @@
 {
 	"aiXcoder.configuration.endpoint": "代码推荐服务器的地址。",
+	"aiXcoder.configuration.selfLearining": "([专业版](https://www.aixcoder.com/)) 允许aiXcoder学习您的编程习惯。",
 	"aiXcoder.configuration.searchEndpoint": "代码搜索服务器地址。",
 	"aiXcoder.configuration.searchIntegratedWindow": "是否使用VS Code集成的网页控件显示搜索结果。",
 	"aiXcoder.configuration.searchDefaultBrowser": "默认的浏览器可执行文件。启动命令为 <浏览器可执行文件> <url>。可以同时指定额外的启动参数，比如 `%ProgramFiles%\\Mozilla Firefox\\firefox.exe -new-tab`。默认：操作系统的默认浏览器。",
@@ -17,5 +18,5 @@
 	"aiXcoder.configuration.longResultCutSort.short2long": "从短到长",
 	"aiXcoder.configuration.longResultCutSort.long2short": "从长到短",
 	"aiXcoder.configuration.longResultCuts.auto": "自动",
-	"aiXcoder.configuration.longResultCuts.none": "0-无"
+	"aiXcoder.configuration.longResultCuts.none": "不切割为更多短结果"
 }

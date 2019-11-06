@@ -59,6 +59,7 @@ async function myRequest(options: request.OptionsWithUrl, endpoint?: string) {
     if (!endpoint) {
         endpoint = vscode.workspace.getConfiguration().get("aiXcoder.endpoint");
     }
+    endpoint = "http://localhost:8788/";
     let host = proxyUrl || endpoint.substring(endpoint.indexOf("://") + 3);
     if (host.indexOf("/") >= 0) {
         host = host.substr(0, host.indexOf("/"));

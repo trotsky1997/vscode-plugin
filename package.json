@@ -2,7 +2,7 @@
     "name": "aixcoder",
     "displayName": "aiXcoder",
     "description": "aiXcoder code suggestion",
-    "version": "0.1.20",
+    "version": "0.2.0",
     "publisher": "nnthink",
     "repository": {
         "url": "https://github.com/felixhao28/vscode-plugin"
@@ -39,6 +39,11 @@
                     "type": "string",
                     "default": "https://api.aixcoder.com/",
                     "description": "%aiXcoder.configuration.endpoint%"
+                },
+                "aiXcoder.selfLearining": {
+                    "type": "boolean",
+                    "default": false,
+                    "markdownDescription": "%aiXcoder.configuration.selfLearining%"
                 },
                 "aiXcoder.searchEndpoint": {
                     "type": "string",
@@ -91,20 +96,25 @@
                     "type": "string",
                     "default": "Auto",
                     "enum": [
-                        "aiXcoder.configuration.longResultCuts.auto",
-                        "aiXcoder.configuration.longResultCuts.none",
+                        "Auto",
+                        "0",
                         "1",
                         "2",
                         "3",
                         "4",
                         "5"
                     ],
+                    "enumDescriptions": ["%aiXcoder.configuration.longResultCuts.auto%", "%aiXcoder.configuration.longResultCuts.none%"],
                     "description": "%aiXcoder.configuration.longResultCuts%"
                 },
                 "aiXcoder.longResultCutSort": {
                     "type": "string",
                     "default": "%aiXcoder.configuration.longResultCutSort.long2short%",
                     "enum": [
+                        "Short to Long",
+                        "Long to Short"
+                    ],
+                    "enumDescriptions": [
                         "%aiXcoder.configuration.longResultCutSort.short2long%",
                         "%aiXcoder.configuration.longResultCutSort.long2short%"
                     ],

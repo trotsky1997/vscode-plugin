@@ -72,7 +72,7 @@ export default class Preference {
         switch (cuts) {
             case "Auto":
                 return -1;
-            case "0-None":
+            case "0":
                 return 0;
             case "1":
                 return 1;
@@ -90,6 +90,6 @@ export default class Preference {
 
     public static getLongResultCutsLong2Short() {
         const order = vscode.workspace.getConfiguration().get("aiXcoder.longResultCutSort") as string;
-        return order === "Long to short";
+        return order === "Long to Short";
     }
 }
