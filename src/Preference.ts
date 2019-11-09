@@ -1,5 +1,7 @@
 import * as uuidv4 from "uuid/v4";
 import * as vscode from "vscode";
+import { getUUID, isProfessional } from "./API";
+import log from "./logger";
 
 function getParamsFromUrl(url: string) {
     url = decodeURI(url);
@@ -19,9 +21,26 @@ function getParamsFromUrl(url: string) {
 export default class Preference {
     public static uuid: string;
     public static context: vscode.ExtensionContext;
-    public static init(context: vscode.ExtensionContext) {
+    public static isProfessional: boolean | void;
+    public static async init(context: vscode.ExtensionContext) {
         Preference.context = context;
-        Preference.uuid = context.globalState.get("aiXcoder.uuid");
+        try {
+            Preference.uuid = (await getUUID()).uuid;
+        } catch (e) {
+            // try reading uuid every 10 min
+            const repeater = setInterval(async () => {
+                Preference.uuid = (await getUUID()).uuid;
+                clearInterval(repeater);
+            }, 1000 * 60 * 10);
+            // meanwhile use a generated fake uuid
+            Preference.uuid = context.globalState.get("aiXcoder.uuid");
+        }
+        try {
+            Preference.isProfessional = await isProfessional();
+        } catch (e) {
+            // not registered
+            log(e);
+        }
         if (Preference.uuid == null || Preference.uuid === "") {
             Preference.uuid = "vscode-" + uuidv4();
             context.globalState.update("aiXcoder.uuid", Preference.uuid);
@@ -91,5 +110,9 @@ export default class Preference {
     public static getLongResultCutsLong2Short() {
         const order = vscode.workspace.getConfiguration().get("aiXcoder.longResultCutSort") as string;
         return order === "Long to Short";
+    }
+
+    public static getSelfLearn() {
+        return vscode.workspace.getConfiguration().get("aiXcoder.selfLearining") as boolean;
     }
 }

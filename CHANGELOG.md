@@ -4,6 +4,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 ## [0.2.0] - %DATE%
 
 ### Added
+- 支持了专业版的自学习功能。
 
 ### Changed
 

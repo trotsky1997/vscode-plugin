@@ -1,6 +1,6 @@
 {
 	"aiXcoder.configuration.endpoint": "Specifies the endpoint for code suggestion server.",
-	"aiXcoder.configuration.selfLearining": "([Professional Edition](https://www.aixcoder.com/)) Allows aiXcoder to learn your coding idiom.",
+	"aiXcoder.configuration.selfLearining": "([Professional Edition](https://www.aixcoder.com/#/Product?tab=0)) Allows aiXcoder to learn your coding idiom.",
 	"aiXcoder.configuration.searchEndpoint": "Specifies the endpoint for code search server.",
 	"aiXcoder.configuration.searchIntegratedWindow": "Whether to use integrated webview for code search or not.",
 	"aiXcoder.configuration.searchDefaultBrowser": "Specifies the default browser executable, launched like <browser_executable> <url>. It is also possible to specify additional arguments, E.g. `%ProgramFiles%\\Mozilla Firefox\\firefox.exe -new-tab`. Default: default browser from OS.",
