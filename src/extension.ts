@@ -49,7 +49,16 @@ const shownMessages = new Set();
 export async function showInformationMessageOnce(message: string, ...items: string[]): Promise<string | undefined> {
     if (!shownMessages.has(message)) {
         shownMessages.add(message);
-        return showInformationMessage(message, ...items);
+        const localizedItems = [];
+        for (const item of items) {
+            localizedItems.push(localize(item));
+        }
+        const select = await vscode.window.showInformationMessage(localize(message), ...localizedItems);
+        const localizedSelection = localizedItems.indexOf(select);
+        if (localizedSelection >= 0) {
+            return items[localizedSelection];
+        }
+        return select;
     }
 }
 
@@ -658,7 +667,7 @@ export async function activate(context: vscode.ExtensionContext) {
         });
     }
 
-    Preference.init(context);
+    await Preference.init(context);
     API.checkUpdate();
     const askedTelemetry = context.globalState.get("aiXcoder.askedTelemetry");
     if (!askedTelemetry) {

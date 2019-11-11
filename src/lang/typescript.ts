@@ -1,3 +1,4 @@
+import { JavaScriptLangUtil } from "./javascript";
 import { ID_REGEX, LangUtil } from "./langUtil";
 
 const keywords = new Set<string>();
@@ -9,7 +10,7 @@ const keywords = new Set<string>();
     "transient", "volatile", "true", "false", "null", "NaN", "Infinity", "undefined", "module", "string",
     "bool", "number", "constructor", "declare", "interface", "as", "AS", "super"].map(keywords.add.bind(keywords));
 
-export class TypeScriptLangUtil extends LangUtil {
+export class TypeScriptLangUtil extends JavaScriptLangUtil {
 
     public genericTypeRegex = /^([a-zA-Z0-9_$]+|<|>|,|\[\])$/;
 
@@ -28,9 +29,8 @@ export class TypeScriptLangUtil extends LangUtil {
         this.addSpacingOption(":", LangUtil.SpacingKeyALL, true);
         this.hasSpaceBetweenMap.get(LangUtil.SpacingKeyALL).delete(":");
         this.addSpacingOption(LangUtil.SpacingKeyALL, ":", false);
-        this.addSpacingOption("...", LangUtil.SpacingKeyALL, false);
-        this.addSpacingOption("import", LangUtil.SpacingKeyALL, true);
         this.addSpacingOption(LangUtil.SpacingKeyALL, "=>", true);
+        this.addSpacingOption(">", "(", false);
     }
 
     public getKeywords(): Set<string> {

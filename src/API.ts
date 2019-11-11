@@ -1,14 +1,15 @@
 import { exec } from "child_process";
 import * as crypto from "crypto";
-import * as fs from "fs";
+import { promises as fs, watch as fsWatch } from "fs";
 import * as os from "os";
 import * as path from "path";
 import * as request from "request-promise";
 import { URL } from "url";
 import * as vscode from "vscode";
-import { compareVersion, myVersion, showInformationMessage, showWarningMessage } from "./extension";
+import { compareVersion, myVersion, showInformationMessage, showInformationMessageOnce, showWarningMessage } from "./extension";
 import { localize } from "./i18n";
 import { LangUtil } from "./lang/langUtil";
+import Learner from "./Learner";
 import log from "./logger";
 import NetworkController from "./NetworkController";
 import Preference from "./Preference";
@@ -28,13 +29,11 @@ function readFile() {
         return;
     }
     lastCheckLocalTime = Date.now();
-    fs.readFile(localserver, "utf-8", (err, data) => {
-        if (!err) {
-            const d = JSON.parse(data);
-            models = {};
-            for (const model of d.models) {
-                models[model.name] = model;
-            }
+    fs.readFile(localserver, "utf-8").then((data) => {
+        const d = JSON.parse(data);
+        models = {};
+        for (const model of d.models) {
+            models[model.name] = model;
         }
     });
 }
@@ -43,11 +42,11 @@ readFile();
 setInterval(readFile, 1000 * 60 * 5);
 async function initWatch() {
     try {
-        await fs.promises.stat(localserver);
+        await fs.stat(localserver);
     } catch (e) {
-        await fs.promises.writeFile(localserver, "{}", "utf-8");
+        await fs.writeFile(localserver, "{}", "utf-8");
     }
-    fs.watch(localserver, (event, filename) => {
+    fsWatch(localserver, (event, filename) => {
         readFile();
     });
 }
@@ -89,6 +88,27 @@ async function myRequest(options: request.OptionsWithUrl, endpoint?: string) {
     return request(options);
 }
 
+let lastOpenFailed = false;
+export async function openurl(url: string) {
+    if (lastOpenFailed) { return; }
+    const commands = {
+        darwin: "open",
+        win32: "explorer.exe",
+        default: "xdg-open",
+    };
+    await new Promise((resolve, reject) => {
+        exec(`${commands[process.platform]} ${url}`, (err, stdout, stderr) => {
+            if (err) {
+                lastOpenFailed = true;
+                showInformationMessageOnce("openAixcoderUrlFailed");
+                reject(err);
+            } else {
+                resolve(stdout);
+            }
+        });
+    });
+}
+
 const realExtension = {
     python: "py",
     javascript: "js",
@@ -100,7 +120,29 @@ const localNetworkController = new NetworkController();
 
 let lastLocalRequest = false;
 let firstLocalRequestAttempt = true;
+let learner: Learner;
+
 export async function predict(langUtil: LangUtil, text: string, ext: string, remainingText: string, laterCode: string, lastQueryUUID: number, fileID: string, retry = true) {
+    if (Preference.getSelfLearn()) {
+        if (Preference.isProfessional === undefined) {
+            showInformationMessageOnce("unableToLogin", "login").then((selection) => {
+                if (selection === "login") {
+                    openurl(`aixcoder://login`);
+                }
+            });
+        } else if (Preference.isProfessional) {
+            if (learner == null) {
+                learner = new Learner();
+            }
+            learner.learn(ext, fileID);
+        } else {
+            showInformationMessageOnce("notProfessionalEdition", "learnProfessional").then((selection) => {
+                if (selection === "learnProfessional") {
+                    vscode.commands.executeCommand("vscode.open", vscode.Uri.parse("https://www.aixcoder.com/#/Product?tab=0"));
+                }
+            });
+        }
+    }
     let localRequest = false;
     let endpoint: string | undefined;
     if (models[ext] && models[ext].active && models[ext].url) {
@@ -176,19 +218,14 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
             return predict(langUtil, text, ext, remainingText, laterCode, lastQueryUUID, fileID, false);
         }
         if (localRequest) {
-            const commands = {
-                darwin: "open",
-                win32: "explorer.exe",
-                default: "xdg-open",
-            };
             if (firstLocalRequestAttempt) {
-                exec(`${commands[process.platform]} aixcoder://localserver`);
+                openurl(`aixcoder://localserver`);
                 showInformationMessage("localServiceStarting");
                 firstLocalRequestAttempt = false;
             } else {
                 localNetworkController.onFailure(() => showWarningMessage(localize("localServerDown", endpoint), "manualTryStartLocalService").then((selection) => {
                     if (selection === "manualTryStartLocalService") {
-                        exec(`${commands[process.platform]} aixcoder://localserver`);
+                        openurl(`aixcoder://localserver`);
                         showInformationMessage("localServiceStarting");
                     }
                 }));
@@ -246,7 +283,7 @@ export async function checkUpdate() {
             log("New aiXCoder version is available: " + bestV);
             const select = await vscode.window.showInformationMessage(localize("newVersion", bestV), localize("download"), localize("ignoreThisVersion"));
             if (select === localize("download")) {
-                await vscode.commands.executeCommand("vscode.open", vscode.Uri.parse(new URL(bestHref, endpoint).href));
+                openurl("aixcoder://update-vscode");
             } else if (select === localize("ignoreThisVersion")) {
                 Preference.context.globalState.update("aiXcoder.ignoredUpdateVersion", bestV);
             }
@@ -321,4 +358,25 @@ export async function getModels(): Promise<string[]> {
         log(e);
     }
     return [];
+}
+
+export async function getUUID(): Promise<{ token: string, uuid: string }> {
+    const loginFile = path.join(homedir, "aiXcoder", "login");
+    const content = await fs.readFile(loginFile, "utf-8");
+    const { token, uuid } = JSON.parse(content);
+    return { token, uuid };
+}
+
+export async function isProfessional() {
+    const { token, uuid } = await getUUID();
+    const r = await myRequest({
+        method: "post",
+        url: "/aixcoderutil/plug/checkToken",
+        form: {
+            token,
+        },
+        timeout: 2000,
+    }, "https://aixcoder.com");
+    const res = JSON.parse(r);
+    return res.level === 2 || true;
 }

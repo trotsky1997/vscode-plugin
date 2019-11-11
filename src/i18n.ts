@@ -184,7 +184,7 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
     },
     "serverDown": {
         "en": "The aiXcoder server is not responding. Please make sure you have a stable network connection to %s.",
-        "zh-cn": "本地aiXcoder服务器没有响应。请确保您有一个稳定的可以访问%s的网络。",
+        "zh-cn": "aiXcoder服务器没有响应。请确保您有一个稳定的可以访问%s的网络。",
     },
     "java.fail": {
         "en": "Java integration failed. Please ensure you have latest version of aiXcoder and VS Code.",
@@ -202,7 +202,28 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "en": "Local service is starting. It will take up to a minute to warm up.",
         "zh-cn": "本地服务正在启动。可能需要不超过一分钟的时间来预热。",
     },
+    "unableToLogin": {
+        "en": "Unable to check login status. Please open aiXcoder main app to login. And then restart vscode.",
+        "zh-cn": "无法检查登录状态。请打开aiXcoder主程序继续登录。然后重启vscode。",
+    },
+    "notProfessionalEdition": {
+        "en": "You are using community version of aiXcoder. Features in Professional Edition is not available.",
+        "zh-cn": "您使用的不是专业版，无法使用专业版功能。",
+    },
+    "login": {
+        "en": "Login...",
+        "zh-cn": "登录...",
+    },
+    "learnProfessional": {
+        "en": "learn more...",
+        "zh-cn": "了解更多...",
+    },
+    "openAixcoderUrlFailed": {
+        "en": "Unable to open aixcoder protocol. This might be due to the original app being moved or deleted. Please open aixcoder app. And then reload VSCode.",
+        "zh-cn": "无法打开aixcoder协议，这可能是由于应用程序被移动或删除导致。请重新打开aixcoder应用。然后重新加载VSCode。",
+    },
 };
+
 export function localize(key: string, ...params: any[]) {
     return localizeMessages[key] ? util.format(localizeMessages[key][vscode.env.language] || localizeMessages[key].en, ...params) : key;
 }

@@ -1,1 +1,0 @@
-mvn -e clean package && copy .\extension.core\target\extension.core-0.0.1-SNAPSHOT.jar ..\..\dist\aixjdtls.jar

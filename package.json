@@ -2,7 +2,7 @@
     "name": "aixcoder",
     "displayName": "aiXcoder",
     "description": "aiXcoder code suggestion",
-    "version": "0.1.19",
+    "version": "0.2.0",
     "publisher": "nnthink",
     "repository": {
         "url": "https://github.com/felixhao28/vscode-plugin"
@@ -39,6 +39,11 @@
                     "type": "string",
                     "default": "",
                     "description": "%aiXcoder.configuration.endpoint%"
+                },
+                "aiXcoder.selfLearining": {
+                    "type": "boolean",
+                    "default": false,
+                    "markdownDescription": "%aiXcoder.configuration.selfLearining%"
                 },
                 "aiXcoder.searchEndpoint": {
                     "type": "string",
@@ -133,13 +138,17 @@
                     "type": "string",
                     "default": "Auto",
                     "enum": [
-                        "aiXcoder.configuration.longResultCuts.auto",
-                        "aiXcoder.configuration.longResultCuts.none",
+                        "Auto",
+                        "0",
                         "1",
                         "2",
                         "3",
                         "4",
                         "5"
+                    ],
+                    "enumDescriptions": [
+                        "%aiXcoder.configuration.longResultCuts.auto%",
+                        "%aiXcoder.configuration.longResultCuts.none%"
                     ],
                     "description": "%aiXcoder.configuration.longResultCuts%"
                 },
@@ -147,6 +156,10 @@
                     "type": "string",
                     "default": "%aiXcoder.configuration.longResultCutSort.long2short%",
                     "enum": [
+                        "Short to Long",
+                        "Long to Short"
+                    ],
+                    "enumDescriptions": [
                         "%aiXcoder.configuration.longResultCutSort.short2long%",
                         "%aiXcoder.configuration.longResultCutSort.long2short%"
                     ],
@@ -195,32 +208,32 @@
         "test": "npm run compile && node ./node_modules/vscode/bin/test"
     },
     "devDependencies": {
-        "@types/chai": "^4.2.3",
+        "@types/chai": "^4.2.4",
         "@types/mocha": "^5.2.7",
-        "@types/node": "^12.7.12",
+        "@types/node": "^12.12.6",
         "@types/request-promise": "^4.1.44",
-        "@types/uuid": "^3.4.5",
+        "@types/uuid": "^3.4.6",
         "@types/vscode": "^1.18.0",
         "chai": "^4.2.0",
         "concurrently": "^5.0.0",
-        "eslint": "^6.5.1",
+        "eslint": "^6.6.0",
         "eslint-config-standard": "^14.1.0",
         "eslint-plugin-import": "^2.18.2",
         "eslint-plugin-node": "^10.0.0",
         "eslint-plugin-promise": "^4.2.1",
         "eslint-plugin-standard": "^4.0.1",
-        "mocha": "^6.2.1",
-        "ts-loader": "^6.2.0",
-        "tslint": "^5.20.0",
-        "typescript": "^3.6.4",
-        "vscode-test": "^1.2.0",
-        "webpack": "^4.41.1",
-        "webpack-cli": "^3.3.9"
+        "mocha": "^6.2.2",
+        "ts-loader": "^6.2.1",
+        "tslint": "^5.20.1",
+        "typescript": "^3.7.2",
+        "vscode-test": "^1.2.2",
+        "webpack": "^4.41.2",
+        "webpack-cli": "^3.3.10"
     },
     "dependencies": {
         "agentkeepalive": "^4.1.0",
         "request": "^2.88.0",
-        "request-promise": "^4.2.4",
+        "request-promise": "^4.2.5",
         "uuid": "^3.3.3"
     }
 }
