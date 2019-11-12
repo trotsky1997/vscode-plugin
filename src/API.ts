@@ -4,7 +4,6 @@ import { promises as fs, watch as fsWatch } from "fs";
 import * as os from "os";
 import * as path from "path";
 import * as request from "request-promise";
-import { URL } from "url";
 import * as vscode from "vscode";
 import { compareVersion, myVersion, showInformationMessage, showInformationMessageOnce, showWarningMessage } from "./extension";
 import { localize } from "./i18n";
@@ -57,7 +56,7 @@ async function myRequest(options: request.OptionsWithUrl, endpoint?: string) {
     const proxyAuth: string = vscode.workspace.getConfiguration().get("http.proxyAuthorization");
     const proxyStrictSSL: boolean = vscode.workspace.getConfiguration().get("http.proxyStrictSSL");
     if (!endpoint) {
-        endpoint = vscode.workspace.getConfiguration().get("aiXcoder.endpoint");
+        endpoint = Preference.getEndpoint();
     }
     let host = proxyUrl || endpoint.substring(endpoint.indexOf("://") + 3);
     if (host.indexOf("/") >= 0) {
@@ -151,7 +150,7 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
         log("LOCAL!");
     } else {
         lastLocalRequest = localRequest = false;
-        endpoint = vscode.workspace.getConfiguration().get("aiXcoder.endpoint");
+        endpoint = Preference.getEndpoint();
         if (!networkController.shouldPredict()) {
             return null;
         }
@@ -163,7 +162,7 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
     const projName = proj ? proj.name : "_scratch";
     const offset = CodeStore.getInstance().getDiffPosition(fileID, maskedText);
     const md5 = md5Hash(maskedText);
-
+    ext = Preference.enterpriseExt(ext);
     try {
         if (fileID.match(/^Untitled-\d+$/)) {
             const lang = ext.substring(ext.indexOf("(") + 1, ext.length - 1).toLowerCase();
@@ -249,43 +248,25 @@ export function getTrivialLiterals(ext: string) {
 
 export async function checkUpdate() {
     try {
-        let endpoint = vscode.workspace.getConfiguration().get("aiXcoder.endpoint") as string;
-        const enterprisePort = vscode.workspace.getConfiguration().get("aiXcoder.enterprise.endpoint") as number;
-        endpoint = endpoint.replace(/:\d+/, ":" + enterprisePort);
-        if (!endpoint.endsWith("/")) {
-            endpoint += "/";
-        }
-        const updateURL = "plugins/vscode";
-        const filesHtml = await myRequest({
+        const updateURL = Preference.remoteVersionUrl;
+        const versionJson = await myRequest({
             method: "get",
-            url: updateURL,
-        }, endpoint) as string;
-        const regex = /<a href="([^\"]+)">vscode-aixcoder-([0-9.]+)-enterprise.vsix<\/a>/g;
+            url: "",
+        }, updateURL);
+        let newVersions = JSON.parse(versionJson);
+        newVersions = process.platform === "win32" ? newVersions.win : newVersions.mac;
         const ignoredVersion = Preference.context.globalState.get("aiXcoder.ignoredUpdateVersion");
-        let bestHref = "";
-        let bestV = "0";
-        while (true) {
-            const m = regex.exec(filesHtml);
-            if (m == null) {
-                break;
-            }
-            const href = m[1];
-            const v = m[2];
-            if (ignoredVersion === v) {
-                return;
-            }
-            if (compareVersion(bestV, v) < 0) {
-                bestV = v;
-                bestHref = href;
-            }
+        const v = newVersions.vscode.version;
+        if (ignoredVersion === v) {
+            return;
         }
-        if (compareVersion(myVersion, bestV) < 0) {
-            log("New aiXCoder version is available: " + bestV);
-            const select = await vscode.window.showInformationMessage(localize("newVersion", bestV), localize("download"), localize("ignoreThisVersion"));
+        if (compareVersion(myVersion, v) < 0) {
+            log("New aiXCoder version is available: " + v);
+            const select = await vscode.window.showInformationMessage(localize("newVersion", v), localize("download"), localize("ignoreThisVersion"));
             if (select === localize("download")) {
-                openurl("aixcoder://update-vscode");
+                await vscode.commands.executeCommand("vscode.open", vscode.Uri.parse(Preference.installPage));
             } else if (select === localize("ignoreThisVersion")) {
-                Preference.context.globalState.update("aiXcoder.ignoredUpdateVersion", bestV);
+                Preference.context.globalState.update("aiXcoder.ignoredUpdateVersion", v);
             }
         } else {
             log("AiXCoder is up to date");
@@ -293,6 +274,7 @@ export async function checkUpdate() {
     } catch (e) {
         log(e);
     }
+
 }
 
 export enum TelemetryType {
@@ -378,5 +360,5 @@ export async function isProfessional() {
         timeout: 2000,
     }, "https://aixcoder.com");
     const res = JSON.parse(r);
-    return res.level === 2 || true;
+    return res.level >= 2 || true;
 }

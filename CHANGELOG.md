@@ -5,6 +5,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 
 ### Added
 - 支持了专业版的自学习功能。
+- (企业版) 新增了自动配置的功能。
 
 ### Changed
 
@@ -13,6 +14,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 - `switch`后加上了空格。
 - 使用远程服务超时的提示文字写成了本地
 - 修复了两个短结果相关的设置项无效的bug
+- (企业版) 修复了一些设置的文本显示
 
 ## [0.1.19] - 2019-11-01
 

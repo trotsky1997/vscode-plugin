@@ -1,3 +1,6 @@
+import { promises as fs } from "fs";
+import * as os from "os";
+import * as path from "path";
 import * as uuidv4 from "uuid/v4";
 import * as vscode from "vscode";
 import { getUUID, isProfessional } from "./API";
@@ -22,8 +25,36 @@ export default class Preference {
     public static uuid: string;
     public static context: vscode.ExtensionContext;
     public static isProfessional: boolean | void;
+    public static remoteVersionUrl: string;
+    public static group: string;
+    public static endpoint: string;
+    public static installPage: string;
+    public static defaultModel: Map<string, string> = new Map();
+
     public static async init(context: vscode.ExtensionContext) {
         Preference.context = context;
+
+        try {
+            const homedir = os.homedir();
+            const configFile = path.join(homedir, "aiXcoder", "aix-enterprise-config.json");
+            const text = await fs.readFile(configFile, "utf-8");
+            const jo = JSON.parse(text);
+            Preference.group = jo.group;
+            Preference.installPage = jo.installPage;
+            Preference.remoteVersionUrl = jo.remoteVersionUrl;
+            Preference.endpoint = jo.endpoint;
+            const model = jo.model;
+            if (model) {
+                for (const lang in model) {
+                    if (model.hasOwnProperty(lang)) {
+                        Preference.defaultModel.set(lang, model[lang]);
+                    }
+                }
+            }
+        } catch (e) {
+            // TODO: handle exception
+        }
+
         try {
             Preference.uuid = (await getUUID()).uuid;
         } catch (e) {
@@ -45,6 +76,26 @@ export default class Preference {
             Preference.uuid = "vscode-" + uuidv4();
             context.globalState.update("aiXcoder.uuid", Preference.uuid);
         }
+    }
+
+    public static enterpriseExt(ext: string): string {
+        const m = ext.match(/^(.+)\((.+)\)$/);
+        if (m) {
+            const modelName = m[1];
+            const lang = m[2].toLowerCase();
+            if (modelName === lang && Preference.defaultModel.has(lang)) {
+                ext = Preference.defaultModel.get(lang);
+            }
+        }
+        return ext;
+    }
+
+    public static getEndpoint() {
+        let endpoint: string = vscode.workspace.getConfiguration().get("aiXcoder.endpoint");
+        if (endpoint == null || endpoint === "") {
+            endpoint = Preference.endpoint;
+        }
+        return endpoint;
     }
 
     public static getParams() {

@@ -70,37 +70,37 @@
                 "aiXcoder.model.java": {
                     "type": "string",
                     "default": "java(Java)",
-                    "markdownDescription": "%aiXcoder.configuration.aiXcoder.model.java%"
+                    "markdownDescription": "%aiXcoder.configuration.model.java%"
                 },
                 "aiXcoder.model.python": {
                     "type": "string",
                     "default": "python(Python)",
-                    "markdownDescription": "%aiXcoder.configuration.aiXcoder.model.python%"
+                    "markdownDescription": "%aiXcoder.configuration.model.python%"
                 },
                 "aiXcoder.model.cpp": {
                     "type": "string",
                     "default": "cpp(Cpp)",
-                    "markdownDescription": "%aiXcoder.configuration.aiXcoder.model.cpp%"
+                    "markdownDescription": "%aiXcoder.configuration.model.cpp%"
                 },
                 "aiXcoder.model.php": {
                     "type": "string",
                     "default": "php(Php)",
-                    "markdownDescription": "%aiXcoder.configuration.aiXcoder.model.php%"
+                    "markdownDescription": "%aiXcoder.configuration.model.php%"
                 },
                 "aiXcoder.model.javascript": {
                     "type": "string",
                     "default": "javascript(JavaScript)",
-                    "markdownDescription": "%aiXcoder.configuration.aiXcoder.model.javascript%"
+                    "markdownDescription": "%aiXcoder.configuration.model.javascript%"
                 },
                 "aiXcoder.model.typescript": {
                     "type": "string",
                     "default": "typescript(TypeScript)",
-                    "markdownDescription": "%aiXcoder.configuration.aiXcoder.model.typescript%"
+                    "markdownDescription": "%aiXcoder.configuration.model.typescript%"
                 },
                 "aiXcoder.model.go": {
                     "type": "string",
                     "default": "go(Go)",
-                    "markdownDescription": "%aiXcoder.configuration.aiXcoder.model.go%"
+                    "markdownDescription": "%aiXcoder.configuration.model.go%"
                 },
                 "aiXcoder.enableTelemetry": {
                     "type": "boolean",
