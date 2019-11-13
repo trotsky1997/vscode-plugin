@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import { EOL, homedir } from "os";
 import * as path from "path";
-import { openurl } from "./API";
+// import { openurl } from "./API";
 import { onDeactivateHandlers } from "./extension";
 
 const learnFilesFolder = path.join(homedir(), "aiXcoder", "learnFiles");
@@ -78,7 +78,7 @@ export default class Learner {
             console.log("saved");
         }
         this.saver = setTimeout(this.save.bind(this), 1000 * 10);
-        openurl("aixcoder://upload");
+        // openurl("aixcoder://upload");
     }
 
     private normalizePathToFileName(p: string) {

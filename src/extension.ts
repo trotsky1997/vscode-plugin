@@ -26,7 +26,7 @@ function escapeRegExp(s: string) {
     return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
 }
 
-export const myID = "nnthink.aixcoder";
+export const myID = "aixcoder.aixcoder";
 const myPackageJSON = vscode.extensions.getExtension(myID).packageJSON;
 export const myVersion = myPackageJSON.version;
 

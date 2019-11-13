@@ -24,23 +24,23 @@ export default class Preference {
     public static isProfessional: boolean | void;
     public static async init(context: vscode.ExtensionContext) {
         Preference.context = context;
-        try {
-            Preference.uuid = (await getUUID()).uuid;
-        } catch (e) {
-            // try reading uuid every 10 min
-            const repeater = setInterval(async () => {
-                Preference.uuid = (await getUUID()).uuid;
-                clearInterval(repeater);
-            }, 1000 * 60 * 10);
-            // meanwhile use a generated fake uuid
-            Preference.uuid = context.globalState.get("aiXcoder.uuid");
-        }
-        try {
-            Preference.isProfessional = await isProfessional();
-        } catch (e) {
-            // not registered
-            log(e);
-        }
+        // try {
+        //     Preference.uuid = (await getUUID()).uuid;
+        // } catch (e) {
+        //     // try reading uuid every 10 min
+        //     const repeater = setInterval(async () => {
+        //         Preference.uuid = (await getUUID()).uuid;
+        //         clearInterval(repeater);
+        //     }, 1000 * 60 * 10);
+        //     // meanwhile use a generated fake uuid
+        //     Preference.uuid = context.globalState.get("aiXcoder.uuid");
+        // }
+        // try {
+        //     Preference.isProfessional = await isProfessional();
+        // } catch (e) {
+        //     // not registered
+        //     log(e);
+        // }
         if (Preference.uuid == null || Preference.uuid === "") {
             Preference.uuid = "vscode-" + uuidv4();
             context.globalState.update("aiXcoder.uuid", Preference.uuid);
@@ -71,13 +71,13 @@ export default class Preference {
     }
 
     public static shouldTrigger(lastModifedTime: { [uri: string]: number }, document: vscode.TextDocument) {
-        if (!vscode.workspace.getConfiguration().get("aiXcoder.alwaysTrigger")) {
-            const last = lastModifedTime[document.uri.toJSON()] || 0;
-            if (Date.now() - last < 100) {
-                // triggered by key type
-                return false;
-            }
-        }
+        // if (!vscode.workspace.getConfiguration().get("aiXcoder.alwaysTrigger")) {
+        //     const last = lastModifedTime[document.uri.toJSON()] || 0;
+        //     if (Date.now() - last < 100) {
+        //         // triggered by key type
+        //         return false;
+        //     }
+        // }
         return true;
     }
 

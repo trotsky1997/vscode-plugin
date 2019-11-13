@@ -1,11 +1,14 @@
 {
     "name": "aixcoder",
-    "displayName": "aiXcoder",
-    "description": "aiXcoder code suggestion",
+    "displayName": "aiXcoder AI Code Completer",
+    "description": "The best code completion tool for Java.",
     "version": "0.2.0",
-    "publisher": "nnthink",
+    "publisher": "aixcoder",
     "repository": {
-        "url": "https://github.com/felixhao28/vscode-plugin"
+        "url": "https://github.com/aixcoder-plugin/vscode-plugin/tree/local"
+    },
+    "bugs": {
+        "url": "https://github.com/aixcoder-plugin/vscode-plugin/issues"
     },
     "engines": {
         "vscode": "^1.18.0"
@@ -15,19 +18,7 @@
         "Other"
     ],
     "activationEvents": [
-        "onLanguage:python",
-        "onLanguage:java",
-        "onLanguage:c",
-        "onLanguage:cpp",
-        "onLanguage:php",
-        "onLanguage:typescript",
-        "onLanguage:typescriptreact",
-        "onLanguage:javascript",
-        "onLanguage:javascriptreact",
-        "onLanguage:vue",
-        "onLanguage:html",
-        "onLanguage:go",
-        "onWebviewPanel:aixsearch"
+        "onLanguage:java"
     ],
     "main": "./dist/extension",
     "contributes": {
@@ -37,13 +28,8 @@
             "properties": {
                 "aiXcoder.endpoint": {
                     "type": "string",
-                    "default": "https://api.aixcoder.com/",
+                    "default": "http://localhost:8787/",
                     "description": "%aiXcoder.configuration.endpoint%"
-                },
-                "aiXcoder.selfLearining": {
-                    "type": "boolean",
-                    "default": false,
-                    "markdownDescription": "%aiXcoder.configuration.selfLearining%"
                 },
                 "aiXcoder.searchEndpoint": {
                     "type": "string",
@@ -60,68 +46,10 @@
                     "default": "-",
                     "markdownDescription": "%aiXcoder.configuration.searchDefaultBrowser%"
                 },
-                "aiXcoder.enableTelemetry": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "%aiXcoder.configuration.enableTelemetry%"
-                },
                 "aiXcoder.additionalParameters": {
                     "type": "string",
                     "default": "",
                     "description": "%aiXcoder.configuration.additionalParameters%"
-                },
-                "aiXcoder.alwaysTrigger": {
-                    "type": "boolean",
-                    "default": true,
-                    "markdownDescription": "%aiXcoder.configuration.alwaysTrigger%"
-                },
-                "aiXcoder.autoImport": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "%aiXcoder.configuration.autoImport%"
-                },
-                "aiXcoder.sortOnly": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "%aiXcoder.configuration.sortOnly%"
-                },
-                "aiXcoder.longResultRank": {
-                    "type": "integer",
-                    "default": 1,
-                    "minimum": 1,
-                    "maximum": 5,
-                    "description": "%aiXcoder.configuration.longResultRank%"
-                },
-                "aiXcoder.longResultCuts": {
-                    "type": "string",
-                    "default": "Auto",
-                    "enum": [
-                        "Auto",
-                        "0",
-                        "1",
-                        "2",
-                        "3",
-                        "4",
-                        "5"
-                    ],
-                    "enumDescriptions": [
-                        "%aiXcoder.configuration.longResultCuts.auto%",
-                        "%aiXcoder.configuration.longResultCuts.none%"
-                    ],
-                    "description": "%aiXcoder.configuration.longResultCuts%"
-                },
-                "aiXcoder.longResultCutSort": {
-                    "type": "string",
-                    "default": "%aiXcoder.configuration.longResultCutSort.long2short%",
-                    "enum": [
-                        "Short to Long",
-                        "Long to Short"
-                    ],
-                    "enumDescriptions": [
-                        "%aiXcoder.configuration.longResultCutSort.short2long%",
-                        "%aiXcoder.configuration.longResultCutSort.long2short%"
-                    ],
-                    "description": "%aiXcoder.configuration.longResultCutSort%"
                 },
                 "aiXcoder.symbol": {
                     "type": "string",
@@ -162,6 +90,8 @@
     },
     "devDependencies": {
         "@types/chai": "^4.2.4",
+        "@types/download": "^6.2.4",
+        "@types/fs-extra": "^8.0.1",
         "@types/mocha": "^5.2.7",
         "@types/node": "^12.12.6",
         "@types/request-promise": "^4.1.44",
@@ -185,6 +115,8 @@
     },
     "dependencies": {
         "agentkeepalive": "^4.1.0",
+        "download": "^7.1.0",
+        "fs-extra": "^8.1.0",
         "request": "^2.88.0",
         "request-promise": "^4.2.5",
         "uuid": "^3.3.3"

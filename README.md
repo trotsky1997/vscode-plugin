@@ -1,25 +1,22 @@
-# aiXcoder plugin beta
+# aiXcoder Visual Studio Code Plugin for Java
 
-This is a beta version of aiXcoder plugin. This plugin shows auto-generated code suggestions using latest AI technologies.
+AiXcoder is an code suggestions generator using the latest AI technologies. Our model is trained on over 1 TB of open source code and served from your own computer.
 
-WARNING: This is a beta version. Many features are currently under development.
-
-![writing tensorflow code with aiXcoder](https://github.com/aixcoder-plugin/vscode-plugin/raw/master/images/python_example.gif)
+Currently it runs on 64-bit Windows/Mac OS and Linux.
 
 ![writing Java code with aiXcoder](https://github.com/aixcoder-plugin/vscode-plugin/raw/master/images/java_example.gif)
 
-![writing C++ code with aiXcoder](https://github.com/aixcoder-plugin/vscode-plugin/raw/master/images/cpp_example.gif)
-
 ## Features
 
-1. Make sure you have internet access.
-2. If you need to use proxy, configure it in VSCode configurations (ctrl+, and search "proxy").
-3. Install Microsoft Python Extension (for Python) and Language Support for Java(TM) by Red Hat (for Java).
-3. Open or create a Java or Python file, type "impo" and pause.
-4. You should see suggestions appear momentarily marked by ⭐.
+0. Only support Java for now. More languages (C++/Python/JavaScript/TypeScript/Go/Php) on the way...
+1. Completely works offline. Your code is safe in your hand.
+2. Long completion result with length up to a full line.
+3. Rearrange completion items in a likelyhood probability descending order.
 
-## About us
+## Troubleshooting
 
-We are aiXcoder team. Find more on https://aixcoder.com !
+The local service is downloaded into &lt;home&gt;/aiXcoder/installer/localserver/current/server/. Removing the folder and then restart VSCode will force this plugin to re-download the service.
+
+The service is started as two processes with name "aix-node(.exe)", you can safely kill them at all times. The plugin will automatically launch the service upon a completion event if not running.
 
 **Enjoy!**

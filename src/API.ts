@@ -1,6 +1,5 @@
-import { exec } from "child_process";
 import * as crypto from "crypto";
-import { promises as fs, watch as fsWatch } from "fs";
+import * as fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
 import * as request from "request-promise";
@@ -9,6 +8,7 @@ import { compareVersion, myVersion, showInformationMessage, showInformationMessa
 import { localize } from "./i18n";
 import { LangUtil } from "./lang/langUtil";
 import Learner from "./Learner";
+import { forceUpdate, getVersion, openurl } from "./localService";
 import log from "./logger";
 import NetworkController from "./NetworkController";
 import Preference from "./Preference";
@@ -45,7 +45,7 @@ async function initWatch() {
     } catch (e) {
         await fs.writeFile(localserver, "{}", "utf-8");
     }
-    fsWatch(localserver, (event, filename) => {
+    fs.watch(localserver, (event, filename) => {
         readFile();
     });
 }
@@ -87,27 +87,6 @@ async function myRequest(options: request.OptionsWithUrl, endpoint?: string) {
     return request(options);
 }
 
-let lastOpenFailed = false;
-export async function openurl(url: string) {
-    if (lastOpenFailed) { return; }
-    const commands = {
-        darwin: "open",
-        win32: "explorer.exe",
-        default: "xdg-open",
-    };
-    await new Promise((resolve, reject) => {
-        exec(`${commands[process.platform]} ${url}`, (err, stdout, stderr) => {
-            if (err) {
-                lastOpenFailed = true;
-                showInformationMessageOnce("openAixcoderUrlFailed");
-                reject(err);
-            } else {
-                resolve(stdout);
-            }
-        });
-    });
-}
-
 const realExtension = {
     python: "py",
     javascript: "js",
@@ -124,11 +103,11 @@ let learner: Learner;
 export async function predict(langUtil: LangUtil, text: string, ext: string, remainingText: string, laterCode: string, lastQueryUUID: number, fileID: string, retry = true) {
     if (Preference.getSelfLearn()) {
         if (Preference.isProfessional === undefined) {
-            showInformationMessageOnce("unableToLogin", "login").then((selection) => {
-                if (selection === "login") {
-                    openurl(`aixcoder://login`);
-                }
-            });
+            // showInformationMessageOnce("unableToLogin", "login").then((selection) => {
+            //     if (selection === "login") {
+            //         openurl(`aixcoder://login`);
+            //     }
+            // });
         } else if (Preference.isProfessional) {
             if (learner == null) {
                 learner = new Learner();
@@ -164,7 +143,7 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
     const md5 = md5Hash(maskedText);
 
     try {
-        if (fileID.match(/^Untitled-\d+$/)) {
+        if (fileID.match(/^Untitled-"d",+$/)) {
             const lang = ext.substring(ext.indexOf("(") + 1, ext.length - 1).toLowerCase();
             fileID += "." + (realExtension[lang] || lang);
         }
@@ -248,28 +227,27 @@ export function getTrivialLiterals(ext: string) {
 
 export async function checkUpdate() {
     try {
-        const updateURL = "download/installtool/aixcoderinstaller_aixcoder.json";
+        const updateURL = "repos/aixcoder-plugin/localservice/releases/latest";
         const versionJson = await myRequest({
             method: "get",
             url: updateURL,
-        }, "https://www.aixcoder.com");
-        let newVersions = JSON.parse(versionJson);
-        newVersions = process.platform === "win32" ? newVersions.win : newVersions.mac;
-        const ignoredVersion = Preference.context.globalState.get("aiXcoder.ignoredUpdateVersion");
-        const v = newVersions.vscode.version;
-        if (ignoredVersion === v) {
-            return;
-        }
-        if (compareVersion(myVersion, v) < 0) {
+            headers: {
+                "User-Agent": "aiXcoder-vscode-plugin",
+            },
+        }, "https://api.github.com");
+        const newVersions = JSON.parse(versionJson);
+        const v = newVersions.tag_name;
+        const localVersion = await getVersion();
+        let doUpdate = false;
+        if (compareVersion(localVersion, v) < 0) {
             log("New aiXCoder version is available: " + v);
-            const select = await vscode.window.showInformationMessage(localize("newVersion", v), localize("download"), localize("ignoreThisVersion"));
-            if (select === localize("download")) {
-                openurl("aixcoder://update-vscode");
-            } else if (select === localize("ignoreThisVersion")) {
-                Preference.context.globalState.update("aiXcoder.ignoredUpdateVersion", v);
-            }
+            doUpdate = true;
         } else {
             log("AiXCoder is up to date");
+            doUpdate = false;
+        }
+        if (doUpdate) {
+            forceUpdate();
         }
     } catch (e) {
         log(e);
@@ -287,29 +265,6 @@ export enum TelemetryType {
 }
 
 export async function sendTelemetry(ext: string, type: TelemetryType, tokenNum = 0, charNum = 0) {
-    const telemetry = vscode.workspace.getConfiguration().get("aiXcoder.enableTelemetry");
-    if (telemetry && !lastLocalRequest) {
-        console.log("send telemetry: " + type + "/" + tokenNum + "/" + charNum);
-        try {
-            const updateURL = `user/predict/userUseInfo`;
-            await myRequest({
-                method: "post",
-                url: updateURL,
-                form: {
-                    type,
-                    area: ext,
-                    uuid: Preference.uuid,
-                    plugin_version: myVersion,
-                    ide_version: vscode.version,
-                    ide_type: "vscode",
-                    token_num: tokenNum,
-                    char_num: charNum,
-                },
-            });
-        } catch (e) {
-            log(e);
-        }
-    }
 }
 
 export async function sendErrorTelemetry(msg: string) {
@@ -345,5 +300,5 @@ export async function isProfessional() {
         timeout: 2000,
     }, "https://aixcoder.com");
     const res = JSON.parse(r);
-    return res.level === 2 || true;
+    return res.level === 2;
 }
