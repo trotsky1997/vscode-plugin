@@ -107,7 +107,7 @@ function launchLocalServer() {
     });
 }
 
-async function execAsync(cmd: string) {
+export async function execAsync(cmd: string) {
     return new Promise((resolve, reject) => {
         exec(cmd, (err, stdout, stderr) => {
             if (err) {

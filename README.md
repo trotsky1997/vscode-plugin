@@ -6,6 +6,13 @@ Currently it runs on 64-bit Windows/Mac OS and Linux.
 
 ![writing Java code with aiXcoder](https://github.com/aixcoder-plugin/vscode-plugin/raw/master/images/java_example.gif)
 
+## Requirements
+
+1. VSCode 1.18+
+2. [JRE 1.8+](https://adoptopenjdk.net/)
+3. Around 500 MB of free memory.
+4. More than 300 MB of free disk space in your home directory.
+
 ## Features
 
 1. Only support Java for now. More languages (C++/Python/JavaScript/TypeScript/Go/Php) on the way...

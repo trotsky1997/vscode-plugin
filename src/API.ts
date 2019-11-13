@@ -4,11 +4,12 @@ import * as os from "os";
 import * as path from "path";
 import * as request from "request-promise";
 import * as vscode from "vscode";
+import * as findJavaHome from 'find-java-home';
 import { compareVersion, myVersion, showInformationMessage, showInformationMessageOnce, showWarningMessage } from "./extension";
 import { localize } from "./i18n";
 import { LangUtil } from "./lang/langUtil";
 import Learner from "./Learner";
-import { forceUpdate, getVersion, openurl } from "./localService";
+import { forceUpdate, getVersion, openurl, execAsync } from "./localService";
 import log from "./logger";
 import NetworkController from "./NetworkController";
 import Preference from "./Preference";
@@ -31,8 +32,10 @@ function readFile() {
     fs.readFile(localserver, "utf-8").then((data) => {
         const d = JSON.parse(data);
         models = {};
-        for (const model of d.models) {
-            models[model.name] = model;
+        if (d.models) {
+            for (const model of d.models) {
+                models[model.name] = model;
+            }
         }
     });
 }
@@ -128,8 +131,8 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
         lastLocalRequest = localRequest = true;
         log("LOCAL!");
     } else {
-        lastLocalRequest = localRequest = false;
         endpoint = vscode.workspace.getConfiguration().get("aiXcoder.endpoint");
+        lastLocalRequest = localRequest = endpoint.indexOf("localhost") >= 0;
         if (!networkController.shouldPredict()) {
             return null;
         }
@@ -226,6 +229,23 @@ export function getTrivialLiterals(ext: string) {
 }
 
 export async function checkUpdate() {
+    const javaHome = vscode.workspace.getConfiguration().get("java.home") as string || await new Promise((resolve, reject) => {
+        findJavaHome((err, home) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(home);
+            }
+        });
+    });
+    if (javaHome) {
+        process.env.PATH += ";" + path.join(javaHome, "bin");
+    }
+    try {
+        await execAsync("java -version");
+    } catch (e) {
+        showInformationMessageOnce("JREMissing");
+    }
     try {
         const updateURL = "repos/aixcoder-plugin/localservice/releases/latest";
         const versionJson = await myRequest({
