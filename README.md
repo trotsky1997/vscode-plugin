@@ -8,15 +8,15 @@ Currently it runs on 64-bit Windows/Mac OS and Linux.
 
 ## Features
 
-0. Only support Java for now. More languages (C++/Python/JavaScript/TypeScript/Go/Php) on the way...
-1. Completely works offline. Your code is safe in your hand.
-2. Long completion result with length up to a full line.
-3. Rearrange completion items in a likelyhood probability descending order.
+1. Only support Java for now. More languages (C++/Python/JavaScript/TypeScript/Go/Php) on the way...
+2. Completely works offline. Your code is safe in your hand.
+3. Long completion result with length up to a full line.
+4. Rearrange completion items in a likelyhood probability descending order.
 
 ## Troubleshooting
 
-The local service is downloaded into &lt;home&gt;/aiXcoder/installer/localserver/current/server/. Removing the folder and then restart VSCode will force this plugin to re-download the service.
+The local server is downloaded into &lt;home&gt;/aiXcoder/installer/localserver/current/server/. Removing the folder and then restart VSCode will force this plugin to re-download the service.
 
-The service is started as two processes with name "aix-node(.exe)", you can safely kill them at all times. The plugin will automatically launch the service upon a completion event if not running.
+The service is started as two processes with name "aix-node(.exe)", you can safely kill them at any time. The plugin will automatically launch the service upon a completion event if not running.
 
 **Enjoy!**
