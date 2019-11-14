@@ -99,9 +99,9 @@ function getExePath() {
 
 function launchLocalServer() {
     const exePath = getExePath();
-    execAsync(exePath).catch((e) => {
+    execAsync(`"${exePath}"`).catch((e) => {
         lastOpenFailed = true;
-        showInformationMessageOnce("openAixcoderUrlFailed");
+        // showInformationMessageOnce("openAixcoderUrlFailed");
         log(e);
     });
 }
@@ -176,7 +176,7 @@ export async function forceUpdate() {
                 extract: true,
             });
         } else if (process.platform === "darwin") {
-            ball = "server-mac.zip";
+            ball = "server-osx.zip";
             stream = download(`https://github.com/aixcoder-plugin/localservice/releases/latest/download/${ball}`, aixcoderPath, {
                 extract: true,
             });

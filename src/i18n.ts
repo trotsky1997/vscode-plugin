@@ -228,7 +228,7 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
     },
     "aixUpdatefailed" : {
         "en": "aiXcoder service update failed. You can manually download the latest service zipfile/tarball from: [](%s). And then unzip it here: %s.",
-        "zh-cn": "aiXcoder服务更新失败。您可以手动在此下载最新的压缩包：[](%s)。然后解压到这个目录：%s。",
+        "zh-cn": "aiXcoder服务更新失败。您可以手动在此下载最新的压缩包：%s。然后解压到这个目录：%s。",
     },
     "JREMissing": {
         "en": "Error: JRE not found! Please install Java in case some features disabled.",
