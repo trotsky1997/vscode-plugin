@@ -4,21 +4,20 @@ import * as fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
-import { showInformationMessage, showInformationMessageOnce } from "./extension";
+import { showInformationMessageOnce } from "./extension";
 import { localize } from "./i18n";
 import log from "./logger";
 
-const homedir = os.homedir();
+let homedir = os.homedir();
+if (process.platform === "win32") {
+
+} else if (process.platform === "darwin") {
+    homedir = path.join(homedir, "Library", "Application Support");
+} else {
+}
 
 function getAixcoderInstallUserPath() {
-    let userHome = homedir;
-    if (process.platform === "win32") {
-
-    } else if (process.platform === "darwin") {
-        userHome = path.join(userHome, "Library", "Application Support");
-    } else {
-    }
-    const installInfoPath = path.join(userHome, "aiXcoder", "installer");
+    const installInfoPath = path.join(homedir, "aiXcoder", "installer");
     return installInfoPath;
 }
 
