@@ -89,11 +89,11 @@
         "test": "npm run compile && node ./node_modules/vscode/bin/test"
     },
     "devDependencies": {
-        "@types/chai": "^4.2.4",
+        "@types/chai": "^4.2.5",
         "@types/download": "^6.2.4",
         "@types/fs-extra": "^8.0.1",
         "@types/mocha": "^5.2.7",
-        "@types/node": "^12.12.6",
+        "@types/node": "^12.12.7",
         "@types/request-promise": "^4.1.44",
         "@types/uuid": "^3.4.6",
         "@types/vscode": "^1.18.0",
@@ -109,7 +109,7 @@
         "ts-loader": "^6.2.1",
         "tslint": "^5.20.1",
         "typescript": "^3.7.2",
-        "vscode-test": "^1.2.2",
+        "vscode-test": "^1.2.3",
         "webpack": "^4.41.2",
         "webpack-cli": "^3.3.10"
     },
