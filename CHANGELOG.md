@@ -1,6 +1,15 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.2.1] - 2019-11-14
+
+### Added
+
+### Changed
+
+### Fixed
+- Fix a plugin id mismatch bug.
+
 ## [0.2.0] - 2019-11-13
 
 ### Added

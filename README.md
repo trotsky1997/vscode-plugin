@@ -2,6 +2,8 @@
 
 AiXcoder is an code suggestions generator using the latest AI technologies. Our model is trained on over 1 TB of open source code and served from your own computer.
 
+For now aiXcoder only supports Java.
+
 Currently it runs on 64-bit Windows/Mac OS and Linux.
 
 ![writing Java code with aiXcoder](https://github.com/aixcoder-plugin/vscode-plugin/raw/master/images/java_example.gif)
