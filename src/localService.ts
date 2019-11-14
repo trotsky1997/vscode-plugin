@@ -170,16 +170,21 @@ export async function forceUpdate() {
             //
         }
         let ball: string;
+        let stream;
         if (process.platform === "win32") {
             ball = "server-win.zip";
+            stream = download(`https://github.com/aixcoder-plugin/localservice/releases/latest/download/${ball}`, aixcoderPath, {
+                extract: true,
+            });
         } else if (process.platform === "darwin") {
             ball = "server-mac.zip";
+            stream = download(`https://github.com/aixcoder-plugin/localservice/releases/latest/download/${ball}`, aixcoderPath, {
+                extract: true,
+            });
         } else {
             ball = "server-linux.tar.gz";
+            stream = download(`https://github.com/aixcoder-plugin/localservice/releases/latest/download/${ball}`, aixcoderPath);
         }
-        const stream = download(`https://github.com/aixcoder-plugin/localservice/releases/latest/download/${ball}`, aixcoderPath, {
-            extract: true,
-        });
         const onErr = (err?: any) => {
             vscode.window.showInformationMessage(localize("aixUpdatefailed", "https://github.com/aixcoder-plugin/localservice/releases", aixcoderPath));
         };
@@ -197,13 +202,20 @@ export async function forceUpdate() {
         });
         stream.on("downloadProgress", (p: FileProgressLite) => {
             progress.report({
-                message: localize("aixUpdateProgress") + ` ${p.transferred}/${p.total}`,
+                message: `${p.transferred}/${p.total} - ${p.percent.toLocaleString(undefined, { style: "percent", minimumFractionDigits: 2 })}`,
                 increment: (p.percent - last) * 100,
             });
             last = p.percent;
         });
         stream.catch(onErr);
         await stream;
+        if (ball.endsWith(".tar.gz")) {
+            try {
+                await execAsync(`tar zxf ${path.join(aixcoderPath, ball)}`);
+            } catch (e) {
+                onErr();
+            }
+        }
         lastOpenFailed = false;
     }).then(null, (err) => {
         log(err);
