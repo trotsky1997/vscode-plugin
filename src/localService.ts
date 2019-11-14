@@ -211,7 +211,7 @@ export async function forceUpdate() {
         await stream;
         if (ball.endsWith(".tar.gz")) {
             try {
-                await execAsync(`tar zxf ${path.join(aixcoderPath, ball)}`);
+                await execAsync(`tar zxf "${path.join(aixcoderPath, ball)}" -C "${aixcoderPath}"`);
             } catch (e) {
                 onErr();
             }
