@@ -40,9 +40,7 @@ async function getActivePid(pid: string) {
                         if (tmpLine.indexOf(pid) >= 0) {
                             const resultSplits = tmpLine.trim().split(/\s+/);
                             if (resultSplits.length >= 2) {
-                                let pid = resultSplits[resultSplits.length - 1];
-                                pid = pid.trim();
-                                return pid;
+                                return resultSplits[resultSplits.length - 1].trim();
                             }
                         }
                     }

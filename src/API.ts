@@ -1,15 +1,15 @@
 import * as crypto from "crypto";
+import * as findJavaHome from "find-java-home";
 import * as fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
 import * as request from "request-promise";
 import * as vscode from "vscode";
-import * as findJavaHome from 'find-java-home';
 import { compareVersion, myVersion, showInformationMessage, showInformationMessageOnce, showWarningMessage } from "./extension";
 import { localize } from "./i18n";
 import { LangUtil } from "./lang/langUtil";
 import Learner from "./Learner";
-import { forceUpdate, getVersion, openurl, execAsync } from "./localService";
+import { execAsync, forceUpdate, getVersion, openurl } from "./localService";
 import log from "./logger";
 import NetworkController from "./NetworkController";
 import Preference from "./Preference";
