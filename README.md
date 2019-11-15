@@ -1,12 +1,18 @@
-# aiXcoder plugin beta
+# AiXcoder Plugin
 
-This is a beta version of aiXcoder plugin. This plugin shows auto-generated code suggestions using latest AI technologies.
+**If you are looking for the source code for [aiXcoder AI Code Completer on VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=aixcoder-plugin.aixcoder), it is on the [local branch](https://github.com/aixcoder-plugin/vscode-plugin/tree/local)**
 
-WARNING: This is a beta version. Many features are currently under development.
+AiXcoder Plugin shows auto-generated code suggestions using latest AI technologies.
+
+Python:
 
 ![writing tensorflow code with aiXcoder](https://github.com/aixcoder-plugin/vscode-plugin/raw/master/images/python_example.gif)
 
+Java:
+
 ![writing Java code with aiXcoder](https://github.com/aixcoder-plugin/vscode-plugin/raw/master/images/java_example.gif)
+
+C++:
 
 ![writing C++ code with aiXcoder](https://github.com/aixcoder-plugin/vscode-plugin/raw/master/images/cpp_example.gif)
 

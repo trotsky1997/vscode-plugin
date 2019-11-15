@@ -225,7 +225,7 @@ function formatResData(results: PredictResult, langUtil: LangUtil, document: vsc
         command: "aiXcoder.insert",
         arguments: [ext, "primary", langUtil, document],
     };
-    const minCompletionTokensCount = Preference.getParam("controllerMode") ? 0 : 1;
+    const minCompletionTokensCount = 0;
     const sortL2S = Preference.getLongResultCutsLong2Short();
     const unique = new Set();
     for (const result of results.data) {
