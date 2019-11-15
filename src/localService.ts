@@ -27,7 +27,7 @@ async function getActivePid(pid: string) {
         return null;
     }
     let cmd = "";
-    let result;
+    let result: string;
     try {
         switch (process.platform) {
             case "win32":
@@ -104,7 +104,7 @@ function launchLocalServer() {
     });
 }
 
-export async function execAsync(cmd: string) {
+export async function execAsync(cmd: string): Promise<string> {
     return new Promise((resolve, reject) => {
         exec(cmd, (err, stdout, stderr) => {
             if (err) {

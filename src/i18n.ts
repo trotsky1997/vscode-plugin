@@ -227,13 +227,13 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "zh-cn": "正在下载aiXcoder服务...",
     },
     "aixUpdatefailed" : {
-        "en": "aiXcoder service update failed. You can manually download the latest service zipfile/tarball from: [](%s). And then unzip it here: %s.",
+        "en": "aiXcoder service update failed. You can manually download the latest service zipfile/tarball from: %s. And then unzip it here: %s.",
         "zh-cn": "aiXcoder服务更新失败。您可以手动在此下载最新的压缩包：%s。然后解压到这个目录：%s。",
     },
     "JREMissing": {
         "en": "Error: JRE not found! Please install Java in case some features disabled.",
-        "zh-cn": "错误：未找到JRE! 请安装Java以免影响部分功能正常使用。"
-    }
+        "zh-cn": "错误：未找到JRE! 请安装Java以免影响部分功能正常使用。",
+    },
 };
 
 export function localize(key: string, ...params: any[]) {
