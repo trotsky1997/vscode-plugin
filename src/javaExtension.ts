@@ -22,7 +22,7 @@ export async function activateJava(context: vscode.ExtensionContext) {
             log("AiX: redhat.java detected");
 
             const distjsPath = path.join(redhatjavaExtension.extensionPath, "dist", "extension.js");
-            hooked = await JSHooker("/**AiXHooked-0**/", distjsPath, redhatjavaExtension, "java.reload", "java.fail", (distjs) => {
+            hooked = await JSHooker("/**local-AiXHooked-0**/", distjsPath, redhatjavaExtension, "java.reload", "java.fail", (distjs) => {
                 const middleware = `middleware:{
                     provideCompletionItem:async(_a1,_a2,_a3,_a4,_a5)=>{
                         let rr=_a5(_a1,_a2,_a3,_a4);
@@ -40,7 +40,7 @@ export async function activateJava(context: vscode.ExtensionContext) {
 
             if (msintellicode) {
                 const intellicodeDistjsPath = path.join(msintellicode.extensionPath, "dist", "intellicode.js");
-                hooked = await JSHooker("/**AiXHooked-1**/", intellicodeDistjsPath, msintellicode, "java.reload", "java.fail", (distjs) => {
+                hooked = await JSHooker("/**local-AiXHooked-1**/", intellicodeDistjsPath, msintellicode, "java.reload", "java.fail", (distjs) => {
                     const s = SafeStringUtil.indexOf(distjs, "i.languages.registerCompletionItemProvider");
                     const s1 = SafeStringUtil.indexOf(distjs, "provideCompletionItems:", s);
                     const e = SafeStringUtil.indexOf(distjs, ",resolveCompletionItem:", s1);

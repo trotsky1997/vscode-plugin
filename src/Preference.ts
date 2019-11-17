@@ -1,12 +1,10 @@
 import * as uuidv4 from "uuid/v4";
 import * as vscode from "vscode";
-import { getUUID, isProfessional } from "./API";
-import log from "./logger";
 
 function getParamsFromUrl(url: string) {
     url = decodeURI(url);
     const eachParamsArr = url.split("&");
-    const obj = {};
+    const obj: {[key: string]: string} = {};
     if (eachParamsArr && eachParamsArr.length) {
         eachParamsArr.map((param) => {
             const keyValuePair = param.split("=");
@@ -47,7 +45,7 @@ export default class Preference {
         }
     }
 
-    public static getParams() {
+    public static getParams(): any {
         const paramsString = vscode.workspace.getConfiguration().get("aiXcoder.additionalParameters") as string;
         const params = getParamsFromUrl(paramsString);
         return params;

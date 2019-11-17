@@ -718,10 +718,10 @@ export async function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.search", (uri) => {
         doSearch(context, uri);
     }));
-    const msintellicode = vscode.extensions.getExtension("visualstudioexptteam.vscodeintellicode");
-    if (msintellicode) {
-        showInformationMessage("msintellicode.enabled");
-    }
+    // const msintellicode = vscode.extensions.getExtension("visualstudioexptteam.vscodeintellicode");
+    // if (msintellicode) {
+    //     showInformationMessage("msintellicode.enabled");
+    // }
     try {
         const aixHooks: {
             [lang: string]: void | {

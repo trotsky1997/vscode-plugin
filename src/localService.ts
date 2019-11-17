@@ -7,6 +7,7 @@ import * as vscode from "vscode";
 import { showInformationMessageOnce } from "./extension";
 import { localize } from "./i18n";
 import log from "./logger";
+import Preference from "./Preference";
 
 let homedir = os.homedir();
 if (process.platform === "win32") {
@@ -97,7 +98,17 @@ function getExePath() {
 
 function launchLocalServer() {
     const exePath = getExePath();
-    execAsync(`"${exePath}"`).catch((e) => {
+    let cmd = `"${exePath}"`;
+    if (Preference.getParams().localconsole) {
+        if (process.platform === "win32") {
+            cmd = `cmd /C start "${exePath}"`;
+        } else if (process.platform === "darwin") {
+            cmd = `open -a Terminal "${exePath}"`;
+        } else {
+            cmd = `gnome-terminal -- "${exePath}"`;
+        }
+    }
+    execAsync(cmd).catch((e) => {
         lastOpenFailed = true;
         // showInformationMessageOnce("openAixcoderUrlFailed");
         log(e);
