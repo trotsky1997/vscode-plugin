@@ -1,7 +1,7 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
-## [0.2.3] - 2019-11-18
+## [0.3.0] - 2019-11-18
 
 ### Added
 - Progress display for launching local server.
