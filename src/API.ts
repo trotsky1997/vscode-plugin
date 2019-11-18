@@ -87,7 +87,15 @@ async function myRequest(options: request.OptionsWithUrl, endpoint?: string) {
         // agent: keepaliveAgent,
         timeout: 1000,
     };
-    return request(options);
+    let r: string | null;
+    try {
+        r = await request(options);
+    } catch (e) {
+        log(`Error requesting ${(options.method || "GET").toUpperCase()} ${options.url}`);
+        log(e);
+        r = null;
+    }
+    return r;
 }
 
 const realExtension = {

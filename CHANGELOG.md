@@ -6,9 +6,11 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 ### Added
 
 ### Changed
+- Better error logs.
 
 ### Fixed
 - No more annoying message about intellicode.
+- Long result is now ranked in the first place
 
 ## [0.2.1] - 2019-11-14
 

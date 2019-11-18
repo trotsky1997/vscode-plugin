@@ -81,7 +81,7 @@ export default class Preference {
 
     public static getLongResultRankSortText() {
         const rank = vscode.workspace.getConfiguration().get("aiXcoder.longResultRank") as number;
-        return ".0." + (rank - 1) + ".0";
+        return ".0." + ((rank || 1) - 1) + ".0";
     }
 
     public static getLongResultCuts() {
