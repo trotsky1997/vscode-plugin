@@ -4,7 +4,6 @@ import * as fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
-import { showInformationMessageOnce } from "./extension";
 import { localize } from "./i18n";
 import log from "./logger";
 import Preference from "./Preference";
@@ -146,6 +145,31 @@ export async function openurl(url: string) {
         // server not found
     }
     launchLocalServer();
+    vscode.window.withProgress({
+        location: vscode.ProgressLocation.Notification,
+        title: localize("localServiceStarting"),
+        cancellable: true,
+    }, (progress, token) => new Promise((resolve, reject) => {
+        let tries = 0;
+        const timeout = 60 * 1000;
+        const startTime = Date.now();
+        (function testServerStarted() {
+            if (token.isCancellationRequested || Date.now() - startTime > timeout) {
+                reject(new Error("local service failed to start"));
+                return;
+            }
+            tries++;
+            log("Try " + tries);
+            download(vscode.workspace.getConfiguration().get("aiXcoder.endpoint"), null, {
+                timeout: 1000,
+            }).then((value) => {
+                lastOpenFailed = false;
+                resolve();
+            }).catch((e) => {
+                setTimeout(testServerStarted, 3000);
+            });
+        })();
+    }));
 }
 
 export async function getVersion() {
@@ -208,12 +232,16 @@ export async function forceUpdate() {
         stream.on("request", (req: any) => {
             myReq = req;
         });
+        let lastReportTime = 0;
         stream.on("downloadProgress", (p: FileProgressLite) => {
-            progress.report({
-                message: `${p.transferred}/${p.total} - ${p.percent.toLocaleString(undefined, { style: "percent", minimumFractionDigits: 2 })}`,
-                increment: (p.percent - last) * 100,
-            });
-            last = p.percent;
+            if (Date.now() - lastReportTime > 1000) {
+                progress.report({
+                    message: `${p.transferred}/${p.total} - ${p.percent.toLocaleString(undefined, { style: "percent", minimumFractionDigits: 2 })}`,
+                    increment: (p.percent - last) * 100,
+                });
+                last = p.percent;
+                lastReportTime = Date.now();
+            }
         });
         stream.catch(onErr);
         await stream;

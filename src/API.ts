@@ -93,7 +93,7 @@ async function myRequest(options: request.OptionsWithUrl, endpoint?: string) {
     } catch (e) {
         log(`Error requesting ${(options.method || "GET").toUpperCase()} ${options.url}`);
         log(e);
-        r = null;
+        throw e;
     }
     return r;
 }
@@ -209,13 +209,11 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
         if (localRequest) {
             if (firstLocalRequestAttempt) {
                 openurl(`aixcoder://localserver`);
-                showInformationMessage("localServiceStarting");
                 firstLocalRequestAttempt = false;
             } else {
                 localNetworkController.onFailure(() => showWarningMessage(localize("localServerDown", endpoint), "manualTryStartLocalService").then((selection) => {
                     if (selection === "manualTryStartLocalService") {
                         openurl(`aixcoder://localserver`);
-                        showInformationMessage("localServiceStarting");
                     }
                 }));
             }
