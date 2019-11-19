@@ -168,6 +168,7 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
                 uuid: Preference.uuid,
                 fileid: fileID,
                 project: projName,
+                projectRoot: u.fsPath,
                 remaining_text: maskedRemainingText,
                 queryUUID: lastQueryUUID,
                 offset,

@@ -5,6 +5,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 
 ### Added
 - Progress display for launching local server.
+- Now works better with project-scope completion.
 
 ### Changed
 
