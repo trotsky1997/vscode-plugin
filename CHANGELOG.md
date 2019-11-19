@@ -13,6 +13,8 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 - `switch`后加上了空格。
 - 使用远程服务超时的提示文字写成了本地
 - 修复了两个短结果相关的设置项无效的bug
+- Fix a bug that prevents local server launching automatically.
+- Fix a bug when there is quote in comment.
 
 ## [0.1.19] - 2019-11-01
 

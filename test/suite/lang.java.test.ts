@@ -70,4 +70,29 @@ suite("Java Language Test Suite", () => {
       expect(rendered, sourceTokensLines[i]).to.equal(expectedValue);
     }
   });
+
+  // tslint:disable: no-trailing-whitespace
+  test("datamask", () => {
+    const s = `String a = "text";
+    // comment
+    String b = "text";
+    // comment with quotes "text"
+    String c = "text"; // comment with single quotes 'text'
+    String d = "text";
+    /* block
+    "text"
+    'text'
+    comment*/
+    String e = "text"; /* block
+    "text"
+    'text'
+    comment*/ String f = "trivial text";`;
+    const t = `String a = "";
+    String b = "";
+    String c = ""; 
+    String d = "";
+    String e = "";  String f = "trivial text";`;
+    const r = langUtil.datamask(s, new Set<string>(["trivial text"]));
+    expect(r.replace(/\n(( |\t)*\n)+/g, "\n")).to.equal(t);
+  });
 });
