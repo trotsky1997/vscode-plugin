@@ -62,4 +62,27 @@ suite("Php Language Test Suite", () => {
       expect(rendered, sourceTokensLines[i]).to.equal(expectedValue);
     }
   });
+
+  // tslint:disable: no-trailing-whitespace
+  test("datamask", () => {
+    const s = `echo 'text'
+    // comment
+    echo "multi
+    line
+    text"
+    /* block comment */
+    echo <<<EOT
+here doc string
+EOT;
+    var_dump(array(<<<EOD
+trivial text
+EOD
+));`;
+    const t = `echo ''
+    echo ""
+    echo ""
+    var_dump(array("trivial text"));`;
+    const r = langUtil.datamask(s, new Set<string>(["trivial text"]));
+    expect(r.replace(/\n(( |\t)*\n)+/g, "\n")).to.equal(t);
+  });
 });
