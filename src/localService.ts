@@ -1,6 +1,8 @@
 import { exec } from "child_process";
+import * as decompress from "decompress";
 import * as download from "download";
 import * as fs from "fs-extra";
+import isRunning = require("is-running");
 import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
@@ -100,7 +102,7 @@ function launchLocalServer() {
     let cmd = `"${exePath}"`;
     if (Preference.getParams().localconsole) {
         if (process.platform === "win32") {
-            cmd = `cmd /C start "${exePath}"`;
+            cmd = `cmd /c start "" "${exePath}"`;
         } else if (process.platform === "darwin") {
             cmd = `open -a Terminal "${exePath}"`;
         } else {
@@ -174,11 +176,10 @@ export async function openurl(url: string) {
 
 export async function getVersion() {
     const aixcoderPath = path.join(getAixcoderInstallUserPath(), "localserver", "current", "server", ".version");
-    let version: string;
+    const version = "0.0.0";
     try {
         version = await fs.readFile(aixcoderPath, "utf-8");
     } catch (e) {
-        version = "0.0.0";
     }
     return version;
 }
@@ -187,6 +188,33 @@ interface FileProgressLite {
     percent: number;
     transferred: number;
     total: number;
+}
+
+async function kill() {
+    const lockfile = path.join(homedir, "aiXcoder", ".router.lock");
+    try {
+        const prevPid = await fs.promises.readFile(lockfile, "utf-8");
+        if (os.platform() === "win32") {
+            exec("taskkill /F /PID " + prevPid);
+        } else if (os.platform() === "darwin") {
+            exec("kill " + prevPid);
+        } else {
+            exec("kill " + prevPid);
+        }
+        let tries = 10;
+        while (isRunning(parseInt(prevPid, 10))) {
+            if (tries === 0) {
+                break;
+            }
+            tries--;
+            await new Promise((resolve, reject) => {
+                setTimeout(resolve, 1000);
+            });
+        }
+    } catch (e) {
+        // file not present
+        console.error(e);
+    }
 }
 
 export async function forceUpdate() {
@@ -202,22 +230,21 @@ export async function forceUpdate() {
             //
         }
         let ball: string;
-        let stream;
+        let stream: Promise<Buffer> & NodeJS.WritableStream & NodeJS.ReadableStream;
         if (process.platform === "win32") {
             ball = "server-win.zip";
-            stream = download(`https://github.com/aixcoder-plugin/localservice/releases/latest/download/${ball}`, aixcoderPath, {
-                extract: true,
-            });
+            stream = download(`https://github.com/aixcoder-plugin/localservice/releases/latest/download/${ball}`, aixcoderPath);
         } else if (process.platform === "darwin") {
             ball = "server-osx.zip";
-            stream = download(`https://github.com/aixcoder-plugin/localservice/releases/latest/download/${ball}`, aixcoderPath, {
-                extract: true,
-            });
+            stream = download(`https://github.com/aixcoder-plugin/localservice/releases/latest/download/${ball}`, aixcoderPath);
         } else {
             ball = "server-linux.tar.gz";
             stream = download(`https://github.com/aixcoder-plugin/localservice/releases/latest/download/${ball}`, aixcoderPath);
         }
         const onErr = (err?: any) => {
+            if (err) {
+                log(err);
+            }
             vscode.window.showInformationMessage(localize("aixUpdatefailed", "https://github.com/aixcoder-plugin/localservice/releases", aixcoderPath));
         };
         token.onCancellationRequested((e) => {
@@ -245,12 +272,15 @@ export async function forceUpdate() {
         });
         stream.catch(onErr);
         await stream;
-        if (ball.endsWith(".tar.gz")) {
-            try {
+        try {
+            await kill();
+            if (ball.endsWith(".tar.gz")) {
                 await execAsync(`tar zxf "${path.join(aixcoderPath, ball)}" -C "${aixcoderPath}"`);
-            } catch (e) {
-                onErr();
+            } else {
+                await decompress(path.join(aixcoderPath, ball), aixcoderPath);
             }
+        } catch (e) {
+            onErr(e);
         }
         lastOpenFailed = false;
     }).then(null, (err) => {

@@ -114,10 +114,13 @@
         "webpack-cli": "^3.3.10"
     },
     "dependencies": {
+        "@types/is-running": "^2.1.0",
         "agentkeepalive": "^4.1.0",
+        "decompress": "^4.2.0",
         "download": "^7.1.0",
         "find-java-home": "^1.1.0",
         "fs-extra": "^8.1.0",
+        "is-running": "^2.1.0",
         "request": "^2.88.0",
         "request-promise": "^4.2.5",
         "uuid": "^3.3.3"

@@ -12,6 +12,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 ### Fixed
 - Fix a bug that prevents local server launching automatically.
 - Fix a bug when there is quote in comment.
+- Fix updating failed because service is already running.
 
 ## [0.3.0] - 2019-11-18
 
