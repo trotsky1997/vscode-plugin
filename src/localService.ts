@@ -176,7 +176,7 @@ export async function openurl(url: string) {
 
 export async function getVersion() {
     const aixcoderPath = path.join(getAixcoderInstallUserPath(), "localserver", "current", "server", ".version");
-    const version = "0.0.0";
+    let version = "0.0.0";
     try {
         version = await fs.readFile(aixcoderPath, "utf-8");
     } catch (e) {
