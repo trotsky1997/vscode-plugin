@@ -552,8 +552,8 @@ export function mergeSortResult(l: vscode.CompletionItem[], sortResults: SortRes
         command: "aiXcoder.insert",
         arguments: [ext, "secondary", getInstance(lang), document],
     };
-    const sortResultsMap = {};
-    const sortResultCompletions = {};
+    const sortResultsMap: { [word: string]: [SingleWordCompletion, number] } = {};
+    const sortResultCompletions: { [word: string]: [number, vscode.CompletionItem] } = {};
     let insertedRank = 1;
     for (const single of sortResults.list) {
         if (single.word.match(/^<.+>$/)) {
@@ -612,6 +612,7 @@ export function mergeSortResult(l: vscode.CompletionItem[], sortResults: SortRes
                 bestSystemCompletion.label = starDisplay === STAR_DISPLAY.LEFT ? star + bestSystemCompletion.label : (starDisplay === STAR_DISPLAY.RIGHT ? bestSystemCompletion.label + star : bestSystemCompletion.label);
                 bestSystemCompletion.sortText = ".0." + rankText;
                 bestSystemCompletion.command = { ...telemetryCommand, arguments: telemetryCommand.arguments.concat([single]) };
+                bestSystemCompletion.detail = (bestSystemCompletion.detail ? bestSystemCompletion.detail + "\n" : "") + "aiXcoder: " + single.prob.toLocaleString("en", {style: "percent", minimumFractionDigits: 2});
                 if (bestSystemCompletion.kind === vscode.CompletionItemKind.Function && insertText.indexOf("(") === -1) {
                     bestSystemCompletion.insertText = new vscode.SnippetString(insertText).appendText("(").appendTabstop().appendText(")");
                 }

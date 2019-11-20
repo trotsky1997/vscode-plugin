@@ -1,17 +1,26 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
-## [0.3.0] - 2019-11-18
+## [0.3.1] - 2019-11-20
 
 ### Added
-- Progress display for launching local server.
 - Now works better with project-scope completion.
+- Sort results show probability as percentage.
 
 ### Changed
 
 ### Fixed
 - Fix a bug that prevents local server launching automatically.
 - Fix a bug when there is quote in comment.
+
+## [0.3.0] - 2019-11-18
+
+### Added
+- Progress display for launching local server.
+
+### Changed
+
+### Fixed
 
 ## [0.2.2] - 2019-11-18
 
