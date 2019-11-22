@@ -2,7 +2,6 @@ import { exec } from "child_process";
 import * as decompress from "decompress";
 import * as download from "download";
 import * as fs from "fs-extra";
-import isRunning = require("is-running");
 import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
@@ -146,6 +145,7 @@ export async function openurl(url: string) {
         lastOpenFailed = true;
         // server not found
     }
+    authorize(); // chmod 777 for mac
     launchLocalServer();
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
@@ -195,25 +195,21 @@ async function kill() {
     try {
         const prevPid = await fs.promises.readFile(lockfile, "utf-8");
         if (os.platform() === "win32") {
-            exec("taskkill /F /PID " + prevPid);
+            await execAsync("taskkill /F /PID " + prevPid);
         } else if (os.platform() === "darwin") {
-            exec("kill " + prevPid);
+            await execAsync("kill " + prevPid);
         } else {
-            exec("kill " + prevPid);
-        }
-        let tries = 10;
-        while (isRunning(parseInt(prevPid, 10))) {
-            if (tries === 0) {
-                break;
-            }
-            tries--;
-            await new Promise((resolve, reject) => {
-                setTimeout(resolve, 1000);
-            });
+            await execAsync("kill " + prevPid);
         }
     } catch (e) {
         // file not present
         console.error(e);
+    }
+}
+
+async function authorize() {
+    if (os.platform() !== "win32") {
+        await execAsync(`chmod -R 777 ${getAixcoderInstallUserPath()}`);
     }
 }
 
