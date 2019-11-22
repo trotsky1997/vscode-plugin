@@ -3,6 +3,12 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 
 ## [0.3.2] - %DATE%
 
+### Changed
+- Wait longer on first request (server might be still loading workspace).
+
+### Fixed
+- Fix a workspace location related bug.
+
 ## [0.3.1] - 2019-11-22
 
 ### Added

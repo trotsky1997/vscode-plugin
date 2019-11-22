@@ -76,6 +76,7 @@ async function myRequest(options: request.OptionsWithUrl, endpoint?: string) {
         }
     }
     options = {
+        timeout: 1000,
         ...options,
         url: endpoint + options.url,
         headers: {
@@ -85,7 +86,6 @@ async function myRequest(options: request.OptionsWithUrl, endpoint?: string) {
         proxy: proxyUrl,
         strictSSL: proxyStrictSSL,
         // agent: keepaliveAgent,
-        timeout: 1000,
     };
     let r: string | null;
     try {
@@ -168,7 +168,7 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
                 uuid: Preference.uuid,
                 fileid: fileID,
                 project: projName,
-                projectRoot: u.fsPath,
+                projectRoot: proj.uri.fsPath,
                 remaining_text: maskedRemainingText,
                 queryUUID: lastQueryUUID,
                 offset,
