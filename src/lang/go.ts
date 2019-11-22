@@ -28,7 +28,7 @@ export class GoLangUtil extends LangUtil {
     public datamask(s: string, trivialLiterals: Set<string>): string {
         let stringBuilder = "";
         let emptyLine = true;
-        let lastLineEnd = -1;
+        let lastLineEnd = 0;
         for (let i = 0; i < s.length; i++) {
             const c = s.charAt(i);
             if (c === "\n") {
