@@ -1,13 +1,14 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
-## [0.3.1] - 2019-11-20
+## [0.3.1] - 2019-11-22
 
 ### Added
 - Now works better with project-scope completion.
 - Sort results show probability as percentage.
 
 ### Changed
+- Now predicts on dot even if intellicode is installed.
 
 ### Fixed
 - Fix a bug that prevents local server launching automatically.

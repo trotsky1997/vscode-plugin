@@ -230,9 +230,9 @@ function formatResData(results: PredictResult, langUtil: LangUtil, document: vsc
     const unique = new Set();
     for (const result of results.data) {
         if (result.tokens.length > minCompletionTokensCount) {
-            if (result.tokens.length === 2 && result.tokens[1] === "(" && result.tokens[0].match(/[a-zA-Z0-9_$]+/)) {
-                continue;
-            }
+            // if (result.tokens.length === 2 && result.tokens[1] === "(" && result.tokens[0].match(/[a-zA-Z0-9_$]+/)) {
+            //     continue;
+            // }
             const mergedTokens = [result.current + result.tokens[0], ...result.tokens.slice(1)];
             const filterTextMergedTokens = [text.substring(text.length - result.current.length) + result.tokens[0], ...result.tokens.slice(1)];
             let title = langUtil.render(mergedTokens, 0);

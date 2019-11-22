@@ -100,10 +100,7 @@ export async function activateJava(context: vscode.ExtensionContext) {
             return null;
         },
     };
-    const triggerCharacters = ["="];
-    if (!msintellicode) {
-        triggerCharacters.push(".");
-    }
+    const triggerCharacters = ["=", "."];
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "java", scheme: "file" }, provider, ...triggerCharacters));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "java", scheme: "untitled" }, provider, ...triggerCharacters));
     return {
