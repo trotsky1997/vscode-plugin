@@ -15,6 +15,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 - Fix a bug when there is quote in comment.
 - Fix updating failed because service is already running.
 - (Mac) Fix an execute permission issue.
+- (Java) Now predict on @
 
 ## [0.3.0] - 2019-11-18
 
