@@ -186,7 +186,7 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
                 ext,
                 uuid: Preference.uuid,
             },
-            timeout: 2000,
+            timeout: firstLocalRequestAttempt ? 10000 : 2000,
         }, endpoint);
         if (retry && resp && resp.indexOf("Conflict") >= 0) {
             console.log("conflict");
