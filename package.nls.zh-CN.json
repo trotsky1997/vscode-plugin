@@ -18,5 +18,6 @@
 	"aiXcoder.configuration.longResultCutSort.short2long": "从短到长",
 	"aiXcoder.configuration.longResultCutSort.long2short": "从长到短",
 	"aiXcoder.configuration.longResultCuts.auto": "自动",
-	"aiXcoder.configuration.longResultCuts.none": "不切割为更多短结果"
+	"aiXcoder.configuration.longResultCuts.none": "不切割为更多短结果",
+	"aiXcoder.configuration.retrigger": "自动重新发起提示"
 }

@@ -55,6 +55,11 @@
                     "type": "string",
                     "default": "⭐",
                     "description": "%aiXcoder.configuration.symbol%"
+                },
+                "aiXcoder.retrigger": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "%aiXcoder.configuration.retrigger%"
                 }
             }
         },

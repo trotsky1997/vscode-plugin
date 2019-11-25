@@ -1,3 +1,4 @@
+import { AiXCompletionItem } from "../extension";
 import { ID_REGEX, LangUtil } from "./langUtil";
 
 const keywords = new Set<string>();
@@ -63,5 +64,9 @@ export class CppLangUtil extends LangUtil {
         } else {
             return false;
         }
+    }
+
+    public retrigger(completionItem: AiXCompletionItem) {
+        return completionItem.label.endsWith(".") || completionItem.label.endsWith("->") || completionItem.label.endsWith("::");
     }
 }

@@ -1,6 +1,11 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.3.2] - %DATE%
+
+### Added
+- Automatically trigger completion upon entering a completion. (Can be turned off in configurations)
+
 ## [0.3.2] - 2019-11-22
 
 ### Changed

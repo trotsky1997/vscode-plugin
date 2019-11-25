@@ -203,7 +203,7 @@ export function getReqText(document: vscode.TextDocument, position: vscode.Posit
     };
 }
 
-class AiXCompletionItem extends vscode.CompletionItem {
+export class AiXCompletionItem extends vscode.CompletionItem {
     public aixPrimary?: boolean;
     constructor(label: string, kind?: vscode.CompletionItemKind) {
         super(label, kind);
@@ -707,6 +707,9 @@ export async function activate(context: vscode.ExtensionContext) {
             langUtil.rescue(document, (single as SinglePredictResult).rescues);
         } else if ((single as SingleWordCompletion).options && (single as SingleWordCompletion).options.rescues) {
             langUtil.rescue(document, (single as SingleWordCompletion).options.rescues);
+        }
+        if (vscode.workspace.getConfiguration().get("aiXcoder.retrigger") || langUtil.retrigger(completionItem)) {
+            vscode.commands.executeCommand("editor.action.triggerSuggest");
         }
     }));
     context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.resetMessage", () => {

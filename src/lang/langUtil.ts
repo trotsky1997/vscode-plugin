@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 
-import { CompletionOptions, Rescue } from "../extension";
+import { AiXCompletionItem, CompletionOptions, Rescue } from "../extension";
 
 export const ID_REGEX = /^[a-zA-Z$_][a-zA-Z_$0-9]*$/;
 
@@ -80,6 +80,10 @@ export abstract class LangUtil {
         if (initSpacingOptions) {
             this.initSpacingOptions();
         }
+    }
+
+    public retrigger(completionItem: AiXCompletionItem) {
+        return completionItem.label.endsWith(".");
     }
 
     public initSpacingOptions() {
