@@ -1,10 +1,11 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
-## [0.3.3] - %DATE%
+## [0.3.3] - 2019-11-26
 
 ### Added
 - Automatically trigger completion upon entering a completion. (Can be turned off in configurations)
+- Configurable order of shorter results.
 
 ### Fixed
 - Add a space between `catch` and `(`

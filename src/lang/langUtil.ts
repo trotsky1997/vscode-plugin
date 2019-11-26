@@ -83,7 +83,13 @@ export abstract class LangUtil {
     }
 
     public retrigger(completionItem: AiXCompletionItem) {
-        return completionItem.label.endsWith(".");
+        if (completionItem.label.endsWith(";") || completionItem.label.endsWith("{") || completionItem.label.endsWith("}")) {
+            return false;
+        }
+        if (completionItem.label.endsWith(".")) {
+            return true;
+        }
+        return vscode.workspace.getConfiguration().get("aiXcoder.retrigger");
     }
 
     public initSpacingOptions() {

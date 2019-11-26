@@ -60,6 +60,19 @@
                     "type": "boolean",
                     "default": true,
                     "description": "%aiXcoder.configuration.retrigger%"
+                },
+                "aiXcoder.longResultCutSort": {
+                    "type": "string",
+                    "default": "%aiXcoder.configuration.longResultCutSort.long2short%",
+                    "enum": [
+                        "Short to Long",
+                        "Long to Short"
+                    ],
+                    "enumDescriptions": [
+                        "%aiXcoder.configuration.longResultCutSort.short2long%",
+                        "%aiXcoder.configuration.longResultCutSort.long2short%"
+                    ],
+                    "description": "%aiXcoder.configuration.longResultCutSort%"
                 }
             }
         },

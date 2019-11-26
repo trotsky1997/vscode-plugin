@@ -67,6 +67,9 @@ export class CppLangUtil extends LangUtil {
     }
 
     public retrigger(completionItem: AiXCompletionItem) {
-        return completionItem.label.endsWith(".") || completionItem.label.endsWith("->") || completionItem.label.endsWith("::");
+        if (completionItem.label.endsWith("->") || completionItem.label.endsWith("::")) {
+            return true;
+        }
+        return super.retrigger(completionItem);
     }
 }

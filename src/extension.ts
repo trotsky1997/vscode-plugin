@@ -124,6 +124,7 @@ interface SinglePredictResult {
     familiarity?: number;
     type?: "rnn" | "ngram";
     sort?: Array<[number, string, CompletionOptions?]>;
+    retrigger?: boolean;
 }
 
 export interface SingleWordCompletion {
@@ -708,7 +709,7 @@ export async function activate(context: vscode.ExtensionContext) {
         } else if ((single as SingleWordCompletion).options && (single as SingleWordCompletion).options.rescues) {
             langUtil.rescue(document, (single as SingleWordCompletion).options.rescues);
         }
-        if (vscode.workspace.getConfiguration().get("aiXcoder.retrigger") || langUtil.retrigger(completionItem)) {
+        if (langUtil.retrigger(completionItem) && (single as SinglePredictResult).retrigger) {
             vscode.commands.executeCommand("editor.action.triggerSuggest");
         }
     }));
