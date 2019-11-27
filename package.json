@@ -136,6 +136,7 @@
         "agentkeepalive": "^4.1.0",
         "decompress": "^4.2.0",
         "download": "^7.1.0",
+        "filesize": "^6.0.1",
         "find-java-home": "^1.1.0",
         "fs-extra": "^8.1.0",
         "request": "^2.88.0",

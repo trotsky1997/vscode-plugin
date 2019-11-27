@@ -1,10 +1,12 @@
 import { exec } from "child_process";
 import * as decompress from "decompress";
 import * as download from "download";
+import * as filesize from "filesize";
 import * as fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
+import { showInformationMessage } from "./extension";
 import { localize } from "./i18n";
 import log from "./logger";
 import Preference from "./Preference";
@@ -229,19 +231,26 @@ export async function forceUpdate() {
         let stream: Promise<Buffer> & NodeJS.WritableStream & NodeJS.ReadableStream;
         if (process.platform === "win32") {
             ball = "server-win.zip";
-            stream = download(`https://github.com/aixcoder-plugin/localservice/releases/latest/download/${ball}`, aixcoderPath);
+            // stream = download(`https://github.com/aixcoder-plugin/localservice/releases/latest/download/${ball}`, path.join(aixcoderPath, ".."));
         } else if (process.platform === "darwin") {
             ball = "server-osx.zip";
-            stream = download(`https://github.com/aixcoder-plugin/localservice/releases/latest/download/${ball}`, aixcoderPath);
+            stream = download(`https://github.com/aixcoder-plugin/localservice/releases/latest/download/${ball}`, path.join(aixcoderPath, ".."));
         } else {
             ball = "server-linux.tar.gz";
-            stream = download(`https://github.com/aixcoder-plugin/localservice/releases/latest/download/${ball}`, aixcoderPath);
+            stream = download(`https://github.com/aixcoder-plugin/localservice/releases/latest/download/${ball}`, path.join(aixcoderPath, ".."));
         }
+        let failed = false;
         const onErr = (err?: any) => {
+            failed = true;
             if (err) {
                 log(err);
             }
-            vscode.window.showInformationMessage(localize("aixUpdatefailed", "https://github.com/aixcoder-plugin/localservice/releases", aixcoderPath));
+            const downloadPage = "https://github.com/aixcoder-plugin/localservice/releases";
+            vscode.window.showInformationMessage(localize("aixUpdatefailed", downloadPage, aixcoderPath), localize("openInBrowser")).then((select) => {
+                if (select === localize("openInBrowser")) {
+                    vscode.commands.executeCommand("vscode.open", vscode.Uri.parse(downloadPage));
+                }
+            });
         };
         token.onCancellationRequested((e) => {
             stream.end();
@@ -257,9 +266,9 @@ export async function forceUpdate() {
         });
         let lastReportTime = 0;
         stream.on("downloadProgress", (p: FileProgressLite) => {
-            if (Date.now() - lastReportTime > 1000) {
+            if (Date.now() - lastReportTime > 100) {
                 progress.report({
-                    message: `${p.transferred}/${p.total} - ${p.percent.toLocaleString(undefined, { style: "percent", minimumFractionDigits: 2 })}`,
+                    message: `${filesize(p.transferred)}/${filesize(p.total)} - ${p.percent.toLocaleString(undefined, { style: "percent", minimumFractionDigits: 2 })}`,
                     increment: (p.percent - last) * 100,
                 });
                 last = p.percent;
@@ -267,16 +276,30 @@ export async function forceUpdate() {
             }
         });
         stream.catch(onErr);
-        await stream;
+        const ballPath = path.join(aixcoderPath, "..", ball);
+        await stream; progress.report({
+            message: localize("unzipping", ballPath, aixcoderPath),
+            increment: (1 - last) * 100,
+        });
         try {
             await kill();
+            await fs.remove(aixcoderPath);
             if (ball.endsWith(".tar.gz")) {
-                await execAsync(`tar zxf "${path.join(aixcoderPath, ball)}" -C "${aixcoderPath}"`);
+                await execAsync(`tar zxf "${ballPath}" -C "${aixcoderPath}"`);
             } else {
-                await decompress(path.join(aixcoderPath, ball), aixcoderPath);
+                await decompress(ballPath, aixcoderPath);
             }
         } catch (e) {
-            onErr(e);
+            failed = true;
+            log(e);
+            vscode.window.showInformationMessage(localize("aixUnzipfailed", ballPath, aixcoderPath), localize("showFolder")).then((select) => {
+                if (select === localize("showFolder")) {
+                    vscode.commands.executeCommand("revealFileInOS", vscode.Uri.file(ballPath));
+                }
+            });
+        }
+        if (!failed) {
+            showInformationMessage(localize("aixUpdated", await getVersion()));
         }
         lastOpenFailed = false;
     }).then(null, (err) => {

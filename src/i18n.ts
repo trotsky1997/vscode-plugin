@@ -198,7 +198,7 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "en": "Restart Service",
         "zh-cn": "重启服务",
     },
-    "localServiceStarting" : {
+    "localServiceStarting": {
         "en": "Local service is starting. It will take up to a minute to warm up.",
         "zh-cn": "本地服务正在启动。可能需要不超过一分钟的时间来预热。",
     },
@@ -226,13 +226,33 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "en": "Downloading aiXcoder service...",
         "zh-cn": "正在下载aiXcoder服务...",
     },
-    "aixUpdatefailed" : {
+    "aixUpdatefailed": {
         "en": "aiXcoder service update failed. You can manually download the latest service zipfile/tarball from: %s. And then unzip it here: %s.",
         "zh-cn": "aiXcoder服务更新失败。您可以手动在此下载最新的压缩包：%s。然后解压到这个目录：%s。",
     },
     "JREMissing": {
         "en": "Error: JRE not found! Please install Java in case some features disabled.",
         "zh-cn": "错误：未找到JRE! 请安装Java以免影响部分功能正常使用。",
+    },
+    "openInBrowser": {
+        "en": "Open in browser",
+        "zh-cn": "在浏览器中打开",
+    },
+    "aixUnzipfailed": {
+        "en": "Failed to extract %s to %s.",
+        "zh-cn": "解压失败：从 %s 到 %s。",
+    },
+    "showFolder": {
+        "en": "Open this folder",
+        "zh-cn": "打开此目录",
+    },
+    "aixUpdated": {
+        "en": "AiXcoder local service is updated to %s.",
+        "zh-cn": "AiXcoder 本地服务已升级到 %s。",
+    },
+    "unzipping": {
+        "en": "Extract %s to %s...",
+        "zh-cn": "解压：从 %s 到 %s...",
     },
 };
 
