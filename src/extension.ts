@@ -290,7 +290,7 @@ export function formatSortData(results: SortResult | null, langUtil: LangUtil, d
     return r;
 }
 
-export async function fetchResults2(text: string, remainingText: string, laterCode: string, fileName: string, ext: string, lang: string, document: vscode.TextDocument, starDisplay = STAR_DISPLAY.LEFT): Promise<{
+export async function fetchResults2(text: string, remainingText: string, laterCode: string, fileName: string, ext: string, lang: string, document: vscode.TextDocument, starDisplay: STAR_DISPLAY): Promise<{
     longResults: AiXCompletionItem[],
     sortResults: SortResult,
     fetchTime: number,

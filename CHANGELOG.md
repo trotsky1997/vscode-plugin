@@ -1,7 +1,7 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
-## [0.2.0] - %DATE%
+## [0.2.0] - 2019-11-27
 
 ### Added
 - 支持了专业版的自学习功能。
@@ -15,6 +15,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 - 修复了两个短结果相关的设置项无效的bug
 - Fix a bug that prevents local server launching automatically.
 - Fix a bug when there is quote in comment.
+- (JavaScript/TypeScript) 一个vue中无法使用的bug。
 
 ## [0.1.19] - 2019-11-01
 

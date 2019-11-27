@@ -126,7 +126,7 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
                     }
                     return [];
                 }
-                const { longResults, sortResults, fetchTime, current } = await fetchResults2(text, remainingText, document.fileName, ext, "ts", laterCode, document, STAR_DISPLAY.LEFT);
+                const { longResults, sortResults, fetchTime, current } = await fetchResults2(text, remainingText, laterCode, document.fileName, ext, "ts", document, STAR_DISPLAY.LEFT);
                 log("< fetch took " + (Date.now() - startTime) + "ms");
                 if (msts && hooked) {
                     syncer.put(offsetID, { ...sortResults, ext, fetchTime, current });
@@ -174,7 +174,7 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
                     }
                     return [];
                 }
-                const { longResults, sortResults, fetchTime, current } = await fetchResults2(text, remainingText, document.fileName, ext, "ts", laterCode, document, STAR_DISPLAY.LEFT);
+                const { longResults, sortResults, fetchTime, current } = await fetchResults2(text, remainingText, laterCode, document.fileName, ext, "ts",  document, STAR_DISPLAY.LEFT);
                 log("< fetch took " + (Date.now() - startTime) + "ms");
                 if (mshtml && htmlhooked) {
                     syncer.put(offsetID, { ...sortResults, ext, fetchTime, current });
@@ -219,7 +219,7 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
                         }
                         return [];
                     }
-                    const { longResults, sortResults, fetchTime, current } = await fetchResults2(text, remainingText, document.fileName, ext, lang, laterCode, document, STAR_DISPLAY.LEFT);
+                    const { longResults, sortResults, fetchTime, current } = await fetchResults2(text, remainingText, laterCode, document.fileName, ext, lang, document, STAR_DISPLAY.LEFT);
                     log("< fetch took " + (Date.now() - startTime) + "ms");
                     if (msts && hooked) {
                         syncer.put(offsetID, { ...sortResults, ext, fetchTime, current });
