@@ -274,7 +274,7 @@ export async function checkUpdate() {
             doUpdate = false;
         }
         if (doUpdate) {
-            forceUpdate();
+            forceUpdate(localVersion, v);
         }
     } catch (e) {
         log(e);

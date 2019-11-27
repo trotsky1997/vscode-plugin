@@ -222,9 +222,13 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "en": "Unable to open aixcoder protocol. This might be due to the original app being moved or deleted. Please open aixcoder app. And then reload VSCode.",
         "zh-cn": "无法打开aixcoder协议，这可能是由于应用程序被移动或删除导致。请重新打开aixcoder应用。然后重新加载VSCode。",
     },
+    "aixInstallProgress": {
+        "en": "Installing aiXcoder service...",
+        "zh-cn": "正在安装aiXcoder服务...",
+    },
     "aixUpdateProgress": {
-        "en": "Downloading aiXcoder service...",
-        "zh-cn": "正在下载aiXcoder服务...",
+        "en": "Upgrading aiXcoder service...",
+        "zh-cn": "正在更新aiXcoder服务...",
     },
     "aixUpdatefailed": {
         "en": "aiXcoder service update failed. You can manually download the latest service zipfile/tarball from: %s. And then unzip it here: %s.",

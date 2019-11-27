@@ -215,10 +215,78 @@ async function authorize() {
     }
 }
 
-export async function forceUpdate() {
+class AiXCancellationToken {
+    private reason: any;
+    public get canceled(): boolean {
+        return this._canceled;
+    }
+    public set canceled(v: boolean) {
+        if (v && !this._canceled) {
+            this._canceled = v;
+            this.listeners.forEach((element) => element(this.reason));
+        } else {
+            this._canceled = v;
+        }
+    }
+    // tslint:disable-next-line: variable-name
+    private _canceled: boolean;
+    private listeners: Array<(reason?: any) => void> = [];
+    public cancel(reason?: any) {
+        this.reason = reason;
+        this.canceled = true;
+    }
+
+    public onCancellationRequested(listener: (reason?: any) => void) {
+        this.listeners.push(listener);
+    }
+}
+
+async function downloadEx(url: string, targetPath: string, onProgress: (p: FileProgressLite) => void, onSpeed: (speed: number) => void, onErr: (err?: any) => void, token: AiXCancellationToken) {
+    let speedTestStart = 0;
+    let totalP = {
+        transferred: 0,
+        total: 1,
+    };
+    const speedTester = onSpeed && setInterval(() => {
+        const elapsed = Date.now() - speedTestStart;
+        if (speedTestStart > 0 && elapsed > 3000) {
+            const speed = totalP.transferred / (elapsed / 1000); // byte / sec
+            onSpeed(speed);
+        }
+    }, 100);
+
+    const stream = download(url, targetPath);
+    let myReq = null;
+    stream.on("request", (req: any) => {
+        myReq = req;
+    });
+    token.onCancellationRequested((reason) => {
+        stream.end();
+        if (myReq) {
+            myReq.abort();
+        }
+        onErr(reason);
+    });
+    stream.on("downloadProgress", (p) => {
+        totalP = p;
+        if (speedTestStart === 0) {
+            speedTestStart = Date.now();
+        }
+        onProgress(p);
+    });
+    return stream.then((value) => {
+        clearInterval(speedTester);
+        return value;
+    }, (reason) => {
+        clearInterval(speedTester);
+        onErr(reason);
+    });
+}
+
+export async function forceUpdate(localVersion: string, remoteVersion: string) {
     await vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
-        title: localize("aixUpdateProgress"),
+        title: localVersion === "0.0.0" ? localize("aixInstallProgress") : localize("aixUpdateProgress"),
         cancellable: true,
     }, async (progress, token) => {
         const aixcoderPath = path.join(getAixcoderInstallUserPath(), "localserver", "current", "server");
@@ -227,18 +295,7 @@ export async function forceUpdate() {
         } catch (e) {
             //
         }
-        let ball: string;
-        let stream: Promise<Buffer> & NodeJS.WritableStream & NodeJS.ReadableStream;
-        if (process.platform === "win32") {
-            ball = "server-win.zip";
-            // stream = download(`https://github.com/aixcoder-plugin/localservice/releases/latest/download/${ball}`, path.join(aixcoderPath, ".."));
-        } else if (process.platform === "darwin") {
-            ball = "server-osx.zip";
-            stream = download(`https://github.com/aixcoder-plugin/localservice/releases/latest/download/${ball}`, path.join(aixcoderPath, ".."));
-        } else {
-            ball = "server-linux.tar.gz";
-            stream = download(`https://github.com/aixcoder-plugin/localservice/releases/latest/download/${ball}`, path.join(aixcoderPath, ".."));
-        }
+
         let failed = false;
         const onErr = (err?: any) => {
             failed = true;
@@ -252,20 +309,10 @@ export async function forceUpdate() {
                 }
             });
         };
-        token.onCancellationRequested((e) => {
-            stream.end();
-            if (myReq) {
-                myReq.abort();
-            }
-            onErr();
-        });
-        let last = 0;
-        let myReq = null;
-        stream.on("request", (req: any) => {
-            myReq = req;
-        });
+
         let lastReportTime = 0;
-        stream.on("downloadProgress", (p: FileProgressLite) => {
+        let last = 0;
+        const onProgress = (p: FileProgressLite) => {
             if (Date.now() - lastReportTime > 100) {
                 progress.report({
                     message: `${filesize(p.transferred)}/${filesize(p.total)} - ${p.percent.toLocaleString(undefined, { style: "percent", minimumFractionDigits: 2 })}`,
@@ -274,29 +321,66 @@ export async function forceUpdate() {
                 last = p.percent;
                 lastReportTime = Date.now();
             }
+        };
+
+        let ball: string;
+        if (process.platform === "win32") {
+            ball = "server-win.zip";
+        } else if (process.platform === "darwin") {
+            ball = "server-osx.zip";
+        } else {
+            ball = "server-linux.tar.gz";
+        }
+        let cancellationToken = new AiXCancellationToken();
+        token.onCancellationRequested(() => {
+            cancellationToken.cancel("userCancel");
         });
-        stream.catch(onErr);
+        let tryMirror = false;
+        await downloadEx(`https://github.com/aixcoder-plugin/localservice/releases/latest/download/${ball}`, path.join(aixcoderPath, ".."),
+            onProgress, (speed) => {
+                if (speed < 100 * 1024) {
+                    // slower than 100kb/s, raise a cancellation and try mirror site
+                    cancellationToken.cancel("speedLow");
+                }
+            }, (e) => {
+                // try mirror site
+                if (e === "speedLow") {
+                    if (!tryMirror) {
+                        tryMirror = true;
+                        throw e;
+                    }
+                } else {
+                    onErr(e);
+                }
+            }, cancellationToken);
+        if (tryMirror) {
+            cancellationToken = new AiXCancellationToken();
+            await downloadEx(`http://image.aixcoder.com/localservice/releases/download/${remoteVersion}/${ball}`, path.join(aixcoderPath, ".."),
+                onProgress, null, onErr, cancellationToken);
+        }
         const ballPath = path.join(aixcoderPath, "..", ball);
-        await stream; progress.report({
+        progress.report({
             message: localize("unzipping", ballPath, aixcoderPath),
             increment: (1 - last) * 100,
         });
-        try {
-            await kill();
-            await fs.remove(aixcoderPath);
-            if (ball.endsWith(".tar.gz")) {
-                await execAsync(`tar zxf "${ballPath}" -C "${aixcoderPath}"`);
-            } else {
-                await decompress(ballPath, aixcoderPath);
-            }
-        } catch (e) {
-            failed = true;
-            log(e);
-            vscode.window.showInformationMessage(localize("aixUnzipfailed", ballPath, aixcoderPath), localize("showFolder")).then((select) => {
-                if (select === localize("showFolder")) {
-                    vscode.commands.executeCommand("revealFileInOS", vscode.Uri.file(ballPath));
+        if (!failed) {
+            try {
+                await kill();
+                await fs.remove(aixcoderPath);
+                if (ball.endsWith(".tar.gz")) {
+                    await execAsync(`tar zxf "${ballPath}" -C "${aixcoderPath}"`);
+                } else {
+                    await decompress(ballPath, aixcoderPath);
                 }
-            });
+            } catch (e) {
+                failed = true;
+                log(e);
+                vscode.window.showInformationMessage(localize("aixUnzipfailed", ballPath, aixcoderPath), localize("showFolder")).then((select) => {
+                    if (select === localize("showFolder")) {
+                        vscode.commands.executeCommand("revealFileInOS", vscode.Uri.file(ballPath));
+                    }
+                });
+            }
         }
         if (!failed) {
             showInformationMessage(localize("aixUpdated", await getVersion()));
