@@ -2,7 +2,7 @@
     "name": "aixcoder",
     "displayName": "aiXcoder",
     "description": "aiXcoder code suggestion",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "publisher": "nnthink",
     "repository": {
         "url": "https://github.com/felixhao28/vscode-plugin"
@@ -39,11 +39,6 @@
                     "type": "string",
                     "default": "https://api.aixcoder.com/",
                     "description": "%aiXcoder.configuration.endpoint%"
-                },
-                "aiXcoder.selfLearining": {
-                    "type": "boolean",
-                    "default": false,
-                    "markdownDescription": "%aiXcoder.configuration.selfLearining%"
                 },
                 "aiXcoder.searchEndpoint": {
                     "type": "string",
@@ -145,7 +140,7 @@
         "menus": {
             "editor/context": [
                 {
-                    "when": "editorLangId == python || editorLangId == java || editorLangId == c || editorLangId == cpp",
+                    "when": "editorLangId == python || editorLangId == java || editorLangId == c || editorLangId == cpp || editorLangId == php || editorLangId == javascript || editorLangId == vue || editorLangId == typescript || editorLangId == html || editorLangId == javascriptreact || editorLangId == typescriptreact || editorLangId == go",
                     "command": "aiXcoder.search",
                     "group": "4_search"
                 }

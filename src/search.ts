@@ -22,23 +22,31 @@ function getWebviewContent(searchUrl: string) {
 
 export class AiXSearchSerializer implements vscode.WebviewPanelSerializer {
     public async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, state: any) {
-      // `state` is the state persisted using `setState` inside the webview
-      console.log(`Got state: ${state}`);
+        // `state` is the state persisted using `setState` inside the webview
+        console.log(`Got state: ${state}`);
 
-      // Restore the content of our webview.
-      //
-      // Make sure we hold on to the `webviewPanel` passed in here and
-      // also restore any event listeners we need on it.
-      webviewPanel.webview.html = getWebviewContent(state);
-      searchPanel = webviewPanel;
+        // Restore the content of our webview.
+        //
+        // Make sure we hold on to the `webviewPanel` passed in here and
+        // also restore any event listeners we need on it.
+        webviewPanel.webview.html = getWebviewContent(state);
+        searchPanel = webviewPanel;
     }
-  }
+}
 
 const languageId2Model = {
     python: { area: "python(Python)", language: "python" },
     java: { area: "java(Java)", language: "java" },
     c: { area: "cpp(Cpp)", language: "cpp" },
     cpp: { area: "cpp(Cpp)", language: "cpp" },
+    php: { area: "php(Php)", language: "php" },
+    javascript: { area: "javascript(Javascript)", language: "javascript" },
+    vue: { area: "javascript(Javascript)", language: "javascript" },
+    typescript: { area: "typescript(Typescript)", language: "typescript" },
+    html: { area: "javascript(Javascript)", language: "javascript" },
+    javascriptreact: { area: "javascript(Javascript)", language: "javascript" },
+    typescriptreact: { area: "typescript(Typescript)", language: "typescript" },
+    go: { area: "golang(Golang)", language: "golang" },
 };
 
 let msgsearchfirsttimeShown = false;

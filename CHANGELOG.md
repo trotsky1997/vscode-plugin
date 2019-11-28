@@ -1,6 +1,11 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.2.1] - 2019-11-28
+
+### Added
+- JavaScript/TypeScript/Go/Php的搜索。
+
 ## [0.2.0] - 2019-11-27
 
 ### Added
