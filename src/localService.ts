@@ -383,7 +383,7 @@ export async function forceUpdate(localVersion: string, remoteVersion: string) {
             }
         }
         if (!failed) {
-            showInformationMessage(localize("aixUpdated", await getVersion()));
+            showInformationMessage(localize("aixUpdated", remoteVersion, localVersion));
         }
         lastOpenFailed = false;
     }).then(null, (err) => {

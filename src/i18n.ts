@@ -251,8 +251,8 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "zh-cn": "打开此目录",
     },
     "aixUpdated": {
-        "en": "AiXcoder local service is updated to %s.",
-        "zh-cn": "AiXcoder 本地服务已升级到 %s。",
+        "en": "AiXcoder local service is updated to %s (from %s).",
+        "zh-cn": "AiXcoder 本地服务已升级到 %s （从%s）。",
     },
     "unzipping": {
         "en": "Extract %s to %s...",

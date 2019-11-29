@@ -1,6 +1,11 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.3.5] - %DATE%
+
+### Added
+- Periodically checks update.
+
 ## [0.3.4] - 2019-11-27
 
 ### Changed

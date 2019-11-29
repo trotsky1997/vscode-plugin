@@ -254,6 +254,7 @@ function formatResData(results: PredictResult, langUtil: LangUtil, document: vsc
                     kind: vscode.CompletionItemKind.Snippet,
                     sortText: Preference.getLongResultRankSortText() + "." + (sortL2S ? 1 - title.length / 100 : title.length / 100),
                     aixPrimary: true,
+                    detail: "aiXcoder: " + result.prob.toLocaleString("en", {style: "percent", minimumFractionDigits: 2}),
                 };
                 z.command = { ...command, arguments: command.arguments.concat([result, z]) };
                 r.push(z);
@@ -284,6 +285,7 @@ export function formatSortData(results: SortResult | null, langUtil: LangUtil, d
             insertText: single.word,
             kind: vscode.CompletionItemKind.Variable,
             sortText: "0." + insertedRank++,
+            detail: "aiXcoder: " + single.prob.toLocaleString("en", {style: "percent", minimumFractionDigits: 2}),
         };
         z.command = { ...command, arguments: command.arguments.concat([single, z]) };
         r.push(z);
@@ -667,7 +669,10 @@ export async function activate(context: vscode.ExtensionContext) {
     }
 
     await Preference.init(context);
-    API.checkUpdate();
+    (async function checkUpdate() {
+        await API.checkUpdate();
+        setTimeout(checkUpdate, 1000 * 60 * 60);
+    })();
     const askedTelemetry = context.globalState.get("aiXcoder.askedTelemetry");
     if (!askedTelemetry) {
         context.globalState.update("aiXcoder.askedTelemetry", true);

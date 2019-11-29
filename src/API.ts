@@ -267,7 +267,7 @@ export async function checkUpdate() {
         const localVersion = await getVersion();
         let doUpdate = false;
         if (compareVersion(localVersion, v) < 0) {
-            log("New aiXCoder version is available: " + v);
+            log("New aiXCoder version is available: " + v + " local: " + localVersion);
             doUpdate = true;
         } else {
             log("AiXCoder is up to date");
