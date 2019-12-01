@@ -179,8 +179,8 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "zh-cn": "您可以在一个外部浏览器窗口中显示搜索结果，只需要在设置中进行设置。",
     },
     "localServerDown": {
-        "en": "The local aiXcoder server is not responding. Please open the aiXcoder app and make sure the local server is running on %s.",
-        "zh-cn": "本地aiXcoder服务器没有响应。请打开aiXcoder应用并确保本地服务器运行在 %s 上。",
+        "en": "The local aiXcoder server is not responding. It may take a long time for the first time loading a project. Otherwise, you may try restarting the service. (The local server is running on %s)",
+        "zh-cn": "本地aiXcoder服务器没有响应。如果是初次加载项目，可能需要很长时间索引项目。否则您可以尝试重启。(本地服务器运行在 %s 上)",
     },
     "serverDown": {
         "en": "The aiXcoder server is not responding. Please make sure you have a stable network connection to %s.",
