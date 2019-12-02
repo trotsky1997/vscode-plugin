@@ -263,3 +263,8 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
 export function localize(key: string, ...params: any[]) {
     return localizeMessages[key] ? util.format(localizeMessages[key][vscode.env.language] || localizeMessages[key].en, ...params) : key;
 }
+
+export function getLocale() {
+    const sep = vscode.env.language.indexOf("-");
+    return sep >= 0 ? vscode.env.language.substring(0, sep) : vscode.env.language;
+}

@@ -38,6 +38,10 @@ const config = {
       }
     ]
   },
-  plugins: [new webpack.IgnorePlugin(/^electron$/)]
+  plugins: [
+    new webpack.IgnorePlugin(/^electron$/),
+    new webpack.IgnorePlugin(/^bsdiff-nodejs$/),
+    new webpack.IgnorePlugin(/^xxhash$/)
+  ]
 };
 module.exports = config;

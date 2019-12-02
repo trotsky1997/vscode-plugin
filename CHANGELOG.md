@@ -5,6 +5,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 
 ### Added
 - Periodically checks update.
+- Incremental update.
 
 ## [0.3.4] - 2019-11-27
 

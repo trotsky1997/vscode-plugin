@@ -7,9 +7,10 @@ import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
 import { showInformationMessage } from "./extension";
-import { localize } from "./i18n";
+import { getLocale, localize } from "./i18n";
 import log from "./logger";
 import Preference from "./Preference";
+import * as AixUpdater from "./utils/AixUpdaterClient";
 
 let homedir = os.homedir();
 if (process.platform === "win32") {
@@ -296,20 +297,6 @@ export async function forceUpdate(localVersion: string, remoteVersion: string) {
             //
         }
 
-        let failed = false;
-        const onErr = (err?: any) => {
-            failed = true;
-            if (err) {
-                log(err);
-            }
-            const downloadPage = "https://github.com/aixcoder-plugin/localservice/releases";
-            vscode.window.showInformationMessage(localize("aixUpdatefailed", downloadPage, aixcoderPath), localize("openInBrowser")).then((select) => {
-                if (select === localize("openInBrowser")) {
-                    vscode.commands.executeCommand("vscode.open", vscode.Uri.parse(downloadPage));
-                }
-            });
-        };
-
         let lastReportTime = 0;
         let last = 0;
         const onProgress = (p: FileProgressLite) => {
@@ -323,67 +310,50 @@ export async function forceUpdate(localVersion: string, remoteVersion: string) {
             }
         };
 
-        let ball: string;
-        if (process.platform === "win32") {
-            ball = "server-win.zip";
-        } else if (process.platform === "darwin") {
-            ball = "server-osx.zip";
-        } else {
-            ball = "server-linux.tar.gz";
-        }
-        let cancellationToken = new AiXCancellationToken();
+        const cancellationToken = new AixUpdater.AiXCancellationToken();
         token.onCancellationRequested(() => {
             cancellationToken.cancel("userCancel");
         });
-        let tryMirror = false;
-        await downloadEx(`https://github.com/aixcoder-plugin/localservice/releases/latest/download/${ball}`, path.join(aixcoderPath, ".."),
-            onProgress, (speed) => {
-                if (speed < 100 * 1024) {
-                    // slower than 100kb/s, raise a cancellation and try mirror site
-                    cancellationToken.cancel("speedLow");
-                }
-            }, (e) => {
-                // try mirror site
-                if (e === "speedLow") {
-                    if (!tryMirror) {
-                        tryMirror = true;
-                        throw e;
-                    }
-                } else {
-                    onErr(e);
-                }
-            }, cancellationToken);
-        if (tryMirror) {
-            cancellationToken = new AiXCancellationToken();
-            await downloadEx(`http://image.aixcoder.com/localservice/releases/download/${remoteVersion}/${ball}`, path.join(aixcoderPath, ".."),
-                onProgress, null, onErr, cancellationToken);
+        let ball: string;
+        let patchball: string;
+        const rawRemoteVersion = remoteVersion.startsWith("v") ? remoteVersion.substr(1) : remoteVersion;
+        if (process.platform === "win32") {
+            ball = "server-win.zip";
+            patchball = `win-patch_${localVersion}_${rawRemoteVersion}_full.zip`;
+        } else if (process.platform === "darwin") {
+            ball = "server-osx.zip";
+            patchball = `osx-patch_${localVersion}_${rawRemoteVersion}_full.zip`;
+        } else {
+            ball = "server-linux.tar.gz";
+            patchball = `linux-patch_${localVersion}_${rawRemoteVersion}_full.tar.gz`;
         }
-        const ballPath = path.join(aixcoderPath, "..", ball);
-        progress.report({
-            message: localize("unzipping", ballPath, aixcoderPath),
-            increment: (1 - last) * 100,
-        });
-        if (!failed) {
-            try {
-                await kill();
-                await fs.remove(aixcoderPath);
-                if (ball.endsWith(".tar.gz")) {
-                    await execAsync(`tar zxf "${ballPath}" -C "${aixcoderPath}"`);
+        try {
+            await AixUpdater.simplePatch(aixcoderPath, [
+                `https://github.com/aixcoder-plugin/localservice/releases/latest/download/${patchball}`,
+                `http://image.aixcoder.com/localservice/releases/download/${remoteVersion}/${patchball}`,
+            ], [
+                `https://github.com/aixcoder-plugin/localservice/releases/latest/download/${ball}`,
+                `http://image.aixcoder.com/localservice/releases/download/${remoteVersion}/${ball}`,
+            ], (p) => {
+                if (p.downloadProgress) {
+                    onProgress(p.downloadProgress.downloadProgresses[0]);
                 } else {
-                    await decompress(ballPath, aixcoderPath);
+                    progress.report({
+                        message: p.toString(getLocale()),
+                    });
                 }
-            } catch (e) {
-                failed = true;
-                log(e);
-                vscode.window.showInformationMessage(localize("aixUnzipfailed", ballPath, aixcoderPath), localize("showFolder")).then((select) => {
-                    if (select === localize("showFolder")) {
-                        vscode.commands.executeCommand("revealFileInOS", vscode.Uri.file(ballPath));
-                    }
-                });
-            }
-        }
-        if (!failed) {
+            }, kill, cancellationToken);
             showInformationMessage(localize("aixUpdated", remoteVersion, localVersion));
+        } catch (err) {
+            if (err) {
+                log(err);
+            }
+            const downloadPage = "https://github.com/aixcoder-plugin/localservice/releases";
+            vscode.window.showInformationMessage(localize("aixUpdatefailed", downloadPage, aixcoderPath), localize("openInBrowser")).then((select) => {
+                if (select === localize("openInBrowser")) {
+                    vscode.commands.executeCommand("vscode.open", vscode.Uri.parse(downloadPage));
+                }
+            });
         }
         lastOpenFailed = false;
     }).then(null, (err) => {
