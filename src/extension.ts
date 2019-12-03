@@ -659,7 +659,7 @@ export async function activate(context: vscode.ExtensionContext) {
         }
     }
 
-    const endpoint = vscode.workspace.getConfiguration().get("aiXcoder.endpoint");
+    const endpoint = Preference.getEndpoint();
     if (!endpoint) {
         vscode.window.showWarningMessage(localize("aiXcoder.endpoint.empty"), localize("openSetting")).then((selected) => {
             if (selected === localize("openSetting")) {

@@ -4,7 +4,7 @@ import * as vscode from "vscode";
 function getParamsFromUrl(url: string) {
     url = decodeURI(url);
     const eachParamsArr = url.split("&");
-    const obj: {[key: string]: string} = {};
+    const obj: { [key: string]: string } = {};
     if (eachParamsArr && eachParamsArr.length) {
         eachParamsArr.map((param) => {
             const keyValuePair = param.split("=");
@@ -112,5 +112,13 @@ export default class Preference {
 
     public static getSelfLearn() {
         return vscode.workspace.getConfiguration().get("aiXcoder.selfLearining") as boolean;
+    }
+
+    public static getEndpoint() {
+        let endpoint = vscode.workspace.getConfiguration().get("aiXcoder.endpoint") as string;
+        if (!endpoint.endsWith("/")) {
+            endpoint += "/";
+        }
+        return endpoint;
     }
 }

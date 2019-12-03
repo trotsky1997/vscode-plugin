@@ -9,7 +9,7 @@ import { compareVersion, myVersion, showInformationMessage, showInformationMessa
 import { localize } from "./i18n";
 import { LangUtil } from "./lang/langUtil";
 import Learner from "./Learner";
-import { execAsync, forceUpdate, getVersion, openurl } from "./localService";
+import { execAsync, forceUpdate, getServiceStatus, getVersion, isServerStarting, openurl } from "./localService";
 import log from "./logger";
 import NetworkController from "./NetworkController";
 import Preference from "./Preference";
@@ -59,14 +59,14 @@ async function myRequest(options: request.OptionsWithUrl, endpoint?: string) {
     const proxyAuth: string = vscode.workspace.getConfiguration().get("http.proxyAuthorization");
     const proxyStrictSSL: boolean = vscode.workspace.getConfiguration().get("http.proxyStrictSSL");
     if (!endpoint) {
-        endpoint = vscode.workspace.getConfiguration().get("aiXcoder.endpoint");
+        endpoint = Preference.getEndpoint();
+    }
+    if (!endpoint.endsWith("/")) {
+        endpoint += "/";
     }
     let host = proxyUrl || endpoint.substring(endpoint.indexOf("://") + 3);
     if (host.indexOf("/") >= 0) {
         host = host.substr(0, host.indexOf("/"));
-    }
-    if (!endpoint.endsWith("/")) {
-        endpoint += "/";
     }
     if (options.headers) {
         for (const headerKey in options.headers) {
@@ -110,6 +110,7 @@ const localNetworkController = new NetworkController();
 let lastLocalRequest = false;
 let firstLocalRequestAttempt = true;
 let learner: Learner;
+let getServiceStatusLock = false;
 
 export async function predict(langUtil: LangUtil, text: string, ext: string, remainingText: string, laterCode: string, lastQueryUUID: number, fileID: string, retry = true) {
     if (Preference.getSelfLearn()) {
@@ -137,13 +138,34 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
     if (models[ext] && models[ext].active && models[ext].url) {
         endpoint = models[ext].url;
         lastLocalRequest = localRequest = true;
+        if (isServerStarting()) {
+            return null;
+        }
         log("LOCAL!");
     } else {
-        endpoint = vscode.workspace.getConfiguration().get("aiXcoder.endpoint");
+        endpoint = Preference.getEndpoint();
         lastLocalRequest = localRequest = endpoint.indexOf("localhost") >= 0;
         if (!networkController.shouldPredict()) {
             return null;
         }
+    }
+    if (!getServiceStatusLock) {
+        getServiceStatusLock = true;
+        vscode.window.withProgress({
+            location: vscode.ProgressLocation.Window,
+            title: "aiXcoder is indexing your project",
+            cancellable: false,
+        }, async (progress, token) => {
+            let status = 1;
+            while (status <= 1) {
+                await new Promise((resolve) => setTimeout(() => resolve, 1000));
+                status = await getServiceStatus(ext);
+            }
+        }).then(() => {
+            getServiceStatusLock = false;
+        }, () => {
+            getServiceStatusLock = false;
+        });
     }
     const maskedText = await DataMasking.mask(langUtil, text, ext);
     const maskedRemainingText = await DataMasking.mask(langUtil, remainingText, ext);

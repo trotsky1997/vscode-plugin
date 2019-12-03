@@ -5,6 +5,7 @@ import * as filesize from "filesize";
 import * as fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
+import * as request from "request-promise";
 import * as vscode from "vscode";
 import { showInformationMessage } from "./extension";
 import { getLocale, localize } from "./i18n";
@@ -130,6 +131,11 @@ export async function execAsync(cmd: string): Promise<string> {
     });
 }
 
+let serverStarting = false;
+export function isServerStarting() {
+    return serverStarting;
+}
+
 let lastOpenFailed = false;
 export async function openurl(url: string) {
     if (lastOpenFailed) { return; }
@@ -148,6 +154,7 @@ export async function openurl(url: string) {
         lastOpenFailed = true;
         // server not found
     }
+    serverStarting = true;
     authorize(); // chmod 777 for mac
     launchLocalServer();
     vscode.window.withProgress({
@@ -165,10 +172,11 @@ export async function openurl(url: string) {
             }
             tries++;
             log("Try " + tries);
-            download(vscode.workspace.getConfiguration().get("aiXcoder.endpoint"), null, {
+            download(Preference.getEndpoint(), null, {
                 timeout: 1000,
             }).then((value) => {
                 lastOpenFailed = false;
+                serverStarting = false;
                 resolve();
             }).catch((e) => {
                 setTimeout(testServerStarted, 3000);
@@ -359,4 +367,14 @@ export async function forceUpdate(localVersion: string, remoteVersion: string) {
     }).then(null, (err) => {
         log(err);
     });
+}
+
+export async function getServiceStatus(ext: string) {
+    const resp = await request({
+        method: "GET",
+        url: Preference.getEndpoint() + "getSaStatus?ext=" + ext,
+        timeout: 1000,
+    });
+    const { status } = JSON.parse(resp);
+    return status as number;
 }
