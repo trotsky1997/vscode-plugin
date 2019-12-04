@@ -254,7 +254,7 @@ function formatResData(results: PredictResult, langUtil: LangUtil, document: vsc
                     kind: vscode.CompletionItemKind.Snippet,
                     sortText: Preference.getLongResultRankSortText() + "." + (sortL2S ? 1 - title.length / 100 : title.length / 100),
                     aixPrimary: true,
-                    detail: "aiXcoder: " + result.prob.toLocaleString("en", {style: "percent", minimumFractionDigits: 2}),
+                    detail: "aiXcoder: " + result.prob.toLocaleString("en", { style: "percent", minimumFractionDigits: 2 }),
                 };
                 z.command = { ...command, arguments: command.arguments.concat([result, z]) };
                 r.push(z);
@@ -285,7 +285,7 @@ export function formatSortData(results: SortResult | null, langUtil: LangUtil, d
             insertText: single.word,
             kind: vscode.CompletionItemKind.Variable,
             sortText: "0." + insertedRank++,
-            detail: "aiXcoder: " + single.prob.toLocaleString("en", {style: "percent", minimumFractionDigits: 2}),
+            detail: "aiXcoder: " + single.prob.toLocaleString("en", { style: "percent", minimumFractionDigits: 2 }),
         };
         z.command = { ...command, arguments: command.arguments.concat([single, z]) };
         r.push(z);
@@ -615,7 +615,7 @@ export function mergeSortResult(l: vscode.CompletionItem[], sortResults: SortRes
                 bestSystemCompletion.label = starDisplay === STAR_DISPLAY.LEFT ? star + bestSystemCompletion.label : (starDisplay === STAR_DISPLAY.RIGHT ? bestSystemCompletion.label + star : bestSystemCompletion.label);
                 bestSystemCompletion.sortText = ".0." + rankText;
                 bestSystemCompletion.command = { ...telemetryCommand, arguments: telemetryCommand.arguments.concat([single]) };
-                bestSystemCompletion.detail = (bestSystemCompletion.detail ? bestSystemCompletion.detail + "\n" : "") + "aiXcoder: " + single.prob.toLocaleString("en", {style: "percent", minimumFractionDigits: 2});
+                bestSystemCompletion.detail = (bestSystemCompletion.detail ? bestSystemCompletion.detail + "\n" : "") + "aiXcoder: " + single.prob.toLocaleString("en", { style: "percent", minimumFractionDigits: 2 });
                 if (bestSystemCompletion.kind === vscode.CompletionItemKind.Function && insertText.indexOf("(") === -1) {
                     bestSystemCompletion.insertText = new vscode.SnippetString(insertText).appendText("(").appendTabstop().appendText(")");
                 }

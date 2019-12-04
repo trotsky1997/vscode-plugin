@@ -153,12 +153,12 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
         getServiceStatusLock = true;
         vscode.window.withProgress({
             location: vscode.ProgressLocation.Window,
-            title: "aiXcoder is indexing your project",
+            title: localize("localInitializing"),
             cancellable: false,
         }, async (progress, token) => {
             let status = 1;
             while (status <= 1) {
-                await new Promise((resolve) => setTimeout(() => resolve, 1000));
+                await new Promise((resolve) => setTimeout(resolve, 1000));
                 status = await getServiceStatus(ext);
             }
         }).then(() => {
@@ -179,6 +179,10 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
         if (fileID.match(/^Untitled-"d",+$/)) {
             const lang = ext.substring(ext.indexOf("(") + 1, ext.length - 1).toLowerCase();
             fileID += "." + (realExtension[lang] || lang);
+        }
+        const additionalParams: any = {};
+        if (ext.endsWith("(Python)")) {
+            additionalParams.saExecutor = vscode.workspace.getConfiguration().get("python.pythonPath");
         }
 
         const resp = await myRequest({
@@ -203,6 +207,7 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
                 laterCode: localRequest ? laterCode : "",
                 long_result_cuts: Preference.getLongResultCuts(),
                 ...Preference.getRequestParams(),
+                ...additionalParams,
             },
             headers: {
                 ext,
