@@ -1,7 +1,7 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
-## [0.3.6] - %DATE%
+## [0.3.6] - 2019-12-5
 
 ### Added
 - Display service index status.
