@@ -5,6 +5,8 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 
 ### Added
 - Display service index status.
+- Asks if suggestions should be shown if index progress is not complete.
+- Better performance on extremely long files (more than 800 lines) with server 1.1.1.
 
 ## [0.3.5] - 2019-12-2
 

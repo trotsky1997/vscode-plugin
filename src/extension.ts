@@ -60,6 +60,24 @@ export async function showInformationMessageOnce(message: string, ...items: stri
         }
         return select;
     }
+    return "skip";
+}
+
+export async function showWarningMessageOnce(message: string, ...items: string[]): Promise<string | undefined> {
+    if (!shownMessages.has(message)) {
+        shownMessages.add(message);
+        const localizedItems = [];
+        for (const item of items) {
+            localizedItems.push(localize(item));
+        }
+        const select = await vscode.window.showWarningMessage(localize(message), ...localizedItems);
+        const localizedSelection = localizedItems.indexOf(select);
+        if (localizedSelection >= 0) {
+            return items[localizedSelection];
+        }
+        return select;
+    }
+    return "skip";
 }
 
 export async function showInformationMessage(message: string, ...items: string[]): Promise<string | undefined> {
@@ -68,7 +86,15 @@ export async function showInformationMessage(message: string, ...items: string[]
         for (const item of items) {
             localizedItems.push(localize(item));
         }
-        const select = await vscode.window.showInformationMessage(localize(message), ...localizedItems, localize("nevershowagain"));
+        const additionalItems = [];
+        if (localizedItems.length === 0) {
+            additionalItems.push(localize("close"));
+        }
+        additionalItems.push(localize("nevershowagain"));
+        const select = await vscode.window.showInformationMessage(localize(message), ...localizedItems, ...additionalItems);
+        if (select === localize("close")) {
+            return;
+        }
         if (select === localize("nevershowagain")) {
             Preference.context.globalState.update("hide:" + message, true);
             return;
@@ -87,7 +113,15 @@ export async function showWarningMessage(message: string, ...items: string[]): P
         for (const item of items) {
             localizedItems.push(localize(item));
         }
-        const select = await vscode.window.showWarningMessage(localize(message), ...localizedItems, localize("nevershowagain"));
+        const additionalItems = [];
+        if (localizedItems.length === 0) {
+            additionalItems.push(localize("close"));
+        }
+        additionalItems.push(localize("nevershowagain"));
+        const select = await vscode.window.showWarningMessage(localize(message), ...localizedItems, ...additionalItems);
+        if (select === localize("close")) {
+            return;
+        }
         if (select === localize("nevershowagain")) {
             Preference.context.globalState.update("hide:" + message, true);
             return;

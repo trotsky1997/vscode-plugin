@@ -5,7 +5,7 @@ import * as os from "os";
 import * as path from "path";
 import * as request from "request-promise";
 import * as vscode from "vscode";
-import { compareVersion, myVersion, showInformationMessage, showInformationMessageOnce, showWarningMessage } from "./extension";
+import { compareVersion, myVersion, showInformationMessage, showInformationMessageOnce, showWarningMessage, showWarningMessageOnce } from "./extension";
 import { localize } from "./i18n";
 import { LangUtil } from "./lang/langUtil";
 import Learner from "./Learner";
@@ -110,7 +110,47 @@ const localNetworkController = new NetworkController();
 let lastLocalRequest = false;
 let firstLocalRequestAttempt = true;
 let learner: Learner;
-let getServiceStatusLock = false;
+let getServiceStatusLock = null;
+let saStatusToken = { cancelled: false };
+let saStatus = 0;
+let allowIgnoreSaStatus = false;
+
+async function saStatusChecker(ext: string) {
+    if (getServiceStatusLock !== ext || saStatus < 2) {
+        saStatusToken.cancelled = true;
+        getServiceStatusLock = ext;
+        saStatusToken = { cancelled: false };
+        saStatus = await getServiceStatus(ext);
+        if (saStatus <= 1) {
+            await vscode.window.withProgress({
+                location: vscode.ProgressLocation.Window,
+                title: localize("localInitializing"),
+                cancellable: false,
+            }, async (progress, token) => {
+                while (saStatus <= 1 && !saStatusToken.cancelled) {
+                    showWarningMessageOnce("localInitializing", "nosa-yes", "nosa-no").then((select) => {
+                        if (select === localize("nosa-yes")) {
+                            allowIgnoreSaStatus = true;
+                        } else if (select === localize("nosa-no")) {
+                            allowIgnoreSaStatus = false;
+                        }
+                    });
+                    await new Promise((resolve) => setTimeout(resolve, 1000));
+                    saStatus = await getServiceStatus(ext);
+                }
+            });
+            getServiceStatusLock = null;
+        }
+    }
+}
+
+function reverseString(str) {
+    let newString = "";
+    for (let i = str.length - 1; i >= 0; i--) {
+        newString += str[i];
+    }
+    return newString;
+}
 
 export async function predict(langUtil: LangUtil, text: string, ext: string, remainingText: string, laterCode: string, lastQueryUUID: number, fileID: string, retry = true) {
     if (Preference.getSelfLearn()) {
@@ -149,24 +189,12 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
             return null;
         }
     }
-    if (!getServiceStatusLock) {
-        getServiceStatusLock = true;
-        vscode.window.withProgress({
-            location: vscode.ProgressLocation.Window,
-            title: localize("localInitializing"),
-            cancellable: false,
-        }, async (progress, token) => {
-            let status = 1;
-            while (status <= 1) {
-                await new Promise((resolve) => setTimeout(resolve, 1000));
-                status = await getServiceStatus(ext);
-            }
-        }).then(() => {
-            getServiceStatusLock = false;
-        }, () => {
-            getServiceStatusLock = false;
-        });
+
+    saStatusChecker(ext);
+    if (saStatus < 2 && !allowIgnoreSaStatus) {
+        return null;
     }
+
     const maskedText = await DataMasking.mask(langUtil, text, ext);
     const maskedRemainingText = await DataMasking.mask(langUtil, remainingText, ext);
     const u = vscode.window.activeTextEditor.document.uri;
@@ -174,13 +202,23 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
     const projName = proj ? proj.name : "_scratch";
     const offset = CodeStore.getInstance().getDiffPosition(fileID, maskedText);
     const md5 = md5Hash(maskedText);
+    const additionalParams: any = {};
+    let laterCodeReversed;
+    if (localRequest) {
+        laterCodeReversed = reverseString(laterCode);
+        const laterOffset = CodeStore.getInstance().getDiffPosition(fileID + ".later", laterCodeReversed);
+        additionalParams.laterMd5 = md5Hash(laterCodeReversed);
+        const shortenedLaterCodeReversed = laterCodeReversed.substring(laterOffset);
+        laterCode = reverseString(shortenedLaterCodeReversed);
+        additionalParams.laterCode = laterCode;
+        additionalParams.laterOffset = laterOffset;
+    }
 
     try {
         if (fileID.match(/^Untitled-"d",+$/)) {
             const lang = ext.substring(ext.indexOf("(") + 1, ext.length - 1).toLowerCase();
             fileID += "." + (realExtension[lang] || lang);
         }
-        const additionalParams: any = {};
         if (ext.endsWith("(Python)")) {
             additionalParams.saExecutor = vscode.workspace.getConfiguration().get("python.pythonPath");
         }
@@ -204,7 +242,6 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
                 prob_th_ngram: 1,
                 prob_th_ngram_t: 1,
                 version: myVersion,
-                laterCode: localRequest ? laterCode : "",
                 long_result_cuts: Preference.getLongResultCuts(),
                 ...Preference.getRequestParams(),
                 ...additionalParams,
@@ -218,10 +255,14 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
         if (retry && resp && resp.indexOf("Conflict") >= 0) {
             console.log("conflict");
             CodeStore.getInstance().invalidateFile(projName, fileID);
+            CodeStore.getInstance().invalidateFile(projName, fileID + ".later");
             return predict(langUtil, text, ext, remainingText, laterCode, lastQueryUUID, fileID, false);
         } else {
             console.log("resp=" + resp);
             CodeStore.getInstance().saveLastSent(projName, fileID, maskedText);
+            if (localRequest) {
+                CodeStore.getInstance().saveLastSent(projName, fileID + ".later", laterCodeReversed);
+            }
         }
         if (!localRequest) {
             networkController.onSuccess();

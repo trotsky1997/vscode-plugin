@@ -262,6 +262,18 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "en": "aiXcoder is indexing your project for the first time. The suggestions may not be accurate until it is done.",
         "zh-cn": "aiXcoder正在初次索引您的项目。在这结束之前提示可能是不准确的。",
     },
+    "nosa-yes": {
+        "en": "Show incomplete suggestions",
+        "zh-cn": "展示提示",
+    },
+    "nosa-no": {
+        "en": "Wait for index to complete",
+        "zh-cn": "等待索引结束",
+    },
+    "close": {
+        "en": "Close",
+        "zh-cn": "关闭",
+    },
 };
 
 export function localize(key: string, ...params: any[]) {
