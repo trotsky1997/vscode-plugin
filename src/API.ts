@@ -205,6 +205,7 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
     const additionalParams: any = {};
     let laterCodeReversed;
     if (localRequest) {
+        // additionalParams.fullCode = maskedText;
         laterCodeReversed = reverseString(laterCode);
         const laterOffset = CodeStore.getInstance().getDiffPosition(fileID + ".later", laterCodeReversed);
         additionalParams.laterMd5 = md5Hash(laterCodeReversed);
@@ -212,6 +213,7 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
         laterCode = reverseString(shortenedLaterCodeReversed);
         additionalParams.laterCode = laterCode;
         additionalParams.laterOffset = laterOffset;
+        // additionalParams.fullLaterCode = laterCodeReversed;
     }
 
     try {
