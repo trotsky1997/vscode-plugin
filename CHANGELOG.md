@@ -1,6 +1,12 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.3.7] - 2019-12-6
+
+### Fixed
+- Fix patch failures when file name contains underscore.
+- Disable non-Java language hooking until local service is ready.
+
 ## [0.3.6] - 2019-12-5
 
 ### Added

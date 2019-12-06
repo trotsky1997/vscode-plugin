@@ -772,12 +772,12 @@ export async function activate(context: vscode.ExtensionContext) {
                 aixHook: (ll: vscode.CompletionList | vscode.CompletionItem[], ...args: any) => Promise<vscode.CompletionList | vscode.CompletionItem[]>,
             },
         } = {
-            python: await activatePython(context),
+            // python: await activatePython(context),
             java: await activateJava(context),
-            cpp: await activateCPP(context),
-            php: await activatePhp(context),
-            typescript: await activateTypeScript(context),
-            go: await activateGo(context),
+            // cpp: await activateCPP(context),
+            // php: await activatePhp(context),
+            // typescript: await activateTypeScript(context),
+            // go: await activateGo(context),
         };
         log("AiX: aiXcoder activated");
         return {
