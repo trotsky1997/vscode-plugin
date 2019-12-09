@@ -648,122 +648,122 @@ const lastModifedTime: { [uri: string]: number } = {};
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export async function activate(context: vscode.ExtensionContext) {
-    log("AiX: aiXcoder activating");
-
-    if (os.platform() === "win32" && compareVersion(os.release(), "10") < 0) {
-        const star = vscode.workspace.getConfiguration().get("aiXcoder.symbol");
-        if (star === myPackageJSON.contributes.configuration.properties["aiXcoder.symbol"].default) {
-            // Emoji ⭐ does not display under < win7
-            vscode.workspace.getConfiguration().set("aiXcoder.symbol", "★");
-        }
-    }
-
-    await Preference.init(context);
-
-    const endpoint = Preference.getEndpoint();
-    if (!endpoint) {
-        vscode.window.showWarningMessage(localize("aiXcoder.endpoint.empty"), localize("openSetting")).then((selected) => {
-            if (selected === localize("openSetting")) {
-                vscode.commands.executeCommand("workbench.action.openSettings", "aiXcoder: Endpoint");
-            }
-        });
-    }
-
-    API.checkUpdate();
-    const askedTelemetry = context.globalState.get("aiXcoder.askedTelemetry");
-    if (!askedTelemetry) {
-        context.globalState.update("aiXcoder.askedTelemetry", true);
-        const enableTelemetry = vscode.workspace.getConfiguration().get("aiXcoder.enableTelemetry");
-        const enableTelemetryMsg = enableTelemetry ? localize("enabled") : localize("disabled");
-        vscode.window.showInformationMessage(util.format(localize("aiXcoder.askedTelemetry"), enableTelemetryMsg), localize("aiXcoder.askedTelemetryOK"), localize("aiXcoder.askedTelemetryNo")).then((selected) => {
-            if (selected === localize("aiXcoder.askedTelemetryNo")) {
-                vscode.workspace.getConfiguration().update("aiXcoder.enableTelemetry", false);
-            }
-        });
-    }
-    context.subscriptions.push(vscode.workspace.onDidOpenTextDocument((document) => {
-        if (document.uri.scheme === "file" || document.uri.scheme === "untitled") {
-            lastModifedTime[document.uri.toJSON()] = Date.now();
-        }
-    }));
-    context.subscriptions.push(vscode.workspace.onDidChangeTextDocument((event) => {
-        if (event.document.uri.scheme === "file" || event.document.uri.scheme === "untitled") {
-            lastModifedTime[event.document.uri.toJSON()] = Date.now();
-        }
-    }));
-    context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.insert", (ext: string, subtype: string, langUtil: LangUtil, document: vscode.TextDocument, single: SinglePredictResult | SingleWordCompletion, completionItem: AiXCompletionItem) => {
-        try {
-            if (subtype === "primary") {
-                const tokenLen = completionItem.insertText.toString().split(/\b/g).filter((s) => s.trim().length > 0).length;
-                const charLen = completionItem.insertText.toString().length;
-                API.sendTelemetry(ext, API.TelemetryType.LongUse, tokenLen, charLen);
-            } else if (subtype === "secondary") {
-                API.sendTelemetry(ext, API.TelemetryType.ShortUse, 1, (single as SingleWordCompletion).word.length);
-            }
-        } catch (e) {
-            log(e);
-        }
-        if (typeof langUtil === "string") {
-            langUtil = getInstance(langUtil);
-        }
-        if ((single as SinglePredictResult).rescues) {
-            langUtil.rescue(document, (single as SinglePredictResult).rescues);
-        } else if ((single as SingleWordCompletion).options && (single as SingleWordCompletion).options.rescues) {
-            langUtil.rescue(document, (single as SingleWordCompletion).options.rescues);
-        }
-    }));
-    context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.resetMessage", () => {
-        for (const message of Object.keys(localizeMessages)) {
-            Preference.context.globalState.update("hide:" + message, false);
-        }
-        showInformationMessage("msgreset");
-    }));
-
-    const commandHandler = async () => {
-        const langs = { cpp: "C++/C", python: "Python", java: "Java", php: "Php", javascript: "JavaScript", typescript: "TypeScript", go: "Go" };
-        const models = await API.getModels();
-        const availableLangs = new Set<string>();
-        for (const ext of models) {
-            const lang = ext.substring(ext.indexOf("(") + 1, ext.length - 1).toLowerCase();
-            availableLangs.add(lang);
-        }
-        const selectedLang = await vscode.window.showQuickPick((async () => {
-            const displays: ModelQuickPickItem[] = [];
-            for (const lang of availableLangs) {
-                const configKey = "aiXcoder.model." + lang;
-                const configValue = vscode.workspace.getConfiguration().get(configKey);
-                displays.push({
-                    label: `${langs[lang]}: ${configValue}`,
-                    description: `aiXcoder model used for ${langs[lang]}`,
-                    lang,
-                });
-            }
-            return displays;
-        })());
-
-        if (selectedLang) {
-            const selectedModel = await vscode.window.showQuickPick((async () => {
-                const filtered = models.filter((model) => model.toLowerCase().endsWith(`(${selectedLang.lang})`));
-                return filtered;
-            })());
-            if (selectedModel != null) {
-                vscode.workspace.getConfiguration().update("aiXcoder.model." + selectedLang.lang, selectedModel);
-                vscode.window.showInformationMessage(util.format(localize("model.switch"), langs[selectedLang.lang], selectedModel));
-            }
-        }
-    };
-
-    context.subscriptions.push(vscode.commands.registerCommand("aixcoder.switchModel", commandHandler));
-
-    vscode.window.registerWebviewPanelSerializer("aixsearch", new AiXSearchSerializer());
-    context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.search", (uri) => {
-        doSearch(context, uri);
-    }));
-    const msintellicode = vscode.extensions.getExtension("visualstudioexptteam.vscodeintellicode");
-    if (msintellicode) {
-        showInformationMessage("msintellicode.enabled");
-    }
     try {
+        log("AiX: aiXcoder activating");
+
+        if (os.platform() === "win32" && compareVersion(os.release(), "10") < 0) {
+            const star = vscode.workspace.getConfiguration().get("aiXcoder.symbol");
+            if (star === myPackageJSON.contributes.configuration.properties["aiXcoder.symbol"].default) {
+                // Emoji ⭐ does not display under < win7
+                vscode.workspace.getConfiguration().set("aiXcoder.symbol", "★");
+            }
+        }
+
+        await Preference.init(context);
+
+        const endpoint = Preference.getEndpoint();
+        if (!endpoint) {
+            vscode.window.showWarningMessage(localize("aiXcoder.endpoint.empty"), localize("openSetting")).then((selected) => {
+                if (selected === localize("openSetting")) {
+                    vscode.commands.executeCommand("workbench.action.openSettings", "aiXcoder: Endpoint");
+                }
+            });
+        }
+
+        API.checkUpdate();
+        const askedTelemetry = context.globalState.get("aiXcoder.askedTelemetry");
+        if (!askedTelemetry) {
+            context.globalState.update("aiXcoder.askedTelemetry", true);
+            const enableTelemetry = vscode.workspace.getConfiguration().get("aiXcoder.enableTelemetry");
+            const enableTelemetryMsg = enableTelemetry ? localize("enabled") : localize("disabled");
+            vscode.window.showInformationMessage(util.format(localize("aiXcoder.askedTelemetry"), enableTelemetryMsg), localize("aiXcoder.askedTelemetryOK"), localize("aiXcoder.askedTelemetryNo")).then((selected) => {
+                if (selected === localize("aiXcoder.askedTelemetryNo")) {
+                    vscode.workspace.getConfiguration().update("aiXcoder.enableTelemetry", false);
+                }
+            });
+        }
+        context.subscriptions.push(vscode.workspace.onDidOpenTextDocument((document) => {
+            if (document.uri.scheme === "file" || document.uri.scheme === "untitled") {
+                lastModifedTime[document.uri.toJSON()] = Date.now();
+            }
+        }));
+        context.subscriptions.push(vscode.workspace.onDidChangeTextDocument((event) => {
+            if (event.document.uri.scheme === "file" || event.document.uri.scheme === "untitled") {
+                lastModifedTime[event.document.uri.toJSON()] = Date.now();
+            }
+        }));
+        context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.insert", (ext: string, subtype: string, langUtil: LangUtil, document: vscode.TextDocument, single: SinglePredictResult | SingleWordCompletion, completionItem: AiXCompletionItem) => {
+            try {
+                if (subtype === "primary") {
+                    const tokenLen = completionItem.insertText.toString().split(/\b/g).filter((s) => s.trim().length > 0).length;
+                    const charLen = completionItem.insertText.toString().length;
+                    API.sendTelemetry(ext, API.TelemetryType.LongUse, tokenLen, charLen);
+                } else if (subtype === "secondary") {
+                    API.sendTelemetry(ext, API.TelemetryType.ShortUse, 1, (single as SingleWordCompletion).word.length);
+                }
+            } catch (e) {
+                log(e);
+            }
+            if (typeof langUtil === "string") {
+                langUtil = getInstance(langUtil);
+            }
+            if ((single as SinglePredictResult).rescues) {
+                langUtil.rescue(document, (single as SinglePredictResult).rescues);
+            } else if ((single as SingleWordCompletion).options && (single as SingleWordCompletion).options.rescues) {
+                langUtil.rescue(document, (single as SingleWordCompletion).options.rescues);
+            }
+        }));
+        context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.resetMessage", () => {
+            for (const message of Object.keys(localizeMessages)) {
+                Preference.context.globalState.update("hide:" + message, false);
+            }
+            showInformationMessage("msgreset");
+        }));
+
+        const commandHandler = async () => {
+            const langs = { cpp: "C++/C", python: "Python", java: "Java", php: "Php", javascript: "JavaScript", typescript: "TypeScript", go: "Go" };
+            const models = await API.getModels();
+            const availableLangs = new Set<string>();
+            for (const ext of models) {
+                const lang = ext.substring(ext.indexOf("(") + 1, ext.length - 1).toLowerCase();
+                availableLangs.add(lang);
+            }
+            const selectedLang = await vscode.window.showQuickPick((async () => {
+                const displays: ModelQuickPickItem[] = [];
+                for (const lang of availableLangs) {
+                    const configKey = "aiXcoder.model." + lang;
+                    const configValue = vscode.workspace.getConfiguration().get(configKey);
+                    displays.push({
+                        label: `${langs[lang]}: ${configValue}`,
+                        description: `aiXcoder model used for ${langs[lang]}`,
+                        lang,
+                    });
+                }
+                return displays;
+            })());
+
+            if (selectedLang) {
+                const selectedModel = await vscode.window.showQuickPick((async () => {
+                    const filtered = models.filter((model) => model.toLowerCase().endsWith(`(${selectedLang.lang})`));
+                    return filtered;
+                })());
+                if (selectedModel != null) {
+                    vscode.workspace.getConfiguration().update("aiXcoder.model." + selectedLang.lang, selectedModel);
+                    vscode.window.showInformationMessage(util.format(localize("model.switch"), langs[selectedLang.lang], selectedModel));
+                }
+            }
+        };
+
+        context.subscriptions.push(vscode.commands.registerCommand("aixcoder.switchModel", commandHandler));
+
+        vscode.window.registerWebviewPanelSerializer("aixsearch", new AiXSearchSerializer());
+        context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.search", (uri) => {
+            doSearch(context, uri);
+        }));
+        const msintellicode = vscode.extensions.getExtension("visualstudioexptteam.vscodeintellicode");
+        if (msintellicode) {
+            showInformationMessage("msintellicode.enabled");
+        }
         const aixHooks: {
             [lang: string]: void | {
                 aixHook: (ll: vscode.CompletionList | vscode.CompletionItem[], ...args: any) => Promise<vscode.CompletionList | vscode.CompletionItem[]>,
