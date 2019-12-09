@@ -5,7 +5,8 @@ import * as os from "os";
 import * as path from "path";
 import * as request from "request-promise";
 import * as vscode from "vscode";
-import { compareVersion, myVersion, showInformationMessage, showInformationMessageOnce, showWarningMessage, showWarningMessageOnce } from "./extension";
+import { compareVersion, myVersion, showInformationMessageOnce, showWarningMessage, showWarningMessageOnce } from "./extension";
+import FileAutoSyncer from "./FileAutoSyncer";
 import { localize } from "./i18n";
 import { LangUtil } from "./lang/langUtil";
 import Learner from "./Learner";
@@ -22,37 +23,19 @@ function md5Hash(s: string) {
 
 const homedir = os.homedir();
 const localserver = path.join(homedir, "aiXcoder", "localserver.json");
-let models = {};
-let lastCheckLocalTime = 0;
-function readFile() {
-    if (Date.now() - lastCheckLocalTime < 1000 * 5) {
-        return;
+const models = new FileAutoSyncer<{ [model: string]: { active: boolean, url: string }; }>(localserver, (err, text) => {
+    if (err) {
+        return {};
     }
-    lastCheckLocalTime = Date.now();
-    fs.readFile(localserver, "utf-8").then((data) => {
-        const d = JSON.parse(data);
-        models = {};
-        if (d.models) {
-            for (const model of d.models) {
-                models[model.name] = model;
-            }
+    const d = JSON.parse(text);
+    const m = {};
+    if (d.models) {
+        for (const model of d.models) {
+            m[model.name] = model;
         }
-    });
-}
-
-readFile();
-setInterval(readFile, 1000 * 60 * 5);
-async function initWatch() {
-    try {
-        await fs.stat(localserver);
-    } catch (e) {
-        await fs.writeFile(localserver, "{}", "utf-8");
     }
-    fs.watch(localserver, (event, filename) => {
-        readFile();
-    });
-}
-initWatch();
+    return m;
+});
 
 async function myRequest(options: request.OptionsWithUrl, endpoint?: string) {
     const proxyUrl: string = vscode.workspace.getConfiguration().get("http.proxy");
@@ -175,8 +158,9 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
     }
     let localRequest = false;
     let endpoint: string | undefined;
-    if (models[ext] && models[ext].active && models[ext].url) {
-        endpoint = models[ext].url;
+    const localModels = await models.get();
+    if (localModels[ext] && localModels[ext].active && localModels[ext].url) {
+        endpoint = localModels[ext].url;
         lastLocalRequest = localRequest = true;
         if (isServerStarting()) {
             return null;
@@ -288,7 +272,7 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
                     }
                 }));
             }
-            readFile();
+            models.reload();
         } else {
             networkController.onFailure(() => showWarningMessage(localize("serverDown", endpoint)));
         }

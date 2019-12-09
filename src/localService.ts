@@ -8,6 +8,7 @@ import * as path from "path";
 import * as request from "request-promise";
 import * as vscode from "vscode";
 import { showInformationMessage } from "./extension";
+import FileAutoSyncer from "./FileAutoSyncer";
 import { getLocale, localize } from "./i18n";
 import log from "./logger";
 import Preference from "./Preference";
@@ -309,4 +310,19 @@ export async function getServiceStatus(ext: string) {
     });
     const { status } = JSON.parse(resp);
     return status as number;
+}
+
+function getConfigPath() {
+    return path.join(homedir, "aiXcoder", "localconfig.json");
+}
+
+const localConfig = new FileAutoSyncer(getConfigPath(), (err, text) => {
+    if (err) {
+        return { };
+    }
+    return JSON.parse(text);
+});
+
+export function getLocalPort() {
+    return localConfig.getSync();
 }
