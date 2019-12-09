@@ -35,7 +35,56 @@ export class PythonLangUtil extends LangUtil {
         return keywords;
     }
 
-    public skipString(i: number, s: string, trivialLiterals: Set<string>, stringBuilder: string, char: string) {
+    public datamask(s: string, trivialLiterals: Set<string>): string {
+        let stringBuilder = "";
+        let emptyLine = true;
+        let lastLineEnd = -1;
+        for (let i = 0; i < s.length; i++) {
+            const c = s.charAt(i);
+            if (c === "\n") {
+                stringBuilder += c;
+                emptyLine = true;
+                lastLineEnd = stringBuilder.length;
+            } else if (c === "\"" || c === "'" || c === "`") {
+                stringBuilder += c;
+                let pythonDoc: boolean;
+                ({ i, stringBuilder, pythonDoc } = this.skipString(s, trivialLiterals, stringBuilder, i, c));
+                if (emptyLine && pythonDoc) {
+                    stringBuilder = stringBuilder.substr(0, stringBuilder.length - 2);
+                }
+                emptyLine = false;
+            } else if (s.startsWith("#", i)) {
+                // line comment
+                i = this.skipAfter(s, i + 2, "\n") - 1;
+                if (emptyLine) {
+                    stringBuilder = stringBuilder.substring(0, lastLineEnd);
+                }
+            } else {
+                stringBuilder += c;
+                if (c !== "\t" && c !== " ") {
+                    emptyLine = false;
+                }
+            }
+        }
+        return stringBuilder;
+    }
+
+    public shouldPredict(text: string) {
+        // in string
+        text = this.datamask(text, new Set());
+        if (this.betweenPair(text, "\"", "\"") || this.betweenPair(text, "'", "'") ||
+            this.betweenPair(text, "\"\"\"", "\"\"\"") || this.betweenPair(text, "'''", "'''")) {
+            return false;
+        }
+        // in comment
+        const lineStart = text.lastIndexOf("\n") + 1;
+        if (text.indexOf("#", lineStart) >= 0) {
+            return false;
+        }
+        return true;
+    }
+
+    protected skipString(s: string, trivialLiterals: Set<string>, stringBuilder: string, i: number, char: string) {
         const c = s.charAt(i);
         const pythonDoc = c === s.charAt(i + 1) && c === s.charAt(i + 2);
         if (pythonDoc) {
@@ -62,35 +111,9 @@ export class PythonLangUtil extends LangUtil {
             stringBuilder += strContent;
         }
         stringBuilder += char;
-        return { i, stringBuilder };
-    }
-
-    public datamask(s: string, trivialLiterals: Set<string>): string {
-        let stringBuilder = "";
-        for (let i = 0; i < s.length; i++) {
-            const c = s.charAt(i);
-            stringBuilder += (c);
-            if (c === '"' || c === "'") {
-                const _ = this.skipString(i, s, trivialLiterals, stringBuilder, c);
-                i = _.i;
-                stringBuilder = _.stringBuilder;
-            }
+        if (pythonDoc) {
+            i += 2;
         }
-        return stringBuilder.toString();
-    }
-
-    public shouldPredict(text: string) {
-        // in string
-        text = this.datamask(text, new Set());
-        if (this.betweenPair(text, "\"", "\"") || this.betweenPair(text, "'", "'") ||
-        this.betweenPair(text, "\"\"\"", "\"\"\"") || this.betweenPair(text, "'''", "'''")) {
-            return false;
-        }
-        // in comment
-        const lineStart = text.lastIndexOf("\n") + 1;
-        if (text.indexOf("#", lineStart) >= 0) {
-            return false;
-        }
-        return true;
+        return { i, stringBuilder, pythonDoc };
     }
 }

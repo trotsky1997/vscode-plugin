@@ -44,4 +44,60 @@ export class PhpLangUtil extends LangUtil {
         }
         return true;
     }
+
+    public datamask(s: string, trivialLiterals: Set<string>): string {
+        let stringBuilder = "";
+        let emptyLine = true;
+        let lastLineEnd = -1;
+        for (let i = 0; i < s.length; i++) {
+            const c = s.charAt(i);
+            if (c === "\n") {
+                stringBuilder += c;
+                emptyLine = true;
+                lastLineEnd = stringBuilder.length;
+            } else if (c === "\"" || c === "'" || c === "`") {
+                stringBuilder += c;
+                emptyLine = false;
+                ({ i, stringBuilder } = this.skipString(s, trivialLiterals, stringBuilder, i, c));
+            } else if (s.startsWith("<<<", i)) {
+                let j = i + 3;
+                while (j < s.length && s[j].match(/^[a-zA-Z0-9_$]$/)) {
+                    j++;
+                }
+                let lineEnd = j;
+                while (lineEnd < s.length && s[lineEnd] !== "\n") {
+                    lineEnd++;
+                }
+                const heredocTag = s.substring(i + 3, j);
+                stringBuilder += "\"";
+                // tslint:disable-next-line: variable-name
+                ({ i, stringBuilder } = this.skipString2(s, trivialLiterals, stringBuilder, lineEnd + 1, (_s, _i) => {
+                    if (_s.substring(_i).match(new RegExp(`^\n${heredocTag.replace("$", "\\$")}( |\\t)*(?=;|\\n)`))) {
+                        return heredocTag.length + 2;
+                    }
+                    return -1;
+                }));
+                i -= 1;
+                stringBuilder += "\"";
+            } else if (s.startsWith("//", i)) {
+                // line comment
+                i = this.skipAfter(s, i + 2, "\n") - 1;
+                if (emptyLine) {
+                    stringBuilder = stringBuilder.substring(0, lastLineEnd);
+                }
+            } else if (s.startsWith("/*", i)) {
+                /* block comment */
+                i = this.skipAfter(s, i + 2, "*/") - 1;
+                if (emptyLine) {
+                    stringBuilder = stringBuilder.substring(0, lastLineEnd);
+                }
+            } else {
+                stringBuilder += c;
+                if (c !== "\t" && c !== " ") {
+                    emptyLine = false;
+                }
+            }
+        }
+        return stringBuilder;
+    }
 }

@@ -1,7 +1,12 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
-## [0.2.0] - %DATE%
+## [0.2.1] - 2019-11-28
+
+### Added
+- JavaScript/TypeScript/Go/Php的搜索。
+
+## [0.2.0] - 2019-11-27
 
 ### Added
 - 支持了专业版的自学习功能。
@@ -15,6 +20,9 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 - 使用远程服务超时的提示文字写成了本地
 - 修复了两个短结果相关的设置项无效的bug
 - (企业版) 修复了一些设置的文本显示
+- Fix a bug that prevents local server launching automatically.
+- Fix a bug when there is quote in comment.
+- (JavaScript/TypeScript) 一个vue中无法使用的bug。
 
 ## [0.1.19] - 2019-11-01
 

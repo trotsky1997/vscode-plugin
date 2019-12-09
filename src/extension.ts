@@ -225,7 +225,7 @@ function formatResData(results: PredictResult, langUtil: LangUtil, document: vsc
         command: "aiXcoder.insert",
         arguments: [ext, "primary", langUtil, document],
     };
-    const minCompletionTokensCount = Preference.getParam("controllerMode") ? 0 : 1;
+    const minCompletionTokensCount = 0;
     const sortL2S = Preference.getLongResultCutsLong2Short();
     const unique = new Set();
     for (const result of results.data) {
@@ -290,7 +290,7 @@ export function formatSortData(results: SortResult | null, langUtil: LangUtil, d
     return r;
 }
 
-export async function fetchResults2(text: string, remainingText: string, laterCode: string, fileName: string, ext: string, lang: string, document: vscode.TextDocument, starDisplay = STAR_DISPLAY.LEFT): Promise<{
+export async function fetchResults2(text: string, remainingText: string, laterCode: string, fileName: string, ext: string, lang: string, document: vscode.TextDocument, starDisplay: STAR_DISPLAY): Promise<{
     longResults: AiXCompletionItem[],
     sortResults: SortResult,
     fetchTime: number,

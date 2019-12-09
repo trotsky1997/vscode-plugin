@@ -31,25 +31,35 @@ export class JavaScriptLangUtil extends LangUtil {
 
     public datamask(s: string, trivialLiterals: Set<string>): string {
         let stringBuilder = "";
+        let emptyLine = true;
+        let lastLineEnd = -1;
         for (let i = 0; i < s.length; i++) {
             const c = s.charAt(i);
-            stringBuilder += (c);
-            if (c === '"' || c === "'" || c === "`") {
-                i++;
-                const strStart = i;
-                for (; i < s.length; i++) {
-                    if (s.charAt(i) === c) {
-                        break;
-                    }
-                    if (s.charAt(i) === "\\") {
-                        i++;
-                    }
-                }
-                const strContent = s.substring(strStart, i);
-                if (trivialLiterals.has(strContent)) {
-                    stringBuilder += strContent;
-                }
+            if (c === "\n") {
                 stringBuilder += c;
+                emptyLine = true;
+                lastLineEnd = stringBuilder.length;
+            } else if (c === "\"" || c === "'" || c === "`") {
+                stringBuilder += c;
+                emptyLine = false;
+                ({ i, stringBuilder } = this.skipString(s, trivialLiterals, stringBuilder, i, c));
+            } else if (s.startsWith("//", i)) {
+                // line comment
+                i = this.skipAfter(s, i + 2, "\n") - 1;
+                if (emptyLine) {
+                    stringBuilder = stringBuilder.substring(0, lastLineEnd);
+                }
+            } else if (s.startsWith("/*", i)) {
+                /* block comment */
+                i = this.skipAfter(s, i + 2, "*/") - 1;
+                if (emptyLine) {
+                    stringBuilder = stringBuilder.substring(0, lastLineEnd);
+                }
+            } else {
+                stringBuilder += c;
+                if (c !== "\t" && c !== " ") {
+                    emptyLine = false;
+                }
             }
         }
         return stringBuilder;

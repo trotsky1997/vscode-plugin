@@ -50,4 +50,24 @@ suite("Python Language Test Suite", () => {
       expect(rendered, sourceTokensLines[i]).to.equal(expectedValue);
     }
   });
+
+  // tslint:disable: no-trailing-whitespace
+  test("datamask", () => {
+    const s = `string e = "text";
+    string e = 'text';
+    string e = """text
+    text
+    text""";
+    """
+    a = 'xx'
+    b = "cc"
+    """
+    string f = "trivial text";`;
+    const t = `string e = "";
+    string e = '';
+    string e = "";
+    string f = "trivial text";`;
+    const r = langUtil.datamask(s, new Set<string>(["trivial text"]));
+    expect(r.replace(/\n(( |\t)*\n)+/g, "\n")).to.equal(t);
+  });
 });

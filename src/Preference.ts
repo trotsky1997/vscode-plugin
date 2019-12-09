@@ -164,6 +164,6 @@ export default class Preference {
     }
 
     public static getSelfLearn() {
-        return vscode.workspace.getConfiguration().get("aiXcoder.selfLearining") as boolean;
+        return vscode.workspace.getConfiguration().get("aiXcoder.selfLearning") as boolean;
     }
 }

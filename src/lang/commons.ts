@@ -25,7 +25,7 @@ function _getInstance(lang: string): LangUtil {
         case "go":
             return new GoLangUtil();
         default:
-            throw new Error(`unsuppored language ${lang}`);
+            throw new Error(`unsupported language ${lang}`);
     }
 }
 

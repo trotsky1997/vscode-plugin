@@ -213,25 +213,37 @@ export abstract class LangUtil {
 
     public datamask(s: string, trivialLiterals: Set<string>): string {
         let stringBuilder = "";
+        let emptyLine = true;
+        let lastLineEnd = -1;
         for (let i = 0; i < s.length; i++) {
             const c = s.charAt(i);
-            stringBuilder += (c);
-            if (c === '"' || c === "'") {
-                i++;
-                const strStart = i;
-                for (; i < s.length; i++) {
-                    if (s.charAt(i) === c) {
-                        break;
-                    }
-                    if (s.charAt(i) === "\\") {
-                        i++;
-                    }
-                }
-                const strContent = s.substring(strStart, i);
-                if (trivialLiterals.has(strContent)) {
-                    stringBuilder += strContent;
-                }
+            if (c === "\n") {
                 stringBuilder += c;
+                emptyLine = true;
+                lastLineEnd = stringBuilder.length;
+            } else if (c === "\"" || c === "'") {
+                stringBuilder += c;
+                emptyLine = false;
+                ({ i, stringBuilder } = this.skipString(s, trivialLiterals, stringBuilder, i, c));
+            } else if (s.startsWith("//", i)) {
+                // line comment
+                i = this.skipAfter(s, i + 2, "\n") - 1;
+                if (emptyLine) {
+                    stringBuilder = stringBuilder.substring(0, lastLineEnd);
+                } else {
+                    i--;
+                }
+            } else if (s.startsWith("/*", i)) {
+                /* block comment */
+                i = this.skipAfter(s, i + 2, "*/") - 1;
+                if (emptyLine) {
+                    stringBuilder = stringBuilder.substring(0, lastLineEnd);
+                }
+            } else {
+                stringBuilder += c;
+                if (c !== "\t" && c !== " ") {
+                    emptyLine = false;
+                }
             }
         }
         return stringBuilder;
@@ -421,6 +433,54 @@ export abstract class LangUtil {
         for (const keyword of this.getKeywords()) {
             this.addSpacingOption(keyword, nextToken, hasSpace);
         }
+    }
+
+    protected skipAfter(s: string, i: number, target: string) {
+        for (; i < s.length; i++) {
+            if (s.startsWith(target, i)) {
+                i += target.length;
+                break;
+            }
+        }
+        return i;
+    }
+
+    protected skipString(s: string, trivialLiterals: Set<string>, stringBuilder: string, i: number, c: string) {
+        i++;
+        const strStart = i;
+        for (; i < s.length; i++) {
+            if (s[i] === c) {
+                break;
+            }
+            if (s[i] === "\\") {
+                i++;
+            }
+        }
+        const strContent = s.substring(strStart, i);
+        if (trivialLiterals.has(strContent)) {
+            stringBuilder += strContent;
+        }
+        stringBuilder += c;
+        return { i, stringBuilder };
+    }
+
+    protected skipString2(s: string, trivialLiterals: Set<string>, stringBuilder: string, i: number, pred: ((s: string, i: number) => number)) {
+        const strStart = i;
+        let skipLen = -1;
+        for (; i < s.length; i++) {
+            skipLen = pred(s, i);
+            if (skipLen >= 0) {
+                break;
+            }
+        }
+        const strContent = s.substring(strStart, i);
+        if (trivialLiterals.has(strContent)) {
+            stringBuilder += strContent;
+        }
+        if (skipLen >= 0) {
+            i += skipLen;
+        }
+        return { i, stringBuilder };
     }
 
     private getHasSpaceBetweenGetterStrict(previousToken: string, nextToken: string): SpaceSupplier | null {
