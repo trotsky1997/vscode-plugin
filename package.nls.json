@@ -19,5 +19,6 @@
 	"aiXcoder.configuration.longResultCutSort.long2short": "Long to Short",
 	"aiXcoder.configuration.longResultCuts.auto": "Auto",
 	"aiXcoder.configuration.longResultCuts.none": "Don't cut into short results",
-	"aiXcoder.configuration.retrigger": "Retrigger completion automatically"
+	"aiXcoder.configuration.retrigger": "Retrigger completion automatically",
+	"aiXcoder.configuration.localShowIncompleteSuggestions": "Show incomplete suggestions before indexing finishes"
 }

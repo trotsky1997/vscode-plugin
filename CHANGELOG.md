@@ -1,10 +1,13 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
-## [0.3.8] - %DATE%
+## [0.3.8] - 2019-12-11
 
 ### Added
 - Automatically detects port of local service.
+
+### Fixed
+- Sometimes local service is not started properly.
 
 ## [0.3.7] - 2019-12-6
 

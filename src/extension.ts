@@ -13,6 +13,7 @@ import { localize, localizeMessages } from "./i18n";
 import { activateJava } from "./javaExtension";
 import { getInstance } from "./lang/commons";
 import { LangUtil } from "./lang/langUtil";
+import { getLocalPort } from "./localService";
 import log from "./logger";
 import { activatePhp } from "./phpExtension";
 import Preference from "./Preference";
@@ -683,90 +684,94 @@ const lastModifedTime: { [uri: string]: number } = {};
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export async function activate(context: vscode.ExtensionContext) {
-    log("AiX: aiXcoder activating");
-
-    if (os.platform() === "win32" && compareVersion(os.release(), "10") < 0) {
-        const star = vscode.workspace.getConfiguration().get("aiXcoder.symbol");
-        if (star === myPackageJSON.contributes.configuration.properties["aiXcoder.symbol"].default) {
-            // Emoji ⭐ does not display under < win7
-            vscode.workspace.getConfiguration().update("aiXcoder.symbol", "★");
-        }
-    }
-
-    const endpoint = Preference.getEndpoint();
-    if (!endpoint) {
-        vscode.window.showWarningMessage(localize("aiXcoder.endpoint.empty"), localize("openSetting")).then((selected) => {
-            if (selected === localize("openSetting")) {
-                vscode.commands.executeCommand("workbench.action.openSettings", "aiXcoder: Endpoint");
-            }
-        });
-    }
-
-    await Preference.init(context);
-    (async function checkUpdate() {
-        await API.checkUpdate();
-        setTimeout(checkUpdate, 1000 * 60 * 60);
-    })();
-    const askedTelemetry = context.globalState.get("aiXcoder.askedTelemetry");
-    if (!askedTelemetry) {
-        context.globalState.update("aiXcoder.askedTelemetry", true);
-        const enableTelemetry = vscode.workspace.getConfiguration().get("aiXcoder.enableTelemetry");
-        const enableTelemetryMsg = enableTelemetry ? localize("enabled") : localize("disabled");
-        vscode.window.showInformationMessage(util.format(localize("aiXcoder.askedTelemetry"), enableTelemetryMsg), localize("aiXcoder.askedTelemetryOK"), localize("aiXcoder.askedTelemetryNo")).then((selected) => {
-            if (selected === localize("aiXcoder.askedTelemetryNo")) {
-                vscode.workspace.getConfiguration().update("aiXcoder.enableTelemetry", false);
-            }
-        });
-    }
-    context.subscriptions.push(vscode.workspace.onDidOpenTextDocument((document) => {
-        if (document.uri.scheme === "file" || document.uri.scheme === "untitled") {
-            lastModifedTime[document.uri.toJSON()] = Date.now();
-        }
-    }));
-    context.subscriptions.push(vscode.workspace.onDidChangeTextDocument((event) => {
-        if (event.document.uri.scheme === "file" || event.document.uri.scheme === "untitled") {
-            lastModifedTime[event.document.uri.toJSON()] = Date.now();
-        }
-    }));
-    context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.insert", (ext: string, subtype: string, langUtil: LangUtil, document: vscode.TextDocument, single: SinglePredictResult | SingleWordCompletion, completionItem: AiXCompletionItem) => {
-        try {
-            if (subtype === "primary") {
-                const tokenLen = completionItem.insertText.toString().split(/\b/g).filter((s) => s.trim().length > 0).length;
-                const charLen = completionItem.insertText.toString().length;
-                API.sendTelemetry(ext, API.TelemetryType.LongUse, tokenLen, charLen);
-            } else if (subtype === "secondary") {
-                API.sendTelemetry(ext, API.TelemetryType.ShortUse, 1, (single as SingleWordCompletion).word.length);
-            }
-        } catch (e) {
-            log(e);
-        }
-        if (typeof langUtil === "string") {
-            langUtil = getInstance(langUtil);
-        }
-        if ((single as SinglePredictResult).rescues) {
-            langUtil.rescue(document, (single as SinglePredictResult).rescues);
-        } else if ((single as SingleWordCompletion).options && (single as SingleWordCompletion).options.rescues) {
-            langUtil.rescue(document, (single as SingleWordCompletion).options.rescues);
-        }
-        if (langUtil.retrigger(completionItem) && (single as SinglePredictResult).retrigger) {
-            vscode.commands.executeCommand("editor.action.triggerSuggest");
-        }
-    }));
-    context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.resetMessage", () => {
-        for (const message of Object.keys(localizeMessages)) {
-            Preference.context.globalState.update("hide:" + message, false);
-        }
-        showInformationMessage("msgreset");
-    }));
-    vscode.window.registerWebviewPanelSerializer("aixsearch", new AiXSearchSerializer());
-    context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.search", (uri) => {
-        doSearch(context, uri);
-    }));
-    // const msintellicode = vscode.extensions.getExtension("visualstudioexptteam.vscodeintellicode");
-    // if (msintellicode) {
-    //     showInformationMessage("msintellicode.enabled");
-    // }
     try {
+        log("AiX: aiXcoder activating");
+
+        if (os.platform() === "win32" && compareVersion(os.release(), "10") < 0) {
+            const star = vscode.workspace.getConfiguration().get("aiXcoder.symbol");
+            if (star === myPackageJSON.contributes.configuration.properties["aiXcoder.symbol"].default) {
+                // Emoji ⭐ does not display under < win7
+                vscode.workspace.getConfiguration().update("aiXcoder.symbol", "★");
+            }
+        }
+
+        await getLocalPort();
+
+        const endpoint = Preference.getEndpoint();
+        if (!endpoint) {
+            vscode.window.showWarningMessage(localize("aiXcoder.endpoint.empty"), localize("openSetting")).then((selected) => {
+                if (selected === localize("openSetting")) {
+                    vscode.commands.executeCommand("workbench.action.openSettings", "aiXcoder: Endpoint");
+                }
+            });
+        } else {
+            vscode.workspace.getConfiguration().update("aiXcoder.endpoint", endpoint);
+        }
+
+        await Preference.init(context);
+        (async function checkUpdate() {
+            await API.checkUpdate();
+            setTimeout(checkUpdate, 1000 * 60 * 60);
+        })();
+        const askedTelemetry = context.globalState.get("aiXcoder.askedTelemetry");
+        if (!askedTelemetry) {
+            context.globalState.update("aiXcoder.askedTelemetry", true);
+            const enableTelemetry = vscode.workspace.getConfiguration().get("aiXcoder.enableTelemetry");
+            const enableTelemetryMsg = enableTelemetry ? localize("enabled") : localize("disabled");
+            vscode.window.showInformationMessage(util.format(localize("aiXcoder.askedTelemetry"), enableTelemetryMsg), localize("aiXcoder.askedTelemetryOK"), localize("aiXcoder.askedTelemetryNo")).then((selected) => {
+                if (selected === localize("aiXcoder.askedTelemetryNo")) {
+                    vscode.workspace.getConfiguration().update("aiXcoder.enableTelemetry", false);
+                }
+            });
+        }
+        context.subscriptions.push(vscode.workspace.onDidOpenTextDocument((document) => {
+            if (document.uri.scheme === "file" || document.uri.scheme === "untitled") {
+                lastModifedTime[document.uri.toJSON()] = Date.now();
+            }
+        }));
+        context.subscriptions.push(vscode.workspace.onDidChangeTextDocument((event) => {
+            if (event.document.uri.scheme === "file" || event.document.uri.scheme === "untitled") {
+                lastModifedTime[event.document.uri.toJSON()] = Date.now();
+            }
+        }));
+        context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.insert", (ext: string, subtype: string, langUtil: LangUtil, document: vscode.TextDocument, single: SinglePredictResult | SingleWordCompletion, completionItem: AiXCompletionItem) => {
+            try {
+                if (subtype === "primary") {
+                    const tokenLen = completionItem.insertText.toString().split(/\b/g).filter((s) => s.trim().length > 0).length;
+                    const charLen = completionItem.insertText.toString().length;
+                    API.sendTelemetry(ext, API.TelemetryType.LongUse, tokenLen, charLen);
+                } else if (subtype === "secondary") {
+                    API.sendTelemetry(ext, API.TelemetryType.ShortUse, 1, (single as SingleWordCompletion).word.length);
+                }
+            } catch (e) {
+                log(e);
+            }
+            if (typeof langUtil === "string") {
+                langUtil = getInstance(langUtil);
+            }
+            if ((single as SinglePredictResult).rescues) {
+                langUtil.rescue(document, (single as SinglePredictResult).rescues);
+            } else if ((single as SingleWordCompletion).options && (single as SingleWordCompletion).options.rescues) {
+                langUtil.rescue(document, (single as SingleWordCompletion).options.rescues);
+            }
+            if (langUtil.retrigger(completionItem) && (single as SinglePredictResult).retrigger) {
+                vscode.commands.executeCommand("editor.action.triggerSuggest");
+            }
+        }));
+        context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.resetMessage", () => {
+            for (const message of Object.keys(localizeMessages)) {
+                Preference.context.globalState.update("hide:" + message, false);
+            }
+            showInformationMessage("msgreset");
+        }));
+        vscode.window.registerWebviewPanelSerializer("aixsearch", new AiXSearchSerializer());
+        context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.search", (uri) => {
+            doSearch(context, uri);
+        }));
+        // const msintellicode = vscode.extensions.getExtension("visualstudioexptteam.vscodeintellicode");
+        // if (msintellicode) {
+        //     showInformationMessage("msintellicode.enabled");
+        // }
         const aixHooks: {
             [lang: string]: void | {
                 aixHook: (ll: vscode.CompletionList | vscode.CompletionItem[], ...args: any) => Promise<vscode.CompletionList | vscode.CompletionItem[]>,

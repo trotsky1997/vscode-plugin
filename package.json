@@ -28,7 +28,7 @@
             "properties": {
                 "aiXcoder.endpoint": {
                     "type": "string",
-                    "default": "http://localhost:8787/",
+                    "default": "",
                     "description": "%aiXcoder.configuration.endpoint%"
                 },
                 "aiXcoder.searchEndpoint": {
@@ -73,6 +73,11 @@
                         "%aiXcoder.configuration.longResultCutSort.long2short%"
                     ],
                     "description": "%aiXcoder.configuration.longResultCutSort%"
+                },
+                "aiXcoder.localShowIncompleteSuggestions": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "%aiXcoder.configuration.localShowIncompleteSuggestions%"
                 }
             }
         },

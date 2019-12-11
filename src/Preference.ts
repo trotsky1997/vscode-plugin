@@ -1,6 +1,6 @@
 import * as uuidv4 from "uuid/v4";
 import * as vscode from "vscode";
-import { getLocalPort } from "./localService";
+import { getLocalPort, getLocalPortSync } from "./localService";
 
 function getParamsFromUrl(url: string) {
     url = decodeURI(url);
@@ -117,12 +117,9 @@ export default class Preference {
 
     public static getEndpoint() {
         let endpoint = vscode.workspace.getConfiguration().get("aiXcoder.endpoint") as string;
+        endpoint = endpoint || "http://localhost:8787/";
         if (endpoint.startsWith("http://localhost")) {
-            const m = endpoint.match("http://localhost(:\d+)?(.*)");
-            if (m) {
-                const url = m[1];
-                endpoint = `http://localhost:${getLocalPort()}${url}`;
-            }
+            endpoint = `http://localhost:${getLocalPortSync()}/`;
         }
         if (!endpoint.endsWith("/")) {
             endpoint += "/";

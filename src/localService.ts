@@ -138,11 +138,8 @@ export function isServerStarting() {
 }
 
 let lastOpenFailed = false;
-export async function openurl(url: string) {
+export async function startLocalService(soft: boolean) {
     if (lastOpenFailed) { return; }
-    if (url !== "aixcoder://localserver") {
-        return;
-    }
     const aixcoderPath = path.join(getAixcoderInstallUserPath(), "localserver", "current", "server");
     try {
         await fs.mkdirp(aixcoderPath);
@@ -155,10 +152,24 @@ export async function openurl(url: string) {
         lastOpenFailed = true;
         // server not found
     }
+
+    if (soft) {
+        try {
+            await download(Preference.getEndpoint(), null, {
+                timeout: 1000,
+            });
+            lastOpenFailed = false;
+            serverStarting = false;
+            return;
+        } catch (error) {
+            // server not running
+        }
+    }
+
     serverStarting = true;
     authorize(); // chmod 777 for mac
     launchLocalServer();
-    vscode.window.withProgress({
+    await vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
         title: localize("localServiceStarting"),
         cancellable: true,
@@ -318,11 +329,15 @@ function getConfigPath() {
 
 const localConfig = new FileAutoSyncer(getConfigPath(), (err, text) => {
     if (err) {
-        return { };
+        return {};
     }
     return JSON.parse(text);
 });
 
-export function getLocalPort() {
-    return localConfig.getSync();
+export function getLocalPortSync() {
+    return localConfig.getSync().port || "8787";
+}
+
+export async function getLocalPort() {
+    return (await localConfig.get()).port || "8787";
 }

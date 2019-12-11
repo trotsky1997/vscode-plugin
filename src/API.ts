@@ -10,7 +10,7 @@ import FileAutoSyncer from "./FileAutoSyncer";
 import { localize } from "./i18n";
 import { LangUtil } from "./lang/langUtil";
 import Learner from "./Learner";
-import { execAsync, forceUpdate, getServiceStatus, getVersion, isServerStarting, openurl } from "./localService";
+import { execAsync, forceUpdate, getServiceStatus, getVersion, isServerStarting, startLocalService } from "./localService";
 import log from "./logger";
 import NetworkController from "./NetworkController";
 import Preference from "./Preference";
@@ -99,33 +99,54 @@ let saStatus = 0;
 let allowIgnoreSaStatus = false;
 
 async function saStatusChecker(ext: string) {
-    if (getServiceStatusLock !== ext || saStatus < 2) {
-        saStatusToken.cancelled = true;
-        getServiceStatusLock = ext;
-        saStatusToken = { cancelled: false };
-        saStatus = await getServiceStatus(ext);
-        if (saStatus <= 1) {
-            await vscode.window.withProgress({
-                location: vscode.ProgressLocation.Window,
-                title: localize("localInitializing"),
-                cancellable: false,
-            }, async (progress, token) => {
-                while (saStatus <= 1 && !saStatusToken.cancelled) {
-                    showWarningMessageOnce("localInitializing", "nosa-yes", "nosa-no").then((select) => {
-                        if (select === localize("nosa-yes")) {
-                            allowIgnoreSaStatus = true;
-                        } else if (select === localize("nosa-no")) {
-                            allowIgnoreSaStatus = false;
+    getServiceStatusLock = ext;
+}
+
+async function saStatusCheckerWorker() {
+    while (true) {
+        if (getServiceStatusLock !== null) {
+            saStatusToken.cancelled = true;
+            saStatusToken = { cancelled: false };
+            try {
+                saStatus = await getServiceStatus(getServiceStatusLock);
+            } catch (error) {
+                // service not started
+                await startLocalService(true);
+                saStatus = 0;
+            }
+            if (saStatus <= 1) {
+                await vscode.window.withProgress({
+                    location: vscode.ProgressLocation.Window,
+                    title: localize("localInitializing"),
+                    cancellable: false,
+                }, async (progress, token) => {
+                    while (saStatus <= 1 && !saStatusToken.cancelled) {
+                        if (!Preference.context.globalState.get("hide:localInitializing")) {
+                            showWarningMessageOnce("localInitializing", "nosa-yes", "nosa-no").then((select) => {
+                                if (select === localize("nosa-yes") || select === localize("nosa-no")) {
+                                    allowIgnoreSaStatus = select === localize("nosa-yes");
+                                    vscode.workspace.getConfiguration().update("aiXcoder.localShowIncompleteSuggestions", allowIgnoreSaStatus);
+                                    showInformationMessageOnce(localize("localShowIncompleteSuggestions", localize(allowIgnoreSaStatus ? "nosa-yes" : "nosa-no").toLowerCase()));
+                                    Preference.context.globalState.update("hide:localInitializing", true);
+                                }
+                            });
                         }
-                    });
-                    await new Promise((resolve) => setTimeout(resolve, 1000));
-                    saStatus = await getServiceStatus(ext);
-                }
-            });
-            getServiceStatusLock = null;
+                        await new Promise((resolve) => setTimeout(resolve, 1000));
+                        try {
+                            saStatus = await getServiceStatus(getServiceStatusLock);
+                        } catch (error) {
+                            // service not started
+                            startLocalService(true);
+                            saStatus = 0;
+                        }
+                    }
+                });
+            }
         }
+        await new Promise((resolve) => setTimeout(resolve, 3000));
     }
 }
+saStatusCheckerWorker();
 
 function reverseString(str) {
     let newString = "";
@@ -263,12 +284,12 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
         }
         if (localRequest) {
             if (firstLocalRequestAttempt) {
-                openurl(`aixcoder://localserver`);
+                startLocalService(true);
                 firstLocalRequestAttempt = false;
             } else {
                 localNetworkController.onFailure(() => showWarningMessage(localize("localServerDown", endpoint), "manualTryStartLocalService").then((selection) => {
                     if (selection === "manualTryStartLocalService") {
-                        openurl(`aixcoder://localserver`);
+                        startLocalService(false);
                     }
                 }));
             }

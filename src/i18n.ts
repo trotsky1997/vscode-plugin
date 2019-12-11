@@ -274,6 +274,10 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "en": "Close",
         "zh-cn": "关闭",
     },
+    "localShowIncompleteSuggestions": {
+        "en": "You chose to %s. You can change it later in settings.",
+        "zh-cn": "您选择了%s。您可以之后在设置中更改。",
+    },
 };
 
 export function localize(key: string, ...params: any[]) {
