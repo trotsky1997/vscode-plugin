@@ -111,7 +111,7 @@ async function saStatusCheckerWorker() {
                 saStatus = await getServiceStatus(getServiceStatusLock);
             } catch (error) {
                 // service not started
-                await startLocalService(true);
+                await startLocalService(false);
                 saStatus = 0;
             }
             if (saStatus <= 1) {
@@ -136,7 +136,7 @@ async function saStatusCheckerWorker() {
                             saStatus = await getServiceStatus(getServiceStatusLock);
                         } catch (error) {
                             // service not started
-                            startLocalService(true);
+                            startLocalService(false);
                             saStatus = 0;
                         }
                     }
@@ -284,12 +284,12 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
         }
         if (localRequest) {
             if (firstLocalRequestAttempt) {
-                startLocalService(true);
+                startLocalService(false);
                 firstLocalRequestAttempt = false;
             } else {
                 localNetworkController.onFailure(() => showWarningMessage(localize("localServerDown", endpoint), "manualTryStartLocalService").then((selection) => {
                     if (selection === "manualTryStartLocalService") {
-                        startLocalService(false);
+                        startLocalService(true);
                     }
                 }));
             }
