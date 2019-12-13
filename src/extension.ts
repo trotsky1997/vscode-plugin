@@ -652,7 +652,7 @@ export async function activate(context: vscode.ExtensionContext) {
             const star = vscode.workspace.getConfiguration().get("aiXcoder.symbol");
             if (star === myPackageJSON.contributes.configuration.properties["aiXcoder.symbol"].default) {
                 // Emoji ⭐ does not display under < win7
-                vscode.workspace.getConfiguration().set("aiXcoder.symbol", "★");
+                vscode.workspace.getConfiguration().update("aiXcoder.symbol", "★");
             }
         }
 
