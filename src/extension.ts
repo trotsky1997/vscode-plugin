@@ -585,6 +585,11 @@ export function mergeSortResult(l: vscode.CompletionItem[], sortResults: SortRes
         l.push(...formatSortData(sortResults, getInstance(lang), document, ext, sortResults.current));
         return;
     }
+    if (sortResults.list.length > 0) {
+        for (const systemCompletion of l) {
+            systemCompletion.preselect = false;
+        }
+    }
     const telemetryCommand: vscode.Command = {
         title: "AiXTelemetry",
         command: "aiXcoder.insert",
@@ -777,11 +782,11 @@ export async function activate(context: vscode.ExtensionContext) {
                 aixHook: (ll: vscode.CompletionList | vscode.CompletionItem[], ...args: any) => Promise<vscode.CompletionList | vscode.CompletionItem[]>,
             },
         } = {
-            // python: await activatePython(context),
+            python: await activatePython(context),
             java: await activateJava(context),
             // cpp: await activateCPP(context),
             // php: await activatePhp(context),
-            // typescript: await activateTypeScript(context),
+            typescript: await activateTypeScript(context, true),
             // go: await activateGo(context),
         };
         log("AiX: aiXcoder activated");

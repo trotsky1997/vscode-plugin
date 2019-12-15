@@ -5,7 +5,7 @@ import { getInstance } from "./lang/commons";
 import log from "./logger";
 import { Syncer } from "./Syncer";
 
-export async function activateTypeScript(context: vscode.ExtensionContext) {
+export async function activateTypeScript(context: vscode.ExtensionContext, jsOnly: boolean) {
     let activated = false;
     async function _activate() {
         if (activated) {

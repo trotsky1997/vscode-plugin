@@ -109,9 +109,6 @@ export async function activateJava(context: vscode.ExtensionContext) {
                 // return ll;
                 const { offsetID } = getReqText(document, position, "java");
                 const items = Array.isArray(ll) ? ll : ll.items;
-                if (items.length > 0) {
-                    items[0].preselect = false;
-                }
 
                 const sortResults = await syncer.get(offsetID, items.length === 0);
                 if (sortResults == null) { return ll; }

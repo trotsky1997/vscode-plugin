@@ -17,7 +17,7 @@ export default class FileAutoSyncer<T> {
         });
         this.text = null;
         this.readFile();
-        setInterval(this.readFile, 1000 * 60 * 5);
+        setInterval(this.readFile.bind(this), 1000 * 60 * 5);
         this.initWatch();
     }
 
