@@ -3,6 +3,12 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 
 ## [0.3.10] - 
 
+### Added
+- Supports Python and JavaScript now with local service 1.2.0 or later.
+
+### Fixed
+- Fixes some bugs on starting local serivcee.
+
 ## [0.3.9] - 2019-12-11
 
 ### Added
