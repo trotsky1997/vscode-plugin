@@ -96,7 +96,6 @@ let learner: Learner;
 let getServiceStatusLock = null;
 let saStatusToken = { cancelled: false };
 let saStatus = 0;
-let allowIgnoreSaStatus = false;
 
 async function saStatusChecker(ext: string) {
     getServiceStatusLock = ext;
@@ -123,8 +122,8 @@ async function saStatusCheckerWorker() {
                     while (saStatus <= 1 && !saStatusToken.cancelled) {
                         if (!Preference.context.globalState.get("hide:localInitializing")) {
                             showWarningMessageOnce("localInitializing", "nosa-yes", "nosa-no").then((select) => {
-                                if (select === localize("nosa-yes") || select === localize("nosa-no")) {
-                                    allowIgnoreSaStatus = select === localize("nosa-yes");
+                                if (select === "nosa-yes" || select === "nosa-no") {
+                                    const allowIgnoreSaStatus = select === "nosa-yes";
                                     vscode.workspace.getConfiguration().update("aiXcoder.localShowIncompleteSuggestions", allowIgnoreSaStatus);
                                     showInformationMessageOnce(localize("localShowIncompleteSuggestions", localize(allowIgnoreSaStatus ? "nosa-yes" : "nosa-no").toLowerCase()));
                                     Preference.context.globalState.update("hide:localInitializing", true);
@@ -196,7 +195,7 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
     }
 
     saStatusChecker(ext);
-    if (saStatus < 2 && !allowIgnoreSaStatus) {
+    if (saStatus < 2 && !vscode.workspace.getConfiguration().get("aiXcoder.localShowIncompleteSuggestions")) {
         return null;
     }
 
