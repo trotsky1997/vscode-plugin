@@ -84,7 +84,7 @@
                     "type": "boolean",
                     "default": false,
                     "description": "%aiXcoder.configuration.localShowIncompleteSuggestions%"
-                },
+                }
             }
         },
         "commands": [

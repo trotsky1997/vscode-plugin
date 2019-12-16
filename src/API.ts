@@ -329,16 +329,28 @@ export async function checkUpdate() {
         showInformationMessageOnce("JREMissing");
     }
     try {
-        const updateURL = "repos/aixcoder-plugin/localservice/releases/latest";
-        const versionJson = await myRequest({
-            method: "get",
-            url: updateURL,
-            headers: {
-                "User-Agent": "aiXcoder-vscode-plugin",
-            },
-        }, "https://api.github.com");
-        const newVersions = JSON.parse(versionJson);
-        const v = newVersions.tag_name;
+        let v = "0.0.0";
+        try {
+            const updateURL = "repos/aixcoder-plugin/localservice/releases/latest";
+            const versionJson = await myRequest({
+                method: "get",
+                url: updateURL,
+                headers: {
+                    "User-Agent": "aiXcoder-vscode-plugin",
+                },
+            }, "https://api.github.com");
+            const newVersions = JSON.parse(versionJson);
+            v = newVersions.tag_name;
+        } catch (error) {
+            const updateURL = "localservice/releases/latest";
+            v = await myRequest({
+                method: "get",
+                url: updateURL,
+                headers: {
+                    "User-Agent": "aiXcoder-vscode-plugin",
+                },
+            }, "http://image.aixcoder.com");
+        }
         const localVersion = await getVersion();
         let doUpdate = false;
         if (compareVersion(localVersion, v) < 0) {
