@@ -20,7 +20,7 @@ export async function activateTypeScript(context: vscode.ExtensionContext, jsOnl
     if (msts) {
         log(`AiX: ${mstsId} detected`);
         const distjsPath = path.join(msts.extensionPath, "dist", "extension.js");
-        hooked = await JSHooker("/**AiXHooked-1**/", distjsPath, msts, "js.reload.msts", "js.fail.msts", (distjs) => {
+        hooked = await JSHooker("/**AiXHooked-local-1**/", distjsPath, msts, "js.reload.msts", "js.fail.msts", (distjs) => {
             const handleResultCode = (r: string) => `const aix = require(\"vscode\").extensions.getExtension("${myID}");const api = aix && aix.exports; if(api && api.aixhook){${r}=await api.aixhook(\"typescript\",${r},$1,$2,$3,$4);}`;
             const newProvideCompletionItems = `async provideCompletionItems($1,$2,$3,$4){let rr=await this.provideCompletionItems2($1,$2,$3,$4);${handleResultCode("rr")};return rr;}`;
             distjs = distjs.replace(/async provideCompletionItems\((\w+),\s*(\w+),\s*(\w+),\s*(\w+)\)\s*{/, `${newProvideCompletionItems}async provideCompletionItems2($1,$2,$3,$4){`);
@@ -34,7 +34,7 @@ export async function activateTypeScript(context: vscode.ExtensionContext, jsOnl
     if (mshtml) {
         log(`AiX: ${mshtmlId} detected`);
         const distjsPath = path.join(mshtml.extensionPath, "client", "dist", "htmlMain.js");
-        htmlhooked = await JSHooker("/**AiXHooked-2**/", distjsPath, mshtml, "js.reload.msts", "js.fail.msts", (distjs) => {
+        htmlhooked = await JSHooker("/**AiXHooked-local-2**/", distjsPath, mshtml, "js.reload.msts", "js.fail.msts", (distjs) => {
             const handleResultCode = (r: string) => `const aix = require(\"vscode\").extensions.getExtension("${myID}");const api = aix && aix.exports; if(api && api.aixhook){${r}=await api.aixhook(\"typescript\",${r},e,t,r,n);}`;
             const newProvideCompletionItems = `middleware:{async provideCompletionItem(e,t,r,n,o){let rr=o(e,t,r,n);${handleResultCode("rr")}return rr;}}`;
             distjs = distjs.replace("initializationOptions:{embeddedLanguages:", `${newProvideCompletionItems},initializationOptions:{embeddedLanguages:`);

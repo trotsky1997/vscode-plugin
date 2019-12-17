@@ -9,14 +9,13 @@ import { Syncer } from "./Syncer";
 import { SafeStringUtil } from "./utils/SafeStringUtil";
 
 export async function activateCPP(context: vscode.ExtensionContext) {
-    const msintellicode = vscode.extensions.getExtension("visualstudioexptteam.vscodeintellicode");
     const mscpp = vscode.extensions.getExtension("ms-vscode.cpptools");
     const activated = false;
     const syncer = new Syncer<SortResultEx>();
     let hooked = false;
     if (mscpp) {
         const distjsPath = path.join(mscpp.extensionPath, "dist", "main.js");
-        hooked = await JSHooker("/**AiXHooked-2**/", distjsPath, mscpp, "cpp.reload", "cpp.fail", (distjs) => {
+        hooked = await JSHooker("/**AiXHooked-local-2**/", distjsPath, mscpp, "cpp.reload", "cpp.fail", (distjs) => {
             const handleResultCode = (r: string) => `const aix = require(\"vscode\").extensions.getExtension("${myID}");const api = aix && aix.exports;if(api && api.aixhook){${r}=await api.aixhook(\"cpp\",${r},$1,$2,$3,$4);}`;
             const targetCode = `provideCompletionItems: async \($1, $2, $3, $4\) => { let rr=($5);${handleResultCode("rr")};return rr;}`;
             const sig = /provideCompletionItems:\s*\((\w+),\s*(\w+),\s*(\w+),\s*(\w+)\)\s*=>\s*{\s*return\s+((?:.|\s)+?);\s*}/;
@@ -57,7 +56,7 @@ export async function activateCPP(context: vscode.ExtensionContext) {
             // log("=====================");
             try {
                 const { longResults, sortResults, offsetID, fetchTime, current } = await fetchResults(document, position, ext, "cpp", syncer, STAR_DISPLAY.LEFT);
-                if (!document.isUntitled && mscpp && hooked) {
+                if (!document.isUntitled && mscpp && mscpp.isActive && hooked) {
                     syncer.put(offsetID, { ...sortResults, ext, fetchTime, current });
                 } else {
                     const sortLabels = formatSortData(sortResults, getInstance("cpp"), document, ext, current);

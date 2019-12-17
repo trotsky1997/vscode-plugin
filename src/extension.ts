@@ -9,6 +9,7 @@ import * as vscode from "vscode";
 import * as API from "./API";
 import { activateCPP } from "./cppExtension";
 import { activateGo } from "./goExtension";
+import { hookIntellicode } from "./hookintellicode";
 import { localize, localizeMessages } from "./i18n";
 import { activateJava } from "./javaExtension";
 import { getInstance } from "./lang/commons";
@@ -773,10 +774,6 @@ export async function activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.search", (uri) => {
             doSearch(context, uri);
         }));
-        // const msintellicode = vscode.extensions.getExtension("visualstudioexptteam.vscodeintellicode");
-        // if (msintellicode) {
-        //     showInformationMessage("msintellicode.enabled");
-        // }
         const aixHooks: {
             [lang: string]: void | {
                 aixHook: (ll: vscode.CompletionList | vscode.CompletionItem[], ...args: any) => Promise<vscode.CompletionList | vscode.CompletionItem[]>,
@@ -789,6 +786,7 @@ export async function activate(context: vscode.ExtensionContext) {
             typescript: await activateTypeScript(context, true),
             // go: await activateGo(context),
         };
+        await hookIntellicode(context, aixHooks);
         log("AiX: aiXcoder activated");
         return {
             async aixhook(lang: string, ll: vscode.CompletionList | vscode.CompletionItem[] | Promise<vscode.CompletionList | vscode.CompletionItem[]>, ...args: any): Promise<vscode.CompletionList | vscode.CompletionItem[]> {
