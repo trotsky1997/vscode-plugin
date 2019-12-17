@@ -2,7 +2,7 @@
     "name": "aixcoder",
     "displayName": "aiXcoder AI Code Completer",
     "description": "The best code completion tool for Java.",
-    "version": "0.3.11",
+    "version": "0.3.12",
     "publisher": "aixcoder-plugin",
     "repository": {
         "url": "https://github.com/aixcoder-plugin/vscode-plugin/tree/local"
