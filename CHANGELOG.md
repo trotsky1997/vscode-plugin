@@ -1,10 +1,13 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
-## [0.3.12] - 
+## [0.3.12] - 2019-12.17
 
 ### Changed
 - Better compability with IntelliCode.
+
+### Fixed
+- Fixed a service upgrade issue on Windows.
 
 ## [0.3.11] - 2019-12-17
 
