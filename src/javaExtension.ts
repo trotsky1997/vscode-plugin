@@ -5,11 +5,9 @@ import { localize } from "./i18n";
 import { getInstance } from "./lang/commons";
 import log from "./logger";
 import { Syncer } from "./Syncer";
-import { SafeStringUtil } from "./utils/SafeStringUtil";
 
 export async function activateJava(context: vscode.ExtensionContext) {
     const redhatjavaExtension = vscode.extensions.getExtension("redhat.java");
-    const msintellicode = vscode.extensions.getExtension("visualstudioexptteam.vscodeintellicode");
     let activated = false;
     const syncer = new Syncer<SortResultEx>();
     let hooked = false;
@@ -22,7 +20,7 @@ export async function activateJava(context: vscode.ExtensionContext) {
             log("AiX: redhat.java detected");
 
             const distjsPath = path.join(redhatjavaExtension.extensionPath, "dist", "extension.js");
-            hooked = await JSHooker("/**AiXHooked-0**/", distjsPath, redhatjavaExtension, "java.reload", "java.fail", (distjs) => {
+            hooked = await JSHooker("/**AiXHooked-online-0**/", distjsPath, redhatjavaExtension, "java.reload", "java.fail", (distjs) => {
                 const middleware = `middleware:{
                     provideCompletionItem:async(_a1,_a2,_a3,_a4,_a5)=>{
                         let rr=_a5(_a1,_a2,_a3,_a4);
@@ -37,24 +35,6 @@ export async function activateJava(context: vscode.ExtensionContext) {
                 distjs = distjs.replace(",outputChannelName:E", ",outputChannelName:E," + middleware);
                 return distjs;
             });
-
-            if (msintellicode) {
-                const intellicodeDistjsPath = path.join(msintellicode.extensionPath, "dist", "intellicode.js");
-                hooked = await JSHooker("/**AiXHooked-1**/", intellicodeDistjsPath, msintellicode, "java.reload", "java.fail", (distjs) => {
-                    const s = SafeStringUtil.indexOf(distjs, "i.languages.registerCompletionItemProvider");
-                    const s1 = SafeStringUtil.indexOf(distjs, "provideCompletionItems:", s);
-                    const e = SafeStringUtil.indexOf(distjs, ",resolveCompletionItem:", s1);
-                    let body = SafeStringUtil.substring(distjs, s1, e);
-                    body = body.replace(/provideCompletionItems:\s*\((.+?),\s*(.+?),\s*(.+?),\s*(.+?)\)\s*=>(.+)/, `provideCompletionItems:($1,$2,$3,$4)=>{let rr=$5;
-                        const aix = require("vscode").extensions.getExtension("${myID}");
-                        const api = aix && aix.exports;
-                        if(api && api.aixhook){
-                            rr = api.aixhook("java",rr,$1,$2,$3,$4);
-                        }
-                        return rr;}`);
-                    return SafeStringUtil.substring(distjs, 0, s1) + body + SafeStringUtil.substring(distjs, e);
-                }) && hooked;
-            }
 
             if (redhatjavaExtension && !redhatjavaExtension.isActive) {
                 try {
@@ -100,10 +80,7 @@ export async function activateJava(context: vscode.ExtensionContext) {
             return null;
         },
     };
-    const triggerCharacters = ["="];
-    if (!msintellicode) {
-        triggerCharacters.push(".");
-    }
+    const triggerCharacters = ["=", "."];
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "java", scheme: "file" }, provider, ...triggerCharacters));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "java", scheme: "untitled" }, provider, ...triggerCharacters));
     return {

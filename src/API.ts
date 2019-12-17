@@ -31,8 +31,10 @@ function readFile() {
     fs.readFile(localserver, "utf-8").then((data) => {
         const d = JSON.parse(data);
         models = {};
-        for (const model of d.models) {
-            models[model.name] = model;
+        if (d.models) {
+            for (const model of d.models) {
+                models[model.name] = model;
+            }
         }
     });
 }

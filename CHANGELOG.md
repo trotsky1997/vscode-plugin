@@ -1,6 +1,11 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.2.4] - 2019-12-17
+
+### Changed
+- 对IntelliCode有更好的兼容
+
 ## [0.2.3] - 2019-12-13
 
 ### Fixed
