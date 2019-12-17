@@ -2,6 +2,7 @@
 const fs = require("fs-extra");
 const path = require("path");
 const semver = require("semver");
+const util = require("util");
 const webdownload = require("download");
 const asyncPool = require("tiny-async-pool");
 const zipdecompress = require("decompress");
@@ -705,7 +706,11 @@ class AixUpdaterClient {
         }
 
         checkCancelled();
+        const urlList = fullDownloadUrl;
         fullDownloadUrl = await this.selectBestMirror(fullDownloadUrl, token);
+        if (fullDownloadUrl == null) {
+            throw new Error("No download url is reachable in " + util.inspect(urlList));
+        }
         const fullFileName = fullDownloadUrl.substring(fullDownloadUrl.lastIndexOf("/") + 1);
         /** @type {FileProgress} */
         const downloadStatus = {
