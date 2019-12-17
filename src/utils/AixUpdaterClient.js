@@ -42,7 +42,9 @@ async function decompress(zipPath, targetPath) {
     if (zipPath.endsWith(".tar.gz")) {
         await execAsync(`tar zxf "${zipPath}" -C "${targetPath}"`);
     } else {
-        await zipdecompress(zipPath, targetPath);
+        await zipdecompress(zipPath, targetPath, {
+            filter: file => !file.path.endsWith('/'),
+        });
     }
 }
 

@@ -22,6 +22,8 @@
         "onLanguage:java",
         "onLanguage:javascript",
         "onLanguage:javascriptreact",
+        "onLanguage:typescript",
+        "onLanguage:typescriptreact",
         "onLanguage:vue",
         "onLanguage:html",
         "onWebviewPanel:aixsearch"
