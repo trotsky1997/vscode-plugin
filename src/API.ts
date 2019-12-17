@@ -1,5 +1,4 @@
 import * as crypto from "crypto";
-import * as findJavaHome from "find-java-home";
 import * as fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
@@ -310,23 +309,6 @@ export function getTrivialLiterals(ext: string) {
 }
 
 export async function checkUpdate() {
-    const javaHome = vscode.workspace.getConfiguration().get("java.home") as string || await new Promise((resolve, reject) => {
-        findJavaHome((err, home) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(home);
-            }
-        });
-    });
-    if (javaHome) {
-        process.env.PATH += ";" + path.join(javaHome, "bin");
-    }
-    try {
-        await execAsync("java -version");
-    } catch (e) {
-        showInformationMessageOnce("JREMissing");
-    }
     try {
         let v = "0.0.0";
         try {
