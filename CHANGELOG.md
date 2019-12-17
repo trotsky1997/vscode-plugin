@@ -1,13 +1,18 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.3.11] - 2019-12-17
+
+### Fixed
+- Disable TypeScript until local model is ready.
+
 ## [0.3.10] - 2019-12-16
 
 ### Added
 - Supports Python and JavaScript now with local service 1.2.0 or later.
 
 ### Fixed
-- Fixes some bugs on starting local serivcee.
+- Fixes some bugs on starting local serivce.
 
 ## [0.3.9] - 2019-12-11
 
