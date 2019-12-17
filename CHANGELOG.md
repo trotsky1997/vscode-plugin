@@ -4,7 +4,8 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 ## [0.2.4] - 2019-12-17
 
 ### Changed
-- 对IntelliCode有更好的兼容
+- 对IntelliCode有更好的兼容。
+- 检查与本地版插件的冲突。
 
 ## [0.2.3] - 2019-12-13
 

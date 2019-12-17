@@ -218,6 +218,10 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "en": "Unable to open aixcoder protocol. This might be due to the original app being moved or deleted. Please open aixcoder app. And then reload VSCode.",
         "zh-cn": "无法打开aixcoder协议，这可能是由于应用程序被移动或删除导致。请重新打开aixcoder应用。然后重新加载VSCode。",
     },
+    "aiXcoder.localInstalled": {
+        "en": "Local version of aiXcoder is already installed. Online version of aiXcoder will be disabled.",
+        "zh-cn": "已经安装了aiXcoder本地版。在线版aiXcoder暂时禁用。",
+    },
 };
 
 export function localize(key: string, ...params: any[]) {

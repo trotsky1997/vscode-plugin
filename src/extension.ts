@@ -648,6 +648,11 @@ const lastModifedTime: { [uri: string]: number } = {};
 export async function activate(context: vscode.ExtensionContext) {
     try {
         log("AiX: aiXcoder activating");
+        if (vscode.extensions.getExtension("aixcoder-plugin.aixcoder")) {
+            vscode.window.showWarningMessage(localize("aiXcoder.localInstalled"));
+            log("Fatal: aiXcoder local already installed.");
+            return;
+        }
 
         if (os.platform() === "win32" && compareVersion(os.release(), "10") < 0) {
             const star = vscode.workspace.getConfiguration().get("aiXcoder.symbol");
