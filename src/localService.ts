@@ -159,7 +159,7 @@ export async function startLocalService(soft: boolean) {
 
     if (soft) {
         try {
-            await download(Preference.getEndpoint(), null, {
+            await download(Preference.getLocalEndpoint(), null, {
                 timeout: 1000,
             });
             lastOpenFailed = false;
@@ -188,7 +188,7 @@ export async function startLocalService(soft: boolean) {
             }
             tries++;
             log("Try " + tries);
-            download(Preference.getEndpoint(), null, {
+            download(Preference.getLocalEndpoint(), null, {
                 timeout: 1000,
             }).then((value) => {
                 lastOpenFailed = false;
@@ -320,7 +320,7 @@ export async function forceUpdate(localVersion: string, remoteVersion: string) {
 export async function getServiceStatus(ext: string) {
     const resp = await request({
         method: "GET",
-        url: Preference.getEndpoint() + "getSaStatus?ext=" + ext,
+        url: Preference.getEndpoint(ext) + "getSaStatus?ext=" + ext,
         timeout: 1000,
     });
     const { status } = JSON.parse(resp);
