@@ -284,6 +284,7 @@ export function getTrivialLiterals(ext: string) {
             timeout: 2000,
         }, endpoint);
     }
+    return "[]";
 }
 
 export async function checkUpdate() {

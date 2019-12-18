@@ -18,6 +18,25 @@ export default class DataMasking {
      * @return 脱敏后字符串
      */
     public static async mask(langUtil: LangUtil, s: string, ext: string): Promise<string> {
-        return s;
+        if (DataMasking.trivialLiterals == null) {
+            try {
+                DataMasking.trivialLiterals = new Set<string>();
+                const literals: string[] = JSON.parse(await API.getTrivialLiterals(ext));
+                for (const lit of literals) {
+                    if (lit.startsWith("<str>")) {
+                        let raw = lit.substring("<str>".length).replace("<str_space>", " ");
+                        if (raw.startsWith("\"")) {
+                            raw = raw.substring(1, raw.length - 1);
+                        }
+                        DataMasking.trivialLiterals.add(raw);
+                    }
+                }
+            } catch (e) {
+                console.log(e);
+            }
+            return s;
+        } else {
+            return langUtil.datamask(s, DataMasking.trivialLiterals);
+        }
     }
 }
