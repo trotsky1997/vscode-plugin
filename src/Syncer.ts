@@ -104,6 +104,7 @@ export class Syncer<T> {
             // AIX went earlier
             value = awaiter;
         }
+        delete this.awaiters[key];
         console.log(`syncer get took ${Date.now() - _t}ms`);
         return value;
     }

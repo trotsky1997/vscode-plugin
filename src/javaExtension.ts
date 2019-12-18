@@ -3,10 +3,29 @@ import * as vscode from "vscode";
 import { fetchResults, formatSortData, getReqText, JSHooker, mergeSortResult, myID, sendPredictTelemetryLong, sendPredictTelemetryShort, showInformationMessageOnce, SortResultEx, STAR_DISPLAY } from "./extension";
 import { localize } from "./i18n";
 import { getInstance } from "./lang/commons";
+import { execAsync } from "./localService";
 import log from "./logger";
 import { Syncer } from "./Syncer";
 
 export async function activateJava(context: vscode.ExtensionContext) {
+    const findJavaHome = require("find-java-home");
+    const javaHome = vscode.workspace.getConfiguration().get("java.home") as string || await new Promise((resolve, reject) => {
+        findJavaHome((err, home) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(home);
+            }
+        });
+    });
+    if (javaHome) {
+        process.env.PATH += ";" + path.join(javaHome, "bin");
+    }
+    try {
+        await execAsync("java -version");
+    } catch (e) {
+        showInformationMessageOnce("JREMissing");
+    }
     const redhatjavaExtension = vscode.extensions.getExtension("redhat.java");
     let activated = false;
     const syncer = new Syncer<SortResultEx>();
@@ -20,7 +39,7 @@ export async function activateJava(context: vscode.ExtensionContext) {
             log("AiX: redhat.java detected");
 
             const distjsPath = path.join(redhatjavaExtension.extensionPath, "dist", "extension.js");
-            hooked = await JSHooker("/**AiXHooked-online-0**/", distjsPath, redhatjavaExtension, "java.reload", "java.fail", (distjs) => {
+            hooked = await JSHooker("/**AiXHooked-0**/", distjsPath, redhatjavaExtension, "java.reload", "java.fail", (distjs) => {
                 const middleware = `middleware:{
                     provideCompletionItem:async(_a1,_a2,_a3,_a4,_a5)=>{
                         let rr=_a5(_a1,_a2,_a3,_a4);
@@ -80,7 +99,7 @@ export async function activateJava(context: vscode.ExtensionContext) {
             return null;
         },
     };
-    const triggerCharacters = ["=", "."];
+    const triggerCharacters = ["=", ".", "@"];
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "java", scheme: "file" }, provider, ...triggerCharacters));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "java", scheme: "untitled" }, provider, ...triggerCharacters));
     return {
@@ -89,9 +108,6 @@ export async function activateJava(context: vscode.ExtensionContext) {
                 // return ll;
                 const { offsetID } = getReqText(document, position, "java");
                 const items = Array.isArray(ll) ? ll : ll.items;
-                if (items.length > 0) {
-                    items[0].preselect = false;
-                }
 
                 const sortResults = await syncer.get(offsetID, items.length === 0);
                 if (sortResults == null) { return ll; }

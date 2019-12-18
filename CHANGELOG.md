@@ -1,6 +1,11 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.4.0] -
+
+### Added
+- Merged local service support.
+
 ## [0.2.4] - 2019-12-17
 
 ### Changed

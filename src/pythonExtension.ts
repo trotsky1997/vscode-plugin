@@ -1,8 +1,6 @@
 import * as path from "path";
 import * as vscode from "vscode";
-import { TelemetryType } from "./API";
 import { fetchResults, formatSortData, getReqText, JSHooker, mergeSortResult, myID, sendPredictTelemetryLong, sendPredictTelemetryShort, showInformationMessageOnce, SortResultEx, STAR_DISPLAY } from "./extension";
-import { localize } from "./i18n";
 import { getInstance } from "./lang/commons";
 import log from "./logger";
 import { Syncer } from "./Syncer";
@@ -22,7 +20,7 @@ export async function activatePython(context: vscode.ExtensionContext) {
         if (mspythonExtension) {
             log("AiX: ms-python.python detected");
             const distjsPath = path.join(mspythonExtension.extensionPath, "out", "client", "extension.js");
-            hooked = await JSHooker("/**AiXHooked-online-16**/", distjsPath, mspythonExtension, "python.reload", "python.fail", (distjs) => {
+            hooked = await JSHooker("/**AiXHooked-16**/", distjsPath, mspythonExtension, "python.reload", "python.fail", (distjs) => {
                 // inject ms engine
                 const handleResultCode = (r: string) => `const aix = require(\"vscode\").extensions.getExtension("${myID}");const api = aix && aix.exports;if(api && api.aixhook){r = await api.aixhook("python",${r},$1,$2,$3,$4);}`;
                 const replaceTarget = `middleware:{provideCompletionItem:async($1,$2,$3,$4,$5)=>{$6;let rr=$7;${handleResultCode("rr")};return rr;}`;

@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 
-import { CompletionOptions, Rescue } from "../extension";
+import { AiXCompletionItem, CompletionOptions, Rescue } from "../extension";
 
 export const ID_REGEX = /^[a-zA-Z$_][a-zA-Z_$0-9]*$/;
 
@@ -82,6 +82,16 @@ export abstract class LangUtil {
         }
     }
 
+    public retrigger(completionItem: AiXCompletionItem) {
+        if (completionItem.label.endsWith(";") || completionItem.label.endsWith("{") || completionItem.label.endsWith("}")) {
+            return false;
+        }
+        if (completionItem.label.endsWith(".")) {
+            return true;
+        }
+        return vscode.workspace.getConfiguration().get("aiXcoder.retrigger");
+    }
+
     public initSpacingOptions() {
         this.addSpacingOptionAround("", LangUtil.SpacingKeyALL, false);
         this.addSpacingOptionAround(".", LangUtil.SpacingKeyALL, false);
@@ -98,6 +108,7 @@ export abstract class LangUtil {
         this.addSpacingOption("for", "(", true);
         this.addSpacingOption("if", "(", true);
         this.addSpacingOption("switch", "(", true);
+        this.addSpacingOption("catch", "(", true);
         this.addSpacingOptionRightKeywords("{", true);
         this.addSpacingOptionRightKeywords(LangUtil.SpacingKeyID, true);
         this.addSpacingOptionRightKeywords(LangUtil.SpacingKeyConstants, true);
@@ -214,7 +225,7 @@ export abstract class LangUtil {
     public datamask(s: string, trivialLiterals: Set<string>): string {
         let stringBuilder = "";
         let emptyLine = true;
-        let lastLineEnd = -1;
+        let lastLineEnd = 0;
         for (let i = 0; i < s.length; i++) {
             const c = s.charAt(i);
             if (c === "\n") {

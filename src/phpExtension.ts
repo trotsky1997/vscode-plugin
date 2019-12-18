@@ -35,7 +35,7 @@ export async function activatePhp(context: vscode.ExtensionContext) {
         if (intelephense) {
             log(`AiX: ${intelephenseId} detected`);
             const distjsPath = path.join(intelephense.extensionPath, "lib", "extension.js");
-            intelephenseHooked = await JSHooker("/**AiXHooked-online-3**/", distjsPath, intelephense, "php.reload.intelephense", "php.fail.intelephense", (distjs) => {
+            intelephenseHooked = await JSHooker("/**AiXHooked-3**/", distjsPath, intelephense, "php.reload.intelephense", "php.fail.intelephense", (distjs) => {
                 const handleResultCode = (r: string) => `const aix = require(\"vscode\").extensions.getExtension("${myID}");const api = aix && aix.exports;if(api && api.aixhook){${r}=await api.aixhook(\"php\",${r},$1,$2,$3,$4,\"intelephense\");}`;
                 distjs = distjs.replace(/provideCompletionItems:\((\w+),(\w+),(\w+),(\w+)\)=>(.+?),resolveCompletionItem:/, `provideCompletionItems:async($1,$2,$3,$4)=>{console.log("intelephense called");let rr=$5;${handleResultCode("rr")};return rr;},resolveCompletionItem:`);
                 return distjs;

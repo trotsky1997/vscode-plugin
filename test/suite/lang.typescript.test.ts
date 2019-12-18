@@ -35,7 +35,8 @@ suite("TypeScript Language Test Suite", () => {
     if ( ! m ) ;
     export = Updater ;
     new Set < string > ( ) ;
-    const [ a , b ] = [ 1 , 2 ] ;`;
+    const [ a , b ] = [ 1 , 2 ] ;
+    const constructor = null ;`;
     const sourceExpect = `import { expect } from "chai";
     import { after } from "mocha";
     import * as vscode from "vscode";
@@ -58,7 +59,8 @@ suite("TypeScript Language Test Suite", () => {
     if (!m);
     export = Updater;
     new Set<string>();
-    const [a, b] = [1, 2];`;
+    const [a, b] = [1, 2];
+    const constructor = null;`;
 
     const sourceTokensLines = sourceTokens.split("\n").map((_) => _.trim());
     const sourceExpectLines = sourceExpect.split("\n").map((_) => _.trim());

@@ -14,6 +14,7 @@ import { localize, localizeMessages } from "./i18n";
 import { activateJava } from "./javaExtension";
 import { getInstance } from "./lang/commons";
 import { LangUtil } from "./lang/langUtil";
+import { getLocalPort } from "./localService";
 import log from "./logger";
 import { activatePhp } from "./phpExtension";
 import Preference from "./Preference";
@@ -27,7 +28,7 @@ function escapeRegExp(s: string) {
     return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
 }
 
-export const myID = "nnthink.aixcoder";
+export const myID = "aixcoder-plugin.aixcoder";
 const myPackageJSON = vscode.extensions.getExtension(myID).packageJSON;
 export const myVersion = myPackageJSON.version;
 
@@ -61,6 +62,24 @@ export async function showInformationMessageOnce(message: string, ...items: stri
         }
         return select;
     }
+    return "skip";
+}
+
+export async function showWarningMessageOnce(message: string, ...items: string[]): Promise<string | undefined> {
+    if (!shownMessages.has(message)) {
+        shownMessages.add(message);
+        const localizedItems = [];
+        for (const item of items) {
+            localizedItems.push(localize(item));
+        }
+        const select = await vscode.window.showWarningMessage(localize(message), ...localizedItems);
+        const localizedSelection = localizedItems.indexOf(select);
+        if (localizedSelection >= 0) {
+            return items[localizedSelection];
+        }
+        return select;
+    }
+    return "skip";
 }
 
 export async function showInformationMessage(message: string, ...items: string[]): Promise<string | undefined> {
@@ -69,7 +88,15 @@ export async function showInformationMessage(message: string, ...items: string[]
         for (const item of items) {
             localizedItems.push(localize(item));
         }
-        const select = await vscode.window.showInformationMessage(localize(message), ...localizedItems, localize("nevershowagain"));
+        const additionalItems = [];
+        if (localizedItems.length === 0) {
+            additionalItems.push(localize("close"));
+        }
+        additionalItems.push(localize("nevershowagain"));
+        const select = await vscode.window.showInformationMessage(localize(message), ...localizedItems, ...additionalItems);
+        if (select === localize("close")) {
+            return;
+        }
         if (select === localize("nevershowagain")) {
             Preference.context.globalState.update("hide:" + message, true);
             return;
@@ -88,7 +115,15 @@ export async function showWarningMessage(message: string, ...items: string[]): P
         for (const item of items) {
             localizedItems.push(localize(item));
         }
-        const select = await vscode.window.showWarningMessage(localize(message), ...localizedItems, localize("nevershowagain"));
+        const additionalItems = [];
+        if (localizedItems.length === 0) {
+            additionalItems.push(localize("close"));
+        }
+        additionalItems.push(localize("nevershowagain"));
+        const select = await vscode.window.showWarningMessage(localize(message), ...localizedItems, ...additionalItems);
+        if (select === localize("close")) {
+            return;
+        }
         if (select === localize("nevershowagain")) {
             Preference.context.globalState.update("hide:" + message, true);
             return;
@@ -125,6 +160,7 @@ interface SinglePredictResult {
     familiarity?: number;
     type?: "rnn" | "ngram";
     sort?: Array<[number, string, CompletionOptions?]>;
+    retrigger?: boolean;
 }
 
 export interface SingleWordCompletion {
@@ -204,7 +240,7 @@ export function getReqText(document: vscode.TextDocument, position: vscode.Posit
     };
 }
 
-class AiXCompletionItem extends vscode.CompletionItem {
+export class AiXCompletionItem extends vscode.CompletionItem {
     public aixPrimary?: boolean;
     constructor(label: string, kind?: vscode.CompletionItemKind) {
         super(label, kind);
@@ -231,9 +267,9 @@ function formatResData(results: PredictResult, langUtil: LangUtil, document: vsc
     const unique = new Set();
     for (const result of results.data) {
         if (result.tokens.length > minCompletionTokensCount) {
-            if (result.tokens.length === 2 && result.tokens[1] === "(" && result.tokens[0].match(/[a-zA-Z0-9_$]+/)) {
-                continue;
-            }
+            // if (result.tokens.length === 2 && result.tokens[1] === "(" && result.tokens[0].match(/[a-zA-Z0-9_$]+/)) {
+            //     continue;
+            // }
             const mergedTokens = [result.current + result.tokens[0], ...result.tokens.slice(1)];
             const filterTextMergedTokens = [text.substring(text.length - result.current.length) + result.tokens[0], ...result.tokens.slice(1)];
             let title = langUtil.render(mergedTokens, 0);
@@ -254,6 +290,7 @@ function formatResData(results: PredictResult, langUtil: LangUtil, document: vsc
                     kind: vscode.CompletionItemKind.Snippet,
                     sortText: Preference.getLongResultRankSortText() + "." + (sortL2S ? 1 - title.length / 100 : title.length / 100),
                     aixPrimary: true,
+                    detail: "aiXcoder: " + result.prob.toLocaleString("en", { style: "percent", minimumFractionDigits: 2 }),
                 };
                 z.command = { ...command, arguments: command.arguments.concat([result, z]) };
                 r.push(z);
@@ -284,6 +321,7 @@ export function formatSortData(results: SortResult | null, langUtil: LangUtil, d
             insertText: single.word,
             kind: vscode.CompletionItemKind.Variable,
             sortText: "0." + insertedRank++,
+            detail: "aiXcoder: " + single.prob.toLocaleString("en", { style: "percent", minimumFractionDigits: 2 }),
         };
         z.command = { ...command, arguments: command.arguments.concat([single, z]) };
         r.push(z);
@@ -548,13 +586,18 @@ export function mergeSortResult(l: vscode.CompletionItem[], sortResults: SortRes
         l.push(...formatSortData(sortResults, getInstance(lang), document, ext, sortResults.current));
         return;
     }
+    if (sortResults.list.length > 0) {
+        for (const systemCompletion of l) {
+            systemCompletion.preselect = false;
+        }
+    }
     const telemetryCommand: vscode.Command = {
         title: "AiXTelemetry",
         command: "aiXcoder.insert",
         arguments: [ext, "secondary", getInstance(lang), document],
     };
-    const sortResultsMap = {};
-    const sortResultCompletions = {};
+    const sortResultsMap: { [word: string]: [SingleWordCompletion, number] } = {};
+    const sortResultCompletions: { [word: string]: [number, vscode.CompletionItem] } = {};
     let insertedRank = 1;
     for (const single of sortResults.list) {
         if (single.word.match(/^<.+>$/)) {
@@ -613,6 +656,7 @@ export function mergeSortResult(l: vscode.CompletionItem[], sortResults: SortRes
                 bestSystemCompletion.label = starDisplay === STAR_DISPLAY.LEFT ? star + bestSystemCompletion.label : (starDisplay === STAR_DISPLAY.RIGHT ? bestSystemCompletion.label + star : bestSystemCompletion.label);
                 bestSystemCompletion.sortText = ".0." + rankText;
                 bestSystemCompletion.command = { ...telemetryCommand, arguments: telemetryCommand.arguments.concat([single]) };
+                bestSystemCompletion.detail = (bestSystemCompletion.detail ? bestSystemCompletion.detail + "\n" : "") + "aiXcoder: " + single.prob.toLocaleString("en", { style: "percent", minimumFractionDigits: 2 });
                 if (bestSystemCompletion.kind === vscode.CompletionItemKind.Function && insertText.indexOf("(") === -1) {
                     bestSystemCompletion.insertText = new vscode.SnippetString(insertText).appendText("(").appendTabstop().appendText(")");
                 }
@@ -648,12 +692,6 @@ const lastModifedTime: { [uri: string]: number } = {};
 export async function activate(context: vscode.ExtensionContext) {
     try {
         log("AiX: aiXcoder activating");
-        if (vscode.extensions.getExtension("aixcoder-plugin.aixcoder")) {
-            vscode.window.showWarningMessage(localize("aiXcoder.localInstalled"));
-            log("Fatal: aiXcoder local already installed.");
-            return;
-        }
-
         if (os.platform() === "win32" && compareVersion(os.release(), "10") < 0) {
             const star = vscode.workspace.getConfiguration().get("aiXcoder.symbol");
             if (star === myPackageJSON.contributes.configuration.properties["aiXcoder.symbol"].default) {
@@ -662,6 +700,8 @@ export async function activate(context: vscode.ExtensionContext) {
             }
         }
 
+        await getLocalPort();
+
         const endpoint = vscode.workspace.getConfiguration().get("aiXcoder.endpoint");
         if (!endpoint) {
             vscode.window.showWarningMessage(localize("aiXcoder.endpoint.empty"), localize("openSetting")).then((selected) => {
@@ -669,10 +709,15 @@ export async function activate(context: vscode.ExtensionContext) {
                     vscode.commands.executeCommand("workbench.action.openSettings", "aiXcoder: Endpoint");
                 }
             });
+        } else {
+            vscode.workspace.getConfiguration().update("aiXcoder.endpoint", endpoint);
         }
 
         await Preference.init(context);
-        API.checkUpdate();
+        (async function checkUpdate() {
+            await API.checkUpdate();
+            setTimeout(checkUpdate, 1000 * 60 * 60);
+        })();
         const askedTelemetry = context.globalState.get("aiXcoder.askedTelemetry");
         if (!askedTelemetry) {
             context.globalState.update("aiXcoder.askedTelemetry", true);
@@ -714,6 +759,9 @@ export async function activate(context: vscode.ExtensionContext) {
             } else if ((single as SingleWordCompletion).options && (single as SingleWordCompletion).options.rescues) {
                 langUtil.rescue(document, (single as SingleWordCompletion).options.rescues);
             }
+            if (langUtil.retrigger(completionItem) && (single as SinglePredictResult).retrigger) {
+                vscode.commands.executeCommand("editor.action.triggerSuggest");
+            }
         }));
         context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.resetMessage", () => {
             for (const message of Object.keys(localizeMessages)) {
@@ -732,11 +780,14 @@ export async function activate(context: vscode.ExtensionContext) {
         } = {
             python: await activatePython(context),
             java: await activateJava(context),
-            cpp: await activateCPP(context),
-            php: await activatePhp(context),
-            typescript: await activateTypeScript(context),
-            go: await activateGo(context),
+            typescript: await activateTypeScript(context, false),
         };
+        if (Preference.hasLoginFile()) {
+            // online mode
+            aixHooks.cpp = await activateCPP(context);
+            aixHooks.php = await activatePhp(context);
+            aixHooks.go = await activateGo(context);
+        }
         await hookIntellicode(context, aixHooks);
         log("AiX: aiXcoder activated");
         return {

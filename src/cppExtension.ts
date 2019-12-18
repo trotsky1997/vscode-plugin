@@ -15,7 +15,7 @@ export async function activateCPP(context: vscode.ExtensionContext) {
     let hooked = false;
     if (mscpp) {
         const distjsPath = path.join(mscpp.extensionPath, "dist", "main.js");
-        hooked = await JSHooker("/**AiXHooked-online-2**/", distjsPath, mscpp, "cpp.reload", "cpp.fail", (distjs) => {
+        hooked = await JSHooker("/**AiXHooked-3**/", distjsPath, mscpp, "cpp.reload", "cpp.fail", (distjs) => {
             const handleResultCode = (r: string) => `const aix = require(\"vscode\").extensions.getExtension("${myID}");const api = aix && aix.exports;if(api && api.aixhook){${r}=await api.aixhook(\"cpp\",${r},$1,$2,$3,$4);}`;
             const targetCode = `provideCompletionItems: async \($1, $2, $3, $4\) => { let rr=($5);${handleResultCode("rr")};return rr;}`;
             const sig = /provideCompletionItems:\s*\((\w+),\s*(\w+),\s*(\w+),\s*(\w+)\)\s*=>\s*{\s*return\s+((?:.|\s)+?);\s*}/;

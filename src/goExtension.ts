@@ -15,7 +15,7 @@ export async function activateGo(context: vscode.ExtensionContext) {
     let hooked = false;
     if (msgo) {
         const distjsPath = path.join(msgo.extensionPath, "out", "src", "goLanguageServer.js");
-        hooked = await JSHooker("/**AiXHooked-online-0**/", distjsPath, msgo, "go.reload", "go.fail", (distjs) => {
+        hooked = await JSHooker("/**AiXHooked-0**/", distjsPath, msgo, "go.reload", "go.fail", (distjs) => {
             const pciStart = SafeStringUtil.indexOf(distjs, "provideCompletionItem:");
             const retStart = SafeStringUtil.indexOf(distjs, "return next(document, position, context, token);", pciStart);
             const A = SafeStringUtil.substring(distjs, 0, retStart);
@@ -31,7 +31,7 @@ export async function activateGo(context: vscode.ExtensionContext) {
         });
 
         const distjsPath2 = path.join(msgo.extensionPath, "out", "src", "goSuggest.js");
-        const hooked2 = await JSHooker("/**AiXHooked-online-1**/", distjsPath2, msgo, "go.reload", "go.fail", (distjs) => {
+        const hooked2 = await JSHooker("/**AiXHooked-1**/", distjsPath2, msgo, "go.reload", "go.fail", (distjs) => {
             const pciStart = SafeStringUtil.indexOf(distjs, "provideCompletionItems(");
             const retStart = SafeStringUtil.indexOf(distjs, "});", pciStart);
             const A = SafeStringUtil.substring(distjs, 0, retStart);

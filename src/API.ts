@@ -1,14 +1,15 @@
-import { exec } from "child_process";
 import * as crypto from "crypto";
-import { promises as fs, watch as fsWatch } from "fs";
+import * as fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
 import * as request from "request-promise";
 import * as vscode from "vscode";
-import { compareVersion, myVersion, showInformationMessage, showInformationMessageOnce, showWarningMessage } from "./extension";
+import { compareVersion, myVersion, showInformationMessageOnce, showWarningMessage, showWarningMessageOnce } from "./extension";
+import FileAutoSyncer from "./FileAutoSyncer";
 import { localize } from "./i18n";
 import { LangUtil } from "./lang/langUtil";
 import Learner from "./Learner";
+import { execAsync, forceUpdate, getServiceStatus, getVersion, isServerStarting, startLocalService } from "./localService";
 import log from "./logger";
 import NetworkController from "./NetworkController";
 import Preference from "./Preference";
@@ -19,53 +20,13 @@ function md5Hash(s: string) {
     return crypto.createHash("md5").update(s).digest("hex");
 }
 
-const homedir = os.homedir();
-const localserver = path.join(homedir, "aiXcoder", "localserver.json");
-let models = {};
-let lastCheckLocalTime = 0;
-function readFile() {
-    if (Date.now() - lastCheckLocalTime < 1000 * 5) {
-        return;
-    }
-    lastCheckLocalTime = Date.now();
-    fs.readFile(localserver, "utf-8").then((data) => {
-        const d = JSON.parse(data);
-        models = {};
-        if (d.models) {
-            for (const model of d.models) {
-                models[model.name] = model;
-            }
-        }
-    });
-}
-
-readFile();
-setInterval(readFile, 1000 * 60 * 5);
-async function initWatch() {
-    try {
-        await fs.stat(localserver);
-    } catch (e) {
-        await fs.writeFile(localserver, "{}", "utf-8");
-    }
-    fsWatch(localserver, (event, filename) => {
-        readFile();
-    });
-}
-initWatch();
-
-async function myRequest(options: request.OptionsWithUrl, endpoint?: string) {
+async function myRequest(options: request.OptionsWithUrl, endpoint: string) {
     const proxyUrl: string = vscode.workspace.getConfiguration().get("http.proxy");
     const proxyAuth: string = vscode.workspace.getConfiguration().get("http.proxyAuthorization");
     const proxyStrictSSL: boolean = vscode.workspace.getConfiguration().get("http.proxyStrictSSL");
-    if (!endpoint) {
-        endpoint = vscode.workspace.getConfiguration().get("aiXcoder.endpoint");
-    }
     let host = proxyUrl || endpoint.substring(endpoint.indexOf("://") + 3);
     if (host.indexOf("/") >= 0) {
         host = host.substr(0, host.indexOf("/"));
-    }
-    if (!endpoint.endsWith("/")) {
-        endpoint += "/";
     }
     if (options.headers) {
         for (const headerKey in options.headers) {
@@ -75,6 +36,7 @@ async function myRequest(options: request.OptionsWithUrl, endpoint?: string) {
         }
     }
     options = {
+        timeout: 1000,
         ...options,
         url: endpoint + options.url,
         headers: {
@@ -84,30 +46,16 @@ async function myRequest(options: request.OptionsWithUrl, endpoint?: string) {
         proxy: proxyUrl,
         strictSSL: proxyStrictSSL,
         // agent: keepaliveAgent,
-        timeout: 1000,
     };
-    return request(options);
-}
-
-let lastOpenFailed = false;
-export async function openurl(url: string) {
-    if (lastOpenFailed) { return; }
-    const commands = {
-        darwin: "open",
-        win32: "explorer.exe",
-        default: "xdg-open",
-    };
-    await new Promise((resolve, reject) => {
-        exec(`${commands[process.platform]} ${url}`, (err, stdout, stderr) => {
-            if (err) {
-                lastOpenFailed = true;
-                showInformationMessageOnce("openAixcoderUrlFailed");
-                reject(err);
-            } else {
-                resolve(stdout);
-            }
-        });
-    });
+    let r: string | null;
+    try {
+        r = await request(options);
+    } catch (e) {
+        log(`Error requesting ${(options.method || "GET").toUpperCase()} ${options.url}`);
+        log(e);
+        throw e;
+    }
+    return r;
 }
 
 const realExtension = {
@@ -122,15 +70,76 @@ const localNetworkController = new NetworkController();
 let lastLocalRequest = false;
 let firstLocalRequestAttempt = true;
 let learner: Learner;
+let getServiceStatusLock = null;
+let saStatusToken = { cancelled: false };
+let saStatus = 0;
+
+async function saStatusChecker(ext: string) {
+    getServiceStatusLock = ext;
+}
+
+async function saStatusCheckerWorker() {
+    while (true) {
+        if (getServiceStatusLock !== null) {
+            saStatusToken.cancelled = true;
+            saStatusToken = { cancelled: false };
+            try {
+                saStatus = await getServiceStatus(getServiceStatusLock);
+            } catch (error) {
+                // service not started
+                await startLocalService(false);
+                saStatus = 0;
+            }
+            if (saStatus <= 1) {
+                await vscode.window.withProgress({
+                    location: vscode.ProgressLocation.Window,
+                    title: localize("localInitializing"),
+                    cancellable: false,
+                }, async (progress, token) => {
+                    while (saStatus <= 1 && !saStatusToken.cancelled) {
+                        if (!Preference.context.globalState.get("hide:localInitializing")) {
+                            showWarningMessageOnce("localInitializing", "nosa-yes", "nosa-no").then((select) => {
+                                if (select === "nosa-yes" || select === "nosa-no") {
+                                    const allowIgnoreSaStatus = select === "nosa-yes";
+                                    vscode.workspace.getConfiguration().update("aiXcoder.localShowIncompleteSuggestions", allowIgnoreSaStatus);
+                                    showInformationMessageOnce(localize("localShowIncompleteSuggestions", localize(allowIgnoreSaStatus ? "nosa-yes" : "nosa-no").toLowerCase()));
+                                    Preference.context.globalState.update("hide:localInitializing", true);
+                                }
+                            });
+                        }
+                        await new Promise((resolve) => setTimeout(resolve, 1000));
+                        try {
+                            saStatus = await getServiceStatus(getServiceStatusLock);
+                        } catch (error) {
+                            // service not started
+                            startLocalService(false);
+                            saStatus = 0;
+                        }
+                    }
+                });
+            }
+        }
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+    }
+}
+saStatusCheckerWorker();
+
+function reverseString(str) {
+    let newString = "";
+    for (let i = str.length - 1; i >= 0; i--) {
+        newString += str[i];
+    }
+    return newString;
+}
 
 export async function predict(langUtil: LangUtil, text: string, ext: string, remainingText: string, laterCode: string, lastQueryUUID: number, fileID: string, retry = true) {
     if (Preference.getSelfLearn()) {
         if (Preference.isProfessional === undefined) {
-            showInformationMessageOnce("unableToLogin", "login").then((selection) => {
-                if (selection === "login") {
-                    openurl(`aixcoder://login`);
-                }
-            });
+            // showInformationMessageOnce("unableToLogin", "login").then((selection) => {
+            //     if (selection === "login") {
+            //         openurl(`aixcoder://login`);
+            //     }
+            // });
         } else if (Preference.isProfessional) {
             if (learner == null) {
                 learner = new Learner();
@@ -145,18 +154,25 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
         }
     }
     let localRequest = false;
-    let endpoint: string | undefined;
-    if (models[ext] && models[ext].active && models[ext].url) {
-        endpoint = models[ext].url;
+    const endpoint = Preference.getEndpoint(ext);
+    if (endpoint.indexOf("localhost") >= 0) {
         lastLocalRequest = localRequest = true;
+        if (isServerStarting()) {
+            return null;
+        }
         log("LOCAL!");
     } else {
         lastLocalRequest = localRequest = false;
-        endpoint = vscode.workspace.getConfiguration().get("aiXcoder.endpoint");
         if (!networkController.shouldPredict()) {
             return null;
         }
     }
+
+    saStatusChecker(ext);
+    if (saStatus < 2 && !vscode.workspace.getConfiguration().get("aiXcoder.localShowIncompleteSuggestions")) {
+        return null;
+    }
+
     const maskedText = await DataMasking.mask(langUtil, text, ext);
     const maskedRemainingText = await DataMasking.mask(langUtil, remainingText, ext);
     const u = vscode.window.activeTextEditor.document.uri;
@@ -164,11 +180,27 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
     const projName = proj ? proj.name : "_scratch";
     const offset = CodeStore.getInstance().getDiffPosition(fileID, maskedText);
     const md5 = md5Hash(maskedText);
+    const additionalParams: any = {};
+    let laterCodeReversed;
+    if (localRequest) {
+        // additionalParams.fullCode = maskedText;
+        laterCodeReversed = reverseString(laterCode);
+        const laterOffset = CodeStore.getInstance().getDiffPosition(fileID + ".later", laterCodeReversed);
+        additionalParams.laterMd5 = md5Hash(laterCodeReversed);
+        const shortenedLaterCodeReversed = laterCodeReversed.substring(laterOffset);
+        laterCode = reverseString(shortenedLaterCodeReversed);
+        additionalParams.laterCode = laterCode;
+        additionalParams.laterOffset = laterOffset;
+        // additionalParams.fullLaterCode = laterCodeReversed;
+    }
 
     try {
         if (fileID.match(/^Untitled-\d+$/)) {
             const lang = ext.substring(ext.indexOf("(") + 1, ext.length - 1).toLowerCase();
             fileID += "." + (realExtension[lang] || lang);
+        }
+        if (ext.endsWith("(Python)")) {
+            additionalParams.saExecutor = vscode.workspace.getConfiguration().get("python.pythonPath");
         }
 
         const resp = await myRequest({
@@ -180,6 +212,7 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
                 uuid: Preference.uuid,
                 fileid: fileID,
                 project: projName,
+                projectRoot: proj.uri.fsPath,
                 remaining_text: maskedRemainingText,
                 queryUUID: lastQueryUUID,
                 offset,
@@ -189,23 +222,27 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
                 prob_th_ngram: 1,
                 prob_th_ngram_t: 1,
                 version: myVersion,
-                laterCode: localRequest ? laterCode : "",
                 long_result_cuts: Preference.getLongResultCuts(),
                 ...Preference.getRequestParams(),
+                ...additionalParams,
             },
             headers: {
                 ext,
                 uuid: Preference.uuid,
             },
-            timeout: 2000,
+            timeout: firstLocalRequestAttempt ? 10000 : 2000,
         }, endpoint);
         if (retry && resp && resp.indexOf("Conflict") >= 0) {
             console.log("conflict");
             CodeStore.getInstance().invalidateFile(projName, fileID);
+            CodeStore.getInstance().invalidateFile(projName, fileID + ".later");
             return predict(langUtil, text, ext, remainingText, laterCode, lastQueryUUID, fileID, false);
         } else {
             console.log("resp=" + resp);
             CodeStore.getInstance().saveLastSent(projName, fileID, maskedText);
+            if (localRequest) {
+                CodeStore.getInstance().saveLastSent(projName, fileID + ".later", laterCodeReversed);
+            }
         }
         if (!localRequest) {
             networkController.onSuccess();
@@ -220,18 +257,16 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
         }
         if (localRequest) {
             if (firstLocalRequestAttempt) {
-                openurl(`aixcoder://localserver`);
-                showInformationMessage("localServiceStarting");
+                startLocalService(false);
                 firstLocalRequestAttempt = false;
             } else {
                 localNetworkController.onFailure(() => showWarningMessage(localize("localServerDown", endpoint), "manualTryStartLocalService").then((selection) => {
                     if (selection === "manualTryStartLocalService") {
-                        openurl(`aixcoder://localserver`);
-                        showInformationMessage("localServiceStarting");
+                        startLocalService(true);
                     }
                 }));
             }
-            readFile();
+            Preference.reloadLocalModelConfig();
         } else {
             networkController.onFailure(() => showWarningMessage(localize("serverDown", endpoint)));
         }
@@ -241,37 +276,51 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
 }
 
 export function getTrivialLiterals(ext: string) {
-    return myRequest({
-        method: "get",
-        url: "trivial_literals?uuid=" + encodeURIComponent(Preference.uuid) + "&ext=" + ext,
-        timeout: 2000,
-    });
+    const endpoint = Preference.getEndpoint(ext);
+    if (endpoint.indexOf("localhost") < 0) {
+        return myRequest({
+            method: "get",
+            url: "trivial_literals?uuid=" + encodeURIComponent(Preference.uuid) + "&ext=" + ext,
+            timeout: 2000,
+        }, endpoint);
+    }
 }
 
 export async function checkUpdate() {
     try {
-        const updateURL = "download/installtool/aixcoderinstaller_aixcoder.json";
-        const versionJson = await myRequest({
-            method: "get",
-            url: updateURL,
-        }, "https://www.aixcoder.com");
-        let newVersions = JSON.parse(versionJson);
-        newVersions = process.platform === "win32" ? newVersions.win : newVersions.mac;
-        const ignoredVersion = Preference.context.globalState.get("aiXcoder.ignoredUpdateVersion");
-        const v = newVersions.vscode.version;
-        if (ignoredVersion === v) {
-            return;
+        let v = "0.0.0";
+        try {
+            const updateURL = "repos/aixcoder-plugin/localservice/releases/latest";
+            const versionJson = await myRequest({
+                method: "get",
+                url: updateURL,
+                headers: {
+                    "User-Agent": "aiXcoder-vscode-plugin",
+                },
+            }, "https://api.github.com");
+            const newVersions = JSON.parse(versionJson);
+            v = newVersions.tag_name;
+        } catch (error) {
+            const updateURL = "localservice/releases/latest";
+            v = await myRequest({
+                method: "get",
+                url: updateURL,
+                headers: {
+                    "User-Agent": "aiXcoder-vscode-plugin",
+                },
+            }, "http://image.aixcoder.com");
         }
-        if (compareVersion(myVersion, v) < 0) {
-            log("New aiXCoder version is available: " + v);
-            const select = await vscode.window.showInformationMessage(localize("newVersion", v), localize("download"), localize("ignoreThisVersion"));
-            if (select === localize("download")) {
-                openurl("aixcoder://update-vscode");
-            } else if (select === localize("ignoreThisVersion")) {
-                Preference.context.globalState.update("aiXcoder.ignoredUpdateVersion", v);
-            }
+        const localVersion = await getVersion();
+        let doUpdate = false;
+        if (compareVersion(localVersion, v) < 0) {
+            log("New aiXCoder version is available: " + v + " local: " + localVersion);
+            doUpdate = true;
         } else {
             log("AiXCoder is up to date");
+            doUpdate = false;
+        }
+        if (doUpdate) {
+            forceUpdate(localVersion, v);
         }
     } catch (e) {
         log(e);
@@ -289,29 +338,6 @@ export enum TelemetryType {
 }
 
 export async function sendTelemetry(ext: string, type: TelemetryType, tokenNum = 0, charNum = 0) {
-    const telemetry = vscode.workspace.getConfiguration().get("aiXcoder.enableTelemetry");
-    if (telemetry && !lastLocalRequest) {
-        console.log("send telemetry: " + type + "/" + tokenNum + "/" + charNum);
-        try {
-            const updateURL = `user/predict/userUseInfo`;
-            await myRequest({
-                method: "post",
-                url: updateURL,
-                form: {
-                    type,
-                    area: ext,
-                    uuid: Preference.uuid,
-                    plugin_version: myVersion,
-                    ide_version: vscode.version,
-                    ide_type: "vscode",
-                    token_num: tokenNum,
-                    char_num: charNum,
-                },
-            });
-        } catch (e) {
-            log(e);
-        }
-    }
 }
 
 export async function sendErrorTelemetry(msg: string) {
@@ -330,7 +356,7 @@ export async function sendErrorTelemetry(msg: string) {
 }
 
 export async function getUUID(): Promise<{ token: string, uuid: string }> {
-    const loginFile = path.join(homedir, "aiXcoder", "login");
+    const loginFile = path.join(os.homedir(), "aiXcoder", "login");
     const content = await fs.readFile(loginFile, "utf-8");
     const { token, uuid } = JSON.parse(content);
     return { token, uuid };
@@ -347,5 +373,5 @@ export async function isProfessional() {
         timeout: 2000,
     }, "https://aixcoder.com");
     const res = JSON.parse(r);
-    return res.level === 2 || true;
+    return res.level === 2;
 }

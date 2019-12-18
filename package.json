@@ -1,11 +1,14 @@
 {
     "name": "aixcoder",
-    "displayName": "aiXcoder",
-    "description": "aiXcoder code suggestion",
-    "version": "0.2.4",
-    "publisher": "nnthink",
+    "displayName": "aiXcoder AI Code Completer",
+    "description": "An free code completion tool powered by deep learning.",
+    "version": "0.4.0",
+    "publisher": "aixcoder-plugin",
     "repository": {
-        "url": "https://github.com/felixhao28/vscode-plugin"
+        "url": "https://github.com/aixcoder-plugin/vscode-plugin/"
+    },
+    "bugs": {
+        "url": "https://github.com/aixcoder-plugin/vscode-plugin/issues"
     },
     "engines": {
         "vscode": "^1.18.0"
@@ -17,15 +20,15 @@
     "activationEvents": [
         "onLanguage:python",
         "onLanguage:java",
+        "onLanguage:javascript",
+        "onLanguage:javascriptreact",
+        "onLanguage:typescript",
+        "onLanguage:typescriptreact",
+        "onLanguage:vue",
+        "onLanguage:html",
         "onLanguage:c",
         "onLanguage:cpp",
         "onLanguage:php",
-        "onLanguage:typescript",
-        "onLanguage:typescriptreact",
-        "onLanguage:javascript",
-        "onLanguage:javascriptreact",
-        "onLanguage:vue",
-        "onLanguage:html",
         "onLanguage:go",
         "onWebviewPanel:aixsearch"
     ],
@@ -35,11 +38,6 @@
             "type": "object",
             "title": "AiXcoder",
             "properties": {
-                "aiXcoder.endpoint": {
-                    "type": "string",
-                    "default": "https://api.aixcoder.com/",
-                    "description": "%aiXcoder.configuration.endpoint%"
-                },
                 "aiXcoder.searchEndpoint": {
                     "type": "string",
                     "default": "https://search.aixcoder.com/",
@@ -55,55 +53,20 @@
                     "default": "-",
                     "markdownDescription": "%aiXcoder.configuration.searchDefaultBrowser%"
                 },
-                "aiXcoder.enableTelemetry": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "%aiXcoder.configuration.enableTelemetry%"
-                },
                 "aiXcoder.additionalParameters": {
                     "type": "string",
                     "default": "",
                     "description": "%aiXcoder.configuration.additionalParameters%"
                 },
-                "aiXcoder.alwaysTrigger": {
-                    "type": "boolean",
-                    "default": true,
-                    "markdownDescription": "%aiXcoder.configuration.alwaysTrigger%"
-                },
-                "aiXcoder.autoImport": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "%aiXcoder.configuration.autoImport%"
-                },
-                "aiXcoder.sortOnly": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "%aiXcoder.configuration.sortOnly%"
-                },
-                "aiXcoder.longResultRank": {
-                    "type": "integer",
-                    "default": 1,
-                    "minimum": 1,
-                    "maximum": 5,
-                    "description": "%aiXcoder.configuration.longResultRank%"
-                },
-                "aiXcoder.longResultCuts": {
+                "aiXcoder.symbol": {
                     "type": "string",
-                    "default": "Auto",
-                    "enum": [
-                        "Auto",
-                        "0",
-                        "1",
-                        "2",
-                        "3",
-                        "4",
-                        "5"
-                    ],
-                    "enumDescriptions": [
-                        "%aiXcoder.configuration.longResultCuts.auto%",
-                        "%aiXcoder.configuration.longResultCuts.none%"
-                    ],
-                    "description": "%aiXcoder.configuration.longResultCuts%"
+                    "default": "⭐",
+                    "description": "%aiXcoder.configuration.symbol%"
+                },
+                "aiXcoder.retrigger": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "%aiXcoder.configuration.retrigger%"
                 },
                 "aiXcoder.longResultCutSort": {
                     "type": "string",
@@ -118,10 +81,10 @@
                     ],
                     "description": "%aiXcoder.configuration.longResultCutSort%"
                 },
-                "aiXcoder.symbol": {
-                    "type": "string",
-                    "default": "⭐",
-                    "description": "%aiXcoder.configuration.symbol%"
+                "aiXcoder.localShowIncompleteSuggestions": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "%aiXcoder.configuration.localShowIncompleteSuggestions%"
                 }
             }
         },
@@ -157,6 +120,8 @@
     },
     "devDependencies": {
         "@types/chai": "^4.2.7",
+        "@types/download": "^6.2.4",
+        "@types/fs-extra": "^8.0.1",
         "@types/mocha": "^5.2.7",
         "@types/node": "^12.12.18",
         "@types/request-promise": "^4.1.45",
@@ -179,9 +144,16 @@
         "webpack-cli": "^3.3.10"
     },
     "dependencies": {
+        "@types/is-running": "^2.1.0",
         "agentkeepalive": "^4.1.0",
+        "decompress": "^4.2.0",
+        "download": "^7.1.0",
+        "filesize": "^6.0.1",
+        "find-java-home": "^1.1.0",
+        "fs-extra": "^8.1.0",
         "request": "^2.88.0",
         "request-promise": "^4.2.5",
+        "tiny-async-pool": "^1.1.0",
         "uuid": "^3.3.3"
     }
 }

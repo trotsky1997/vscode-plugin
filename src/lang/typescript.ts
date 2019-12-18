@@ -31,6 +31,7 @@ export class TypeScriptLangUtil extends JavaScriptLangUtil {
         this.addSpacingOption(LangUtil.SpacingKeyALL, ":", false);
         this.addSpacingOption(LangUtil.SpacingKeyALL, "=>", true);
         this.addSpacingOption(">", "(", false);
+        this.addSpacingOption("constructor", "=", true);
     }
 
     public getKeywords(): Set<string> {
