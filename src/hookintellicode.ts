@@ -27,8 +27,8 @@ export async function hookIntellicode(context: vscode.ExtensionContext, aixHooks
     const msintellicode = vscode.extensions.getExtension("visualstudioexptteam.vscodeintellicode");
     if (msintellicode) {
         const intellicodeDistjsPath = path.join(msintellicode.extensionPath, "dist", "intellicode.js");
-        hooked = await JSHooker("/**AiXHooked-2**/", intellicodeDistjsPath, msintellicode, "java.reload", "java.fail", (distjs) => {
-            const s = SafeStringUtil.indexOf(distjs, "i.languages.registerCompletionItemProvider");
+        hooked = await JSHooker("/**AiXHooked-2**/", intellicodeDistjsPath, msintellicode, "intellicode.reload", "intellicode.fail", (distjs) => {
+            const s = SafeStringUtil.indexOf(distjs, ".languages.registerCompletionItemProvider");
             const s1 = SafeStringUtil.indexOf(distjs, "provideCompletionItems:", s);
             const e = SafeStringUtil.indexOf(distjs, ",resolveCompletionItem:", s1);
             let body = SafeStringUtil.substring(distjs, s1, e);

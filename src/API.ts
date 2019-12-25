@@ -28,6 +28,9 @@ async function myRequest(options: request.OptionsWithUrl, endpoint: string) {
     if (host.indexOf("/") >= 0) {
         host = host.substr(0, host.indexOf("/"));
     }
+    if (!endpoint.endsWith("/")) {
+        endpoint += "/";
+    }
     if (options.headers) {
         for (const headerKey in options.headers) {
             if (options.headers.hasOwnProperty(headerKey)) {
@@ -80,7 +83,7 @@ async function saStatusChecker(ext: string) {
 
 async function saStatusCheckerWorker() {
     while (true) {
-        if (getServiceStatusLock !== null) {
+        if (getServiceStatusLock !== null && lastLocalRequest) {
             saStatusToken.cancelled = true;
             saStatusToken = { cancelled: false };
             try {

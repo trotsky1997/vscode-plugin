@@ -274,6 +274,14 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "en": "You chose to %s. You can change it later in settings.",
         "zh-cn": "您选择了%s。您可以之后在设置中更改。",
     },
+    "intellicode.reload": {
+        "en": "AiXCoder requires a reload to integrate with IntelliCode extension.",
+        "zh-cn": "AiXCoder需要重新加载以便与 IntelliCode 集成。",
+    },
+    "intellicode.fail": {
+        "en": "IntelliCode integration failed. Please ensure you have latest version of aiXcoder and VS Code.",
+        "zh-cn": "IntelliCode 集成失败。请确保您安装了最新版本的aiXcoder插件和VS Code。",
+    },
 };
 
 export function localize(key: string, ...params: any[]) {

@@ -1,10 +1,14 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
-## [0.4.0] -
+## [0.4.0] - 2019-12-25
 
 ### Added
 - Merged local service support.
+
+### Fixed
+- Fixed a URL concatenation issue.
+- Fixed an issue when integrating with intellicode 1.2.2.
 
 ## [0.2.4] - 2019-12-17
 

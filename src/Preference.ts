@@ -71,6 +71,8 @@ export default class Preference {
         if (loginInfo.uuid == null) {
             Preference.uuid = "vscode-" + uuidv4();
             context.globalState.update("aiXcoder.uuid", Preference.uuid);
+        } else {
+            Preference.uuid = loginInfo.uuid;
         }
     }
 
@@ -164,7 +166,14 @@ export default class Preference {
         let endpoint = "";
         if (Preference.hasLoginFile()) {
             const mc = Preference.getLocalModelConfig();
-            if (!mc.hasOwnProperty(ext) || !mc.active || !mc[ext].active) {
+            let localActive;
+            if (mc.hasOwnProperty(ext)) {
+                localActive = mc[ext].active;
+            }
+            if (localActive === undefined) {
+                localActive = mc.active;
+            }
+            if (!localActive) {
                 endpoint = "https://api.aixcoder.com";
             } else {
                 endpoint = Preference.getLocalEndpoint();
