@@ -1,6 +1,11 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.4.1] - 2019-12-27
+
+### Fixed
+- Removed a deprecated "empty endpoint" warning.
+
 ## [0.4.0] - 2019-12-25
 
 ### Added

@@ -702,16 +702,16 @@ export async function activate(context: vscode.ExtensionContext) {
 
         await getLocalPort();
 
-        const endpoint = vscode.workspace.getConfiguration().get("aiXcoder.endpoint");
-        if (!endpoint) {
-            vscode.window.showWarningMessage(localize("aiXcoder.endpoint.empty"), localize("openSetting")).then((selected) => {
-                if (selected === localize("openSetting")) {
-                    vscode.commands.executeCommand("workbench.action.openSettings", "aiXcoder: Endpoint");
-                }
-            });
-        } else {
-            vscode.workspace.getConfiguration().update("aiXcoder.endpoint", endpoint);
-        }
+        // const endpoint = vscode.workspace.getConfiguration().get("aiXcoder.endpoint");
+        // if (!endpoint) {
+        //     vscode.window.showWarningMessage(localize("aiXcoder.endpoint.empty"), localize("openSetting")).then((selected) => {
+        //         if (selected === localize("openSetting")) {
+        //             vscode.commands.executeCommand("workbench.action.openSettings", "aiXcoder: Endpoint");
+        //         }
+        //     });
+        // } else {
+        //     vscode.workspace.getConfiguration().update("aiXcoder.endpoint", endpoint);
+        // }
 
         await Preference.init(context);
         (async function checkUpdate() {
