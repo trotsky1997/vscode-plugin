@@ -770,16 +770,26 @@ class AixUpdaterClient {
     }
 
     /**
-     * Reads the current version of `localPath` by reading .version file
+     * Reads the current version of `localPath` by reading version file
      * 
      * @param {string} localPath the path to the local directory containing the need-to-update artifact.
      * 
      * @returns {Promise<string>} current version of `localPath`
      */
     static async getCurrentLocalVersion(localPath) {
-        const versionFile = path.join(localPath, ".version");
-        const version = await fs.promises.readFile(versionFile, "utf-8");
-        return version;
+        try {
+            const versionFile = path.join(localPath, "version");
+            const version = await fs.promises.readFile(versionFile, "utf-8");
+            return version;
+        } catch (error) {
+            try {
+                const versionFile = path.join(localPath, ".version");
+                const version = await fs.promises.readFile(versionFile, "utf-8");
+                return version;
+            } catch (error) {
+                return "0.0.0";
+            }
+        }
     }
 
     /**
