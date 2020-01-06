@@ -6,6 +6,9 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 ### Added
 - Supports new version file.
 
+### Fixed
+- (JavaScript/TypeScript) Fixed a conflict when suggestions contain "hasOwnProperty".
+
 ## [0.4.1] - 2019-12-27
 
 ### Fixed
