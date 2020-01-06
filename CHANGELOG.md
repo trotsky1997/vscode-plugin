@@ -1,10 +1,11 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
-## [0.4.2] - 
+## [0.4.2] - 2020-01-06
 
 ### Added
 - Supports new version file.
+- (Go) Supports go extension 0.12.0.
 
 ### Fixed
 - (JavaScript/TypeScript) Fixed a conflict when suggestions contain "hasOwnProperty".
