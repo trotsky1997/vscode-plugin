@@ -4,7 +4,7 @@ import { after } from "mocha";
 // You can import and use all API from the 'vscode' module
 // as well as import your extension to test it
 import * as vscode from "vscode";
-import { getInstance } from "../../src/lang/commons";
+import { getInstance } from "../../lang/commons";
 
 suite("Go Language Test Suite", () => {
   const langUtil = getInstance("go");

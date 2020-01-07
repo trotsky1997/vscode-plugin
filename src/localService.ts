@@ -1,5 +1,4 @@
 import { exec } from "child_process";
-import * as decompress from "decompress";
 import * as download from "download";
 import * as filesize from "filesize";
 import * as fs from "fs-extra";

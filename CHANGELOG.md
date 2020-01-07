@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.4.3]
+### Fixed
+- (JavaScript/TypeScript) A space before "}".
+
 ## [0.4.2] - 2020-01-06
 
 ### Added
