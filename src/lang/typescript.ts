@@ -69,14 +69,4 @@ export class TypeScriptLangUtil extends JavaScriptLangUtil {
             return false;
         }
     }
-
-    public shouldPredict(text: string) {
-        // in string
-        try {
-            this.datamask(text, new Set());
-        } catch (error) {
-            return false;
-        }
-        return true;
-    }
 }

@@ -1,7 +1,11 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
-## [0.4.3]
+## [0.4.4] - 2020-01-08
+### Fixed
+- Fixed an issue when writing inside string or comments.
+
+## [0.4.3] - 2020-01-08
 ### Changed
 - Does not download/update local service if the plugin is using online service.
 - Prompts to switch to local service if already using online service.

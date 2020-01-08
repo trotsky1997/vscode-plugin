@@ -69,21 +69,6 @@ export class PythonLangUtil extends LangUtil {
         return stringBuilder;
     }
 
-    public shouldPredict(text: string) {
-        // in string
-        text = this.datamask(text, new Set());
-        if (this.betweenPair(text, "\"", "\"") || this.betweenPair(text, "'", "'") ||
-            this.betweenPair(text, "\"\"\"", "\"\"\"") || this.betweenPair(text, "'''", "'''")) {
-            return false;
-        }
-        // in comment
-        const lineStart = text.lastIndexOf("\n") + 1;
-        if (text.indexOf("#", lineStart) >= 0) {
-            return false;
-        }
-        return true;
-    }
-
     protected skipString(s: string, trivialLiterals: Set<string>, stringBuilder: string, i: number, char: string) {
         const c = s.charAt(i);
         const pythonDoc = c === s.charAt(i + 1) && c === s.charAt(i + 2);
