@@ -2,6 +2,9 @@
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
 ## [0.4.3]
+### Changed
+- Does not download/update local service if the plugin is using online service.
+
 ### Fixed
 - (JavaScript/TypeScript) A space before "}".
 

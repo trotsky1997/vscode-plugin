@@ -290,7 +290,24 @@ export function getTrivialLiterals(ext: string) {
     return "[]";
 }
 
-export async function checkUpdate() {
+export async function checkLocalServiceUpdate() {
+    if (Preference.hasLoginFile()) {
+        const mc = Preference.getLocalModelConfig();
+        let localActive = false;
+        if (mc != null) {
+            for (const ext in mc) {
+                if (mc.hasOwnProperty(ext)) {
+                    localActive = mc[ext].active;
+                    if (localActive) {
+                        break;
+                    }
+                }
+            }
+        }
+        if (!localActive) {
+            return;
+        }
+    }
     try {
         let v = "0.0.0";
         try {

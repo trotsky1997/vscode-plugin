@@ -713,7 +713,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
         await Preference.init(context);
         (async function checkUpdate() {
-            await API.checkUpdate();
+            await API.checkLocalServiceUpdate();
             setTimeout(checkUpdate, 1000 * 60 * 60);
         })();
         const askedTelemetry = context.globalState.get("aiXcoder.askedTelemetry");
