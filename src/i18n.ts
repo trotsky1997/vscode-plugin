@@ -282,6 +282,34 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "en": "IntelliCode integration failed. Please ensure you have latest version of aiXcoder and VS Code.",
         "zh-cn": "IntelliCode 集成失败。请确保您安装了最新版本的aiXcoder插件和VS Code。",
     },
+    "switchToLocal": {
+        "en": "aiXcoder is working in online mode. Do you want to switch to local service? You can always switch between local service and online service using commands.",
+        "zh-cn": "aiXcoder正在使用线上服务，是否切换到本地服务？您以后可以通过命令来切换线上和本地服务。",
+    },
+    "yes": {
+        "en": "Yes",
+        "zh-cn": "是",
+    },
+    "no": {
+        "en": "No",
+        "zh-cn": "否",
+    },
+    "showMe": {
+        "en": "Show Me",
+        "zh-cn": "显示命令",
+    },
+    "switchedToOnline": {
+        "en": "aiXcoder are now switched to online service.",
+        "zh-cn": "aiXcoder现在已切换到线上服务。",
+    },
+    "switchedToLocal": {
+        "en": "aiXcoder are now switched to local service.",
+        "zh-cn": "aiXcoder现在已切换到本地服务。",
+    },
+    "switchCommandPrefix": {
+        "en": "aiXcoder: Switch",
+        "zh-cn": "aiXcoder: 切换",
+    },
 };
 
 export function localize(key: string, ...params: any[]) {

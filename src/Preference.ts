@@ -29,7 +29,7 @@ const loginFile = new FileAutoSyncer<{ uuid?: string, token?: string }>(path.joi
     return JSON.parse(text);
 });
 
-const localserver = path.join(homedir, "aiXcoder", "localserver.json");
+export const localserver = path.join(homedir, "aiXcoder", "localserver.json");
 const models = new FileAutoSyncer<{ [model: string]: { active: boolean, url: string }; }>(localserver, (err, text) => {
     if (err) {
         return {};

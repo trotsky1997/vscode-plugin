@@ -14,7 +14,7 @@ import { localize, localizeMessages } from "./i18n";
 import { activateJava } from "./javaExtension";
 import { getInstance } from "./lang/commons";
 import { LangUtil } from "./lang/langUtil";
-import { getLocalPort } from "./localService";
+import { getLocalPort, switchToLocal } from "./localService";
 import log from "./logger";
 import { activatePhp } from "./phpExtension";
 import Preference from "./Preference";
@@ -714,7 +714,7 @@ export async function activate(context: vscode.ExtensionContext) {
         await Preference.init(context);
         (async function checkUpdate() {
             await API.checkLocalServiceUpdate();
-            setTimeout(checkUpdate, 1000 * 60 * 60);
+            setTimeout(checkUpdate, 4 * 1000 * 60 * 60);
         })();
         const askedTelemetry = context.globalState.get("aiXcoder.askedTelemetry");
         if (!askedTelemetry) {
@@ -771,6 +771,19 @@ export async function activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.search", (uri) => {
             doSearch(context, uri);
         }));
+        if (Preference.hasLoginFile()) {
+            vscode.commands.executeCommand("setContext", "aiXcoderHasLogin", true);
+            context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.switchToOnline", () => {
+                switchToLocal(false);
+                showInformationMessage("switchedToOnline");
+            }));
+            context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.switchToLocal", () => {
+                switchToLocal(true);
+                showInformationMessage("switchedToLocal");
+            }));
+        } else {
+            vscode.commands.executeCommand("setContext", "aiXcoderHasLogin", false);
+        }
         const aixHooks: {
             [lang: string]: void | {
                 aixHook: (ll: vscode.CompletionList | vscode.CompletionItem[], ...args: any) => Promise<vscode.CompletionList | vscode.CompletionItem[]>,

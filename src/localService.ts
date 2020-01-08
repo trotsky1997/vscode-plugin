@@ -10,7 +10,7 @@ import { showInformationMessage } from "./extension";
 import FileAutoSyncer from "./FileAutoSyncer";
 import { getLocale, localize } from "./i18n";
 import log from "./logger";
-import Preference from "./Preference";
+import Preference, { localserver } from "./Preference";
 import * as AixUpdater from "./utils/AixUpdaterClient";
 
 let homedir = os.homedir();
@@ -343,4 +343,31 @@ export function getLocalPortSync() {
 
 export async function getLocalPort() {
     return (await localConfig.get()).port || "8787";
+}
+
+export async function switchToLocal(local: boolean) {
+    await fs.writeFile(localserver, JSON.stringify({
+        models: [{
+            name: "java(Java)",
+            active: local,
+        }, {
+            name: "python(Python)",
+            active: local,
+        }, {
+            name: "typescript(Typescript)",
+            active: local,
+        }, {
+            name: "javascript(Javascript)",
+            active: local,
+        }, {
+            name: "cpp(Cpp)",
+            active: local,
+        }, {
+            name: "go(Go)",
+            active: local,
+        }, {
+            name: "php(Php)",
+            active: local,
+        }],
+    }, null, 2), "utf-8");
 }

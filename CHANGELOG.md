@@ -4,9 +4,11 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 ## [0.4.3]
 ### Changed
 - Does not download/update local service if the plugin is using online service.
+- Prompts to switch to local service if already using online service.
 
 ### Fixed
 - (JavaScript/TypeScript) A space before "}".
+- No longer provide completions inside string or comments.
 
 ## [0.4.2] - 2020-01-06
 

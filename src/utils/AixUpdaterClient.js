@@ -10,6 +10,7 @@ const { exec } = require("child_process");
 
 let hasNative = false;
 try {
+    // @ts-ignore
     require("xxhash");
     hasNative = true;
 } catch (e) {}
@@ -358,6 +359,7 @@ function joinAbsoluteUrlPath(...args) {
  * @returns {Promise<string>}
  */
 async function calcDigest(file) {
+    // @ts-ignore
     const XXHash = require("xxhash");
     const hasher = new XXHash.Stream(0, 64);
     return new Promise((resolve, reject) => {
@@ -421,6 +423,7 @@ async function applyAllPatches(patches, verifyOld, verifyNew, getPatchedFileTemp
         } catch (e) {
             if (patchFile.length > 0) {
                 if (path.basename(patchFile).match(/[A-Za-z0-9]+_[A-Za-z0-9]+\.xpatch/)) {
+                    // @ts-ignore
                     const bsdiff = require("bsdiff-nodejs");
                     await retry(bsdiff.patch, file, patchedFileTemp, patchFile);
                 } else {

@@ -72,16 +72,9 @@ export class TypeScriptLangUtil extends JavaScriptLangUtil {
 
     public shouldPredict(text: string) {
         // in string
-        text = this.datamask(text, new Set());
-        if (this.betweenPair(text, "\"", "\"") || this.betweenPair(text, "'", "'") || this.betweenPair(text, "`", "`")) {
-            return false;
-        }
-        // in comment
-        if (this.betweenPair(text, "/*", "*/")) {
-            return false;
-        }
-        const lineStart = text.lastIndexOf("\n") + 1;
-        if (text.indexOf("//", lineStart) >= 0) {
+        try {
+            this.datamask(text, new Set());
+        } catch (error) {
             return false;
         }
         return true;

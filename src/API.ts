@@ -5,11 +5,11 @@ import * as path from "path";
 import * as request from "request-promise";
 import * as vscode from "vscode";
 import { compareVersion, myVersion, showInformationMessageOnce, showWarningMessage, showWarningMessageOnce } from "./extension";
-import FileAutoSyncer from "./FileAutoSyncer";
 import { localize } from "./i18n";
 import { LangUtil } from "./lang/langUtil";
+import { MatchFailedError } from "./lang/MatchFailedError";
 import Learner from "./Learner";
-import { execAsync, forceUpdate, getServiceStatus, getVersion, isServerStarting, startLocalService } from "./localService";
+import { forceUpdate, getServiceStatus, getVersion, isServerStarting, startLocalService, switchToLocal } from "./localService";
 import log from "./logger";
 import NetworkController from "./NetworkController";
 import Preference from "./Preference";
@@ -169,6 +169,18 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
         if (!networkController.shouldPredict()) {
             return null;
         }
+        if (Object.keys(Preference.getLocalModelConfig()).length === 0) {
+            // prompt for switching to local
+            showInformationMessageOnce("switchToLocal", "yes", "no", "showMe").then((selection) => {
+                if (selection === "yes") {
+                    switchToLocal(true);
+                } else if (selection === "no") {
+                    switchToLocal(false);
+                } else if (selection === "showMe") {
+                    vscode.commands.executeCommand("workbench.action.quickOpen", ">" + localize("switchCommandPrefix"));
+                }
+            });
+        }
     }
 
     saStatusChecker(ext);
@@ -176,8 +188,17 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
         return null;
     }
 
-    const maskedText = await DataMasking.mask(langUtil, text, ext);
-    const maskedRemainingText = await DataMasking.mask(langUtil, remainingText, ext);
+    let maskedText: string;
+    let maskedRemainingText: string;
+    try {
+        maskedText = await DataMasking.mask(langUtil, text, ext);
+        maskedRemainingText = await DataMasking.mask(langUtil, remainingText, ext);
+    } catch (error) {
+        if (error instanceof MatchFailedError) {
+            return null;
+        }
+        throw error;
+    }
     const u = vscode.window.activeTextEditor.document.uri;
     const proj = vscode.workspace.getWorkspaceFolder(u);
     const projName = proj ? proj.name : "_scratch";
@@ -305,6 +326,7 @@ export async function checkLocalServiceUpdate() {
             }
         }
         if (!localActive) {
+            log("Skip check update in online mode");
             return;
         }
     }

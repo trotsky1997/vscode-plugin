@@ -98,6 +98,18 @@
                 "command": "aiXcoder.search",
                 "title": "%aiXcoder.command.search.title%",
                 "category": "aiXcoder"
+            },
+            {
+                "command": "aiXcoder.switchToOnline",
+                "title": "%aiXcoder.command.switchToOnline%",
+                "category": "aiXcoder",
+                "enablement": "aiXcoderHasLogin"
+            },
+            {
+                "command": "aiXcoder.switchToLocal",
+                "title": "%aiXcoder.command.switchToLocal%",
+                "category": "aiXcoder",
+                "enablement": "aiXcoderHasLogin"
             }
         ],
         "menus": {
@@ -106,6 +118,16 @@
                     "when": "editorLangId == python || editorLangId == java || editorLangId == c || editorLangId == cpp || editorLangId == php || editorLangId == javascript || editorLangId == vue || editorLangId == typescript || editorLangId == html || editorLangId == javascriptreact || editorLangId == typescriptreact || editorLangId == go",
                     "command": "aiXcoder.search",
                     "group": "4_search"
+                }
+            ],
+            "commandPalette": [
+                {
+                    "command": "aiXcoder.switchToOnline",
+                    "when": "aiXcoderHasLogin"
+                },
+                {
+                    "command": "aiXcoder.switchToLocal",
+                    "when": "aiXcoderHasLogin"
                 }
             ]
         }

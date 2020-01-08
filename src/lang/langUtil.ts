@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 
 import { AiXCompletionItem, CompletionOptions, Rescue } from "../extension";
+import { MatchFailedError } from "./MatchFailedError";
 
 export const ID_REGEX = /^[a-zA-Z$_][a-zA-Z_$0-9]*$/;
 
@@ -447,11 +448,16 @@ export abstract class LangUtil {
     }
 
     protected skipAfter(s: string, i: number, target: string) {
+        let matchFailed = true;
         for (; i < s.length; i++) {
             if (s.startsWith(target, i)) {
                 i += target.length;
+                matchFailed = false;
                 break;
             }
+        }
+        if (matchFailed) {
+            throw new MatchFailedError();
         }
         return i;
     }
@@ -459,13 +465,18 @@ export abstract class LangUtil {
     protected skipString(s: string, trivialLiterals: Set<string>, stringBuilder: string, i: number, c: string) {
         i++;
         const strStart = i;
+        let matchFailed = true;
         for (; i < s.length; i++) {
             if (s[i] === c) {
+                matchFailed = false;
                 break;
             }
             if (s[i] === "\\") {
                 i++;
             }
+        }
+        if (matchFailed) {
+            throw new MatchFailedError();
         }
         const strContent = s.substring(strStart, i);
         if (trivialLiterals.has(strContent)) {
@@ -478,11 +489,16 @@ export abstract class LangUtil {
     protected skipString2(s: string, trivialLiterals: Set<string>, stringBuilder: string, i: number, pred: ((s: string, i: number) => number)) {
         const strStart = i;
         let skipLen = -1;
+        let matchFailed = true;
         for (; i < s.length; i++) {
             skipLen = pred(s, i);
             if (skipLen >= 0) {
+                matchFailed = false;
                 break;
             }
+        }
+        if (matchFailed) {
+            throw new MatchFailedError();
         }
         const strContent = s.substring(strStart, i);
         if (trivialLiterals.has(strContent)) {
