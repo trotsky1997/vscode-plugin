@@ -303,7 +303,7 @@ export async function checkLocalServiceUpdate() {
     if (await Preference.hasLoginFile()) {
         const mc = await Preference.getLocalModelConfig();
         let localActive = false;
-        if (mc != null) {
+        if (Object.keys(mc).length > 0) {
             for (const ext in mc) {
                 if (mc.hasOwnProperty(ext)) {
                     localActive = mc[ext].active;
