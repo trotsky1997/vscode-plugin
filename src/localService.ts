@@ -96,11 +96,11 @@ async function softStartLocalService() {
 }
 
 function getExePath() {
-    const localserver = path.join(getAixcoderInstallUserPath(), "localserver", "current");
+    const localserverFolder = path.join(getAixcoderInstallUserPath(), "localserver", "current");
     if (process.platform === "win32") {
-        return path.join(localserver, "server", "aixcoder.bat");
+        return path.join(localserverFolder, "server", "aixcoder.bat");
     } else {
-        return path.join(localserver, "server", "aixcoder.sh");
+        return path.join(localserverFolder, "server", "aixcoder.sh");
     }
 }
 
@@ -122,6 +122,18 @@ function launchLocalServer() {
         log(e);
     });
 }
+
+async function _installerExists() {
+    if (process.platform === "win32") {
+        return fs.pathExists(path.join(process.env.LOCALAPPDATA, "aixcoderinstaller"));
+    } else if (process.platform === "darwin") {
+        return fs.pathExists("/Applications/aixcoder.app");
+    } else {
+        return false;
+    }
+}
+
+export const installerExists = _installerExists();
 
 export async function execAsync(cmd: string): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -284,11 +296,11 @@ export async function forceUpdate(localVersion: string, remoteVersion: string) {
         }
         try {
             await AixUpdater.simplePatch(aixcoderPath, [
-                `https://github.com/aixcoder-plugin/localservice/releases/latest/download/${patchball}`,
                 `http://image.aixcoder.com/localservice/releases/download/${remoteVersion}/${patchball}`,
+                `https://github.com/aixcoder-plugin/localservice/releases/latest/download/${patchball}`,
             ], [
-                `https://github.com/aixcoder-plugin/localservice/releases/latest/download/${ball}`,
                 `http://image.aixcoder.com/localservice/releases/download/${remoteVersion}/${ball}`,
+                `https://github.com/aixcoder-plugin/localservice/releases/latest/download/${ball}`,
             ], (p) => {
                 if (p.downloadProgress) {
                     onProgress(p.downloadProgress.downloadProgresses[0]);
@@ -319,7 +331,7 @@ export async function forceUpdate(localVersion: string, remoteVersion: string) {
 export async function getServiceStatus(ext: string) {
     const resp = await request({
         method: "GET",
-        url: Preference.getEndpoint(ext) + "getSaStatus?ext=" + ext,
+        url: (await Preference.getEndpoint(ext)) + "getSaStatus?ext=" + ext,
         timeout: 1000,
     });
     const { status } = JSON.parse(resp);

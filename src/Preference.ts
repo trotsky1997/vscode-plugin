@@ -2,8 +2,10 @@ import * as os from "os";
 import * as path from "path";
 import * as uuidv4 from "uuid/v4";
 import * as vscode from "vscode";
+import { showInformationMessageOnce } from "./extension";
 import FileAutoSyncer from "./FileAutoSyncer";
-import { getLocalPortSync } from "./localService";
+import { localize } from "./i18n";
+import { getLocalPortSync, installerExists, switchToLocal } from "./localService";
 
 function getParamsFromUrl(url: string) {
     url = decodeURI(url);
@@ -76,13 +78,13 @@ export default class Preference {
         }
     }
 
-    public static hasLoginFile() {
-        const loginInfo = loginFile.getSync();
+    public static async hasLoginFile() {
+        const loginInfo = await loginFile.get();
         return loginInfo != null && loginInfo.uuid != null && !loginInfo.uuid.startsWith("local");
     }
 
-    public static getLocalModelConfig() {
-        return models.getSync();
+    public static async getLocalModelConfig() {
+        return models.get();
     }
 
     public static reloadLocalModelConfig() {
@@ -162,24 +164,63 @@ export default class Preference {
         return `http://localhost:${getLocalPortSync()}/`;
     }
 
-    public static getEndpoint(ext: string) {
+    public static getEndpointBasedOnModelConfig(
+        mc: {
+            [model: string]: {
+                active: boolean;
+                url: string;
+            },
+        },
+        ext: string) {
+        let localActive: undefined | boolean;
+        if (mc.hasOwnProperty(ext)) {
+            localActive = mc[ext].active;
+        }
+        if (!localActive) {
+            return "https://api.aixcoder.com";
+        } else {
+            return Preference.getLocalEndpoint();
+        }
+    }
+
+    public static async getEndpoint(ext: string) {
         let endpoint = "";
-        if (Preference.hasLoginFile()) {
-            const mc = Preference.getLocalModelConfig();
-            let localActive;
-            if (mc.hasOwnProperty(ext)) {
-                localActive = mc[ext].active;
-            }
-            if (localActive === undefined) {
-                localActive = mc.active;
-            }
-            if (!localActive) {
+        if (await Preference.hasLoginFile()) {
+            const mc = await Preference.getLocalModelConfig();
+            if (Object.keys(mc).length === 0) {
+                // prompt for switching to local
+                showInformationMessageOnce("switchToLocal", "yes", "no", "showme").then((selection) => {
+                    if (selection === "yes") {
+                        switchToLocal(true);
+                    } else if (selection === "no") {
+                        switchToLocal(false);
+                    } else if (selection === "showMe") {
+                        vscode.commands.executeCommand("workbench.action.quickOpen", ">" + localize("switchCommandPrefix"));
+                    }
+                });
                 endpoint = "https://api.aixcoder.com";
+            } else {
+                endpoint = Preference.getEndpointBasedOnModelConfig(mc, ext);
+            }
+        } else {
+            if (await installerExists) {
+                const mc = await Preference.getLocalModelConfig();
+                if (Object.keys(mc).length === 0) {
+                    // prompt for switching to local
+                    showInformationMessageOnce("switchToOnline", "login", "continueToUseLocal").then((selection) => {
+                        if (selection === "login") {
+                            showInformationMessageOnce("promptToLogin");
+                        } else if (selection === "continueToUseLocal") {
+                            switchToLocal(true);
+                        }
+                    });
+                    endpoint = Preference.getLocalEndpoint();
+                } else {
+                    endpoint = Preference.getEndpointBasedOnModelConfig(mc, ext);
+                }
             } else {
                 endpoint = Preference.getLocalEndpoint();
             }
-        } else {
-            endpoint = Preference.getLocalEndpoint();
         }
         if (!endpoint.endsWith("/")) {
             endpoint += "/";

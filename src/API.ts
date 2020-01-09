@@ -9,7 +9,7 @@ import { localize } from "./i18n";
 import { LangUtil } from "./lang/langUtil";
 import { MatchFailedError } from "./lang/MatchFailedError";
 import Learner from "./Learner";
-import { forceUpdate, getServiceStatus, getVersion, isServerStarting, startLocalService, switchToLocal } from "./localService";
+import { forceUpdate, getServiceStatus, getVersion, installerExists, isServerStarting, startLocalService, switchToLocal } from "./localService";
 import log from "./logger";
 import NetworkController from "./NetworkController";
 import Preference from "./Preference";
@@ -157,7 +157,7 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
         }
     }
     let localRequest = false;
-    const endpoint = Preference.getEndpoint(ext);
+    const endpoint = await Preference.getEndpoint(ext);
     if (endpoint.indexOf("localhost") >= 0) {
         lastLocalRequest = localRequest = true;
         if (isServerStarting()) {
@@ -168,18 +168,6 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
         lastLocalRequest = localRequest = false;
         if (!networkController.shouldPredict()) {
             return null;
-        }
-        if (Object.keys(Preference.getLocalModelConfig()).length === 0) {
-            // prompt for switching to local
-            showInformationMessageOnce("switchToLocal", "yes", "no", "showMe").then((selection) => {
-                if (selection === "yes") {
-                    switchToLocal(true);
-                } else if (selection === "no") {
-                    switchToLocal(false);
-                } else if (selection === "showMe") {
-                    vscode.commands.executeCommand("workbench.action.quickOpen", ">" + localize("switchCommandPrefix"));
-                }
-            });
         }
     }
 
@@ -299,8 +287,8 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
     return null;
 }
 
-export function getTrivialLiterals(ext: string) {
-    const endpoint = Preference.getEndpoint(ext);
+export async function getTrivialLiterals(ext: string) {
+    const endpoint = await Preference.getEndpoint(ext);
     if (endpoint.indexOf("localhost") < 0) {
         return myRequest({
             method: "get",
@@ -312,8 +300,8 @@ export function getTrivialLiterals(ext: string) {
 }
 
 export async function checkLocalServiceUpdate() {
-    if (Preference.hasLoginFile()) {
-        const mc = Preference.getLocalModelConfig();
+    if (await Preference.hasLoginFile()) {
+        const mc = await Preference.getLocalModelConfig();
         let localActive = false;
         if (mc != null) {
             for (const ext in mc) {
@@ -333,6 +321,15 @@ export async function checkLocalServiceUpdate() {
     try {
         let v = "0.0.0";
         try {
+            const updateURL = "localservice/releases/latest";
+            v = await myRequest({
+                method: "get",
+                url: updateURL,
+                headers: {
+                    "User-Agent": "aiXcoder-vscode-plugin",
+                },
+            }, "http://image.aixcoder.com");
+        } catch (error) {
             const updateURL = "repos/aixcoder-plugin/localservice/releases/latest";
             const versionJson = await myRequest({
                 method: "get",
@@ -343,15 +340,6 @@ export async function checkLocalServiceUpdate() {
             }, "https://api.github.com");
             const newVersions = JSON.parse(versionJson);
             v = newVersions.tag_name;
-        } catch (error) {
-            const updateURL = "localservice/releases/latest";
-            v = await myRequest({
-                method: "get",
-                url: updateURL,
-                headers: {
-                    "User-Agent": "aiXcoder-vscode-plugin",
-                },
-            }, "http://image.aixcoder.com");
         }
         const localVersion = await getVersion();
         let doUpdate = false;

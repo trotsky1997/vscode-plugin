@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.4.5] - 2020-01-09
+### Changed
+- Prompts to login if previously used online service.
+
 ## [0.4.4] - 2020-01-08
 ### Fixed
 - Fixed an issue when writing inside string or comments.

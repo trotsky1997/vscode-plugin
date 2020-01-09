@@ -771,7 +771,7 @@ export async function activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.search", (uri) => {
             doSearch(context, uri);
         }));
-        if (Preference.hasLoginFile()) {
+        if (await Preference.hasLoginFile()) {
             vscode.commands.executeCommand("setContext", "aiXcoderHasLogin", true);
             context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.switchToOnline", () => {
                 switchToLocal(false);
@@ -793,7 +793,7 @@ export async function activate(context: vscode.ExtensionContext) {
             java: await activateJava(context),
             typescript: await activateTypeScript(context, false),
         };
-        if (Preference.hasLoginFile()) {
+        if (await Preference.hasLoginFile()) {
             // online mode
             aixHooks.cpp = await activateCPP(context);
             aixHooks.php = await activatePhp(context);

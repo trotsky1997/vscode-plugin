@@ -1,4 +1,5 @@
 import * as fs from "fs-extra";
+import * as path from "path";
 
 export default class FileAutoSyncer<T> {
     private file: string;
@@ -63,11 +64,17 @@ export default class FileAutoSyncer<T> {
     private async initWatch() {
         try {
             await fs.stat(this.file);
+            fs.watch(this.file, (event, filename) => {
+                this.readFile();
+            });
         } catch (e) {
             // await fs.writeFile(this.file, "{}", "utf-8");
+            const fName = path.basename(this.file);
+            fs.watch(path.dirname(this.file), (event, filename) => {
+                if (filename === fName) {
+                    this.readFile();
+                }
+            });
         }
-        fs.watch(this.file, (event, filename) => {
-            this.readFile();
-        });
     }
 }

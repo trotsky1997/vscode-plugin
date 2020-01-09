@@ -286,6 +286,14 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "en": "aiXcoder is working in online mode. Do you want to switch to local service? You can always switch between local service and online service using commands.",
         "zh-cn": "aiXcoder正在使用线上服务，是否切换到本地服务？您以后可以通过命令来切换线上和本地服务。",
     },
+    "switchToOnline": {
+        "en": "aiXcoder is working in local mode. You need to login in aiXcoder installer to switch to online service.",
+        "zh-cn": "aiXcoder正在使用本地服务，您需要登录才能切换到线上服务。",
+    },
+    "continueToUseLocal": {
+        "en": "Keep Using Local Service",
+        "zh-cn": "继续使用本地服务",
+    },
     "yes": {
         "en": "Yes",
         "zh-cn": "是",
@@ -309,6 +317,10 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
     "switchCommandPrefix": {
         "en": "aiXcoder: Switch",
         "zh-cn": "aiXcoder: 切换",
+    },
+    "promptToLogin": {
+        "en": "Please login on aiXcoder Installer before using online service",
+        "zh-cn": "请用aiXcoder安装器登录您的账号以使用线上服务",
     },
 };
 
