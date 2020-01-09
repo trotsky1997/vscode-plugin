@@ -2,7 +2,7 @@
     "name": "aixcoder",
     "displayName": "aiXcoder AI Code Completer",
     "description": "An free code completion tool powered by deep learning.",
-    "version": "0.4.4",
+    "version": "0.4.5",
     "publisher": "aixcoder-plugin",
     "repository": {
         "url": "https://github.com/aixcoder-plugin/vscode-plugin/"
