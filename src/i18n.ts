@@ -250,9 +250,13 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "en": "AiXcoder local service is updated to %s (from %s).",
         "zh-cn": "AiXcoder 本地服务已升级到 %s （从%s）。",
     },
+    "aixInstalled": {
+        "en": "AiXcoder local service %s has been installed.",
+        "zh-cn": "AiXcoder 本地服务%s已安装。",
+    },
     "unzipping": {
-        "en": "Extract %s to %s...",
-        "zh-cn": "解压：从 %s 到 %s...",
+        "en": "Extracting...",
+        "zh-cn": "正在解压...",
     },
     "localInitializing": {
         "en": "aiXcoder is indexing your project for the first time. The suggestions may not be accurate until it is done.",

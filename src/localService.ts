@@ -6,6 +6,7 @@ import * as os from "os";
 import * as path from "path";
 import * as request from "request-promise";
 import * as vscode from "vscode";
+import * as API from "./API";
 import { showInformationMessage } from "./extension";
 import FileAutoSyncer from "./FileAutoSyncer";
 import { getLocale, localize } from "./i18n";
@@ -213,11 +214,17 @@ export async function startLocalService(soft: boolean) {
 }
 
 export async function getVersion() {
-    const aixcoderPath = path.join(getAixcoderInstallUserPath(), "localserver", "current", "server", ".version");
+    let aixcoderPath = path.join(getAixcoderInstallUserPath(), "localserver", "current", "server", ".version");
     let version = "0.0.0";
     try {
         version = await fs.readFile(aixcoderPath, "utf-8");
     } catch (e) {
+        try {
+            aixcoderPath = path.join(getAixcoderInstallUserPath(), "localserver", "current", "server", "version");
+            version = await fs.readFile(aixcoderPath, "utf-8");
+        } catch (e) {
+            // pass
+        }
     }
     return version;
 }
@@ -239,6 +246,7 @@ async function kill() {
         } else {
             await execAsync("kill " + prevPid);
         }
+        await new Promise((resolve) => setTimeout(resolve, 1000));
     } catch (e) {
         // file not present
         console.error(e);
@@ -309,8 +317,15 @@ export async function forceUpdate(localVersion: string, remoteVersion: string) {
                         message: p.toString(getLocale()),
                     });
                 }
-            }, kill, cancellationToken);
-            showInformationMessage(localize("aixUpdated", remoteVersion, localVersion));
+            }, () => {
+                progress.report({ message: localize("unzipping") });
+                return kill();
+            }, cancellationToken);
+            if (localVersion === "0.0.0") {
+                showInformationMessage(localize("aixInstalled", remoteVersion));
+            } else {
+                showInformationMessage(localize("aixUpdated", remoteVersion, localVersion));
+            }
         } catch (err) {
             if (err) {
                 log(err);
@@ -382,4 +397,6 @@ export async function switchToLocal(local: boolean) {
             active: local,
         }],
     }, null, 2), "utf-8");
+    Preference.reloadLocalModelConfig();
+    API.checkLocalServiceUpdate();
 }
