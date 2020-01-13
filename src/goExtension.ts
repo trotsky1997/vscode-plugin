@@ -9,25 +9,25 @@ import { Syncer } from "./Syncer";
 import { SafeStringUtil } from "./utils/SafeStringUtil";
 
 export async function activateGo(context: vscode.ExtensionContext) {
-    const msintellicode = vscode.extensions.getExtension("visualstudioexptteam.vscodeintellicode");
     const msgo = vscode.extensions.getExtension("ms-vscode.go");
     const activated = false;
     const syncer = new Syncer<SortResultEx>();
     let hooked = false;
     if (msgo) {
         const distjsPath = path.join(msgo.extensionPath, "out", "src", "goLanguageServer.js");
-        hooked = await JSHooker("/**AiXHooked-0**/", distjsPath, msgo, "go.reload", "go.fail", (distjs) => {
-            const pciStart = SafeStringUtil.indexOf(distjs, "provideCompletionItem:");
-            const retStart = SafeStringUtil.indexOf(distjs, "return next(document, position, context, token);", pciStart);
-            const A = SafeStringUtil.substring(distjs, 0, retStart);
-            const B = SafeStringUtil.substring(distjs, retStart + "return next(document, position, context, token);".length);
-            const handleResultCode = `let r = next(document, position, context, token);
-            const aix = require(\"vscode\").extensions.getExtension("${myID}");
-            const api = aix && aix.exports;
-            if (api && api.aixhook) {
-                r = api.aixhook(\"go\",r,document,position,context,token);
-            }
-            return r;`;
+        hooked = await JSHooker("/**AiXHooked-1**/", distjsPath, msgo, "go.reload", "go.fail", (distjs) => {
+            const pciStart = SafeStringUtil.indexOf(distjs, "middleware: {");
+            const A = distjs.substring(0, pciStart + "middleware: {".length);
+            const B = distjs.substring(pciStart + "middleware: {".length);
+            const handleResultCode = `provideCompletionItems: async (document, position, context, token, next) => {
+                let r = next(document, position, context, token);
+                const aix = require("vscode").extensions.getExtension("${myID}");
+                const api = aix && aix.exports;
+                if (api && api.aixhook) {
+                    r = api.aixhook("go",r,document,position,context,token);
+                }
+                return r;
+            },`;
             return A + handleResultCode + B;
         });
 
@@ -75,7 +75,7 @@ export async function activateGo(context: vscode.ExtensionContext) {
             // log("=====================");
             try {
                 const { longResults, sortResults, offsetID, fetchTime, current } = await fetchResults(document, position, ext, "go", syncer, STAR_DISPLAY.LEFT);
-                if (msgo && hooked) {
+                if (msgo && msgo.isActive && hooked) {
                     syncer.put(offsetID, { ...sortResults, ext, fetchTime, current });
                 } else {
                     const sortLabels = formatSortData(sortResults, getInstance("go"), document, ext, current);

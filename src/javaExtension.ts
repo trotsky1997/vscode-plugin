@@ -3,13 +3,30 @@ import * as vscode from "vscode";
 import { fetchResults, formatSortData, getReqText, JSHooker, mergeSortResult, myID, sendPredictTelemetryLong, sendPredictTelemetryShort, showInformationMessageOnce, SortResultEx, STAR_DISPLAY } from "./extension";
 import { localize } from "./i18n";
 import { getInstance } from "./lang/commons";
+import { execAsync } from "./localService";
 import log from "./logger";
 import { Syncer } from "./Syncer";
-import { SafeStringUtil } from "./utils/SafeStringUtil";
 
 export async function activateJava(context: vscode.ExtensionContext) {
+    const findJavaHome = require("find-java-home");
+    const javaHome = vscode.workspace.getConfiguration().get("java.home") as string || await new Promise((resolve, reject) => {
+        findJavaHome((err, home) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(home);
+            }
+        });
+    });
+    if (javaHome) {
+        process.env.PATH += ";" + path.join(javaHome, "bin");
+    }
+    try {
+        await execAsync("java -version");
+    } catch (e) {
+        showInformationMessageOnce("JREMissing");
+    }
     const redhatjavaExtension = vscode.extensions.getExtension("redhat.java");
-    const msintellicode = vscode.extensions.getExtension("visualstudioexptteam.vscodeintellicode");
     let activated = false;
     const syncer = new Syncer<SortResultEx>();
     let hooked = false;
@@ -37,24 +54,6 @@ export async function activateJava(context: vscode.ExtensionContext) {
                 distjs = distjs.replace(",outputChannelName:E", ",outputChannelName:E," + middleware);
                 return distjs;
             });
-
-            if (msintellicode) {
-                const intellicodeDistjsPath = path.join(msintellicode.extensionPath, "dist", "intellicode.js");
-                hooked = await JSHooker("/**AiXHooked-1**/", intellicodeDistjsPath, msintellicode, "java.reload", "java.fail", (distjs) => {
-                    const s = SafeStringUtil.indexOf(distjs, "i.languages.registerCompletionItemProvider");
-                    const s1 = SafeStringUtil.indexOf(distjs, "provideCompletionItems:", s);
-                    const e = SafeStringUtil.indexOf(distjs, ",resolveCompletionItem:", s1);
-                    let body = SafeStringUtil.substring(distjs, s1, e);
-                    body = body.replace(/provideCompletionItems:\s*\((.+?),\s*(.+?),\s*(.+?),\s*(.+?)\)\s*=>(.+)/, `provideCompletionItems:($1,$2,$3,$4)=>{let rr=$5;
-                        const aix = require("vscode").extensions.getExtension("${myID}");
-                        const api = aix && aix.exports;
-                        if(api && api.aixhook){
-                            rr = api.aixhook("java",rr,$1,$2,$3,$4);
-                        }
-                        return rr;}`);
-                    return SafeStringUtil.substring(distjs, 0, s1) + body + SafeStringUtil.substring(distjs, e);
-                }) && hooked;
-            }
 
             if (redhatjavaExtension && !redhatjavaExtension.isActive) {
                 try {
@@ -100,10 +99,7 @@ export async function activateJava(context: vscode.ExtensionContext) {
             return null;
         },
     };
-    const triggerCharacters = ["="];
-    if (!msintellicode) {
-        triggerCharacters.push(".");
-    }
+    const triggerCharacters = ["=", ".", "@"];
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "java", scheme: "file" }, provider, ...triggerCharacters));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "java", scheme: "untitled" }, provider, ...triggerCharacters));
     return {
@@ -112,9 +108,6 @@ export async function activateJava(context: vscode.ExtensionContext) {
                 // return ll;
                 const { offsetID } = getReqText(document, position, "java");
                 const items = Array.isArray(ll) ? ll : ll.items;
-                if (items.length > 0) {
-                    items[0].preselect = false;
-                }
 
                 const sortResults = await syncer.get(offsetID, items.length === 0);
                 if (sortResults == null) { return ll; }

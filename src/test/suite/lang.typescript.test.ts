@@ -4,7 +4,7 @@ import { after } from "mocha";
 // You can import and use all API from the 'vscode' module
 // as well as import your extension to test it
 import * as vscode from "vscode";
-import { getInstance } from "../../src/lang/commons";
+import { getInstance } from "../../lang/commons";
 
 suite("TypeScript Language Test Suite", () => {
   const langUtil = getInstance("ts");
@@ -35,7 +35,9 @@ suite("TypeScript Language Test Suite", () => {
     if ( ! m ) ;
     export = Updater ;
     new Set < string > ( ) ;
-    const [ a , b ] = [ 1 , 2 ] ;`;
+    const [ a , b ] = [ 1 , 2 ] ;
+    const constructor = null ;
+    res . json ( { msg : <str> } )`;
     const sourceExpect = `import { expect } from "chai";
     import { after } from "mocha";
     import * as vscode from "vscode";
@@ -58,7 +60,9 @@ suite("TypeScript Language Test Suite", () => {
     if (!m);
     export = Updater;
     new Set<string>();
-    const [a, b] = [1, 2];`;
+    const [a, b] = [1, 2];
+    const constructor = null;
+    res.json({ msg: "" })`;
 
     const sourceTokensLines = sourceTokens.split("\n").map((_) => _.trim());
     const sourceExpectLines = sourceExpect.split("\n").map((_) => _.trim());

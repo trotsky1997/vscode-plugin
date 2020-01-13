@@ -1,15 +1,17 @@
-import { promises as fs } from "fs";
+import * as fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
 import * as uuidv4 from "uuid/v4";
 import * as vscode from "vscode";
-import { getUUID, isProfessional } from "./API";
-import log from "./logger";
+import { showInformationMessageOnce } from "./extension";
+import FileAutoSyncer from "./FileAutoSyncer";
+import { localize } from "./i18n";
+import { getLocalPortSync, installerExists, switchToLocal } from "./localService";
 
 function getParamsFromUrl(url: string) {
     url = decodeURI(url);
     const eachParamsArr = url.split("&");
-    const obj = {};
+    const obj: { [key: string]: string } = {};
     if (eachParamsArr && eachParamsArr.length) {
         eachParamsArr.map((param) => {
             const keyValuePair = param.split("=");
@@ -20,6 +22,30 @@ function getParamsFromUrl(url: string) {
     }
     return obj;
 }
+
+const homedir = os.homedir();
+
+const loginFile = new FileAutoSyncer<{ uuid?: string, token?: string }>(path.join(homedir, "aiXcoder", "login"), (err, text) => {
+    if (err) {
+        return {};
+    }
+    return JSON.parse(text);
+});
+
+export const localserver = path.join(homedir, "aiXcoder", "localserver.json");
+const models = new FileAutoSyncer<{ [model: string]: { active: boolean, url: string }; }>(localserver, (err, text) => {
+    if (err) {
+        return {};
+    }
+    const d = JSON.parse(text);
+    const m = {};
+    if (d.models) {
+        for (const model of d.models) {
+            m[model.name] = model;
+        }
+    }
+    return m;
+});
 
 export default class Preference {
     public static uuid: string;
@@ -35,7 +61,6 @@ export default class Preference {
         Preference.context = context;
 
         try {
-            const homedir = os.homedir();
             const configFile = path.join(homedir, "aiXcoder", "aix-enterprise-config.json");
             const text = await fs.readFile(configFile, "utf-8");
             const jo = JSON.parse(text);
@@ -55,29 +80,33 @@ export default class Preference {
             // TODO: handle exception
         }
 
-        try {
-            Preference.uuid = (await getUUID()).uuid;
-        } catch (e) {
-            // try reading uuid every 10 min
-            const repeater = setInterval(async () => {
-                Preference.uuid = (await getUUID()).uuid;
-                clearInterval(repeater);
-            }, 1000 * 60 * 10);
-            // meanwhile use a generated fake uuid
-            Preference.uuid = context.globalState.get("aiXcoder.uuid");
-        }
-        try {
-            Preference.isProfessional = await isProfessional();
-        } catch (e) {
-            // not registered
-            log(e);
-        }
         if (Preference.uuid == null || Preference.uuid === "") {
-            Preference.uuid = "vscode-" + uuidv4();
-            context.globalState.update("aiXcoder.uuid", Preference.uuid);
+            // try {
+            //     Preference.uuid = (await getUUID()).uuid;
+            // } catch (e) {
+            //     // try reading uuid every 10 min
+            //     const repeater = setInterval(async () => {
+            //         Preference.uuid = (await getUUID()).uuid;
+            //         clearInterval(repeater);
+            //     }, 1000 * 60 * 10);
+            //     // meanwhile use a generated fake uuid
+            //     Preference.uuid = context.globalState.get("aiXcoder.uuid");
+            // }
+            // try {
+            //     Preference.isProfessional = await isProfessional();
+            // } catch (e) {
+            //     // not registered
+            //     log(e);
+            // }
+            const loginInfo = await loginFile.get();
+            if (loginInfo.uuid == null) {
+                Preference.uuid = "vscode-" + uuidv4();
+                context.globalState.update("aiXcoder.uuid", Preference.uuid);
+            } else {
+                Preference.uuid = loginInfo.uuid;
+            }
         }
     }
-
     public static enterpriseExt(ext: string): string {
         const m = ext.match(/^(.+)\((.+)\)$/);
         if (m) {
@@ -90,12 +119,17 @@ export default class Preference {
         return ext;
     }
 
-    public static getEndpoint() {
-        let endpoint: string = vscode.workspace.getConfiguration().get("aiXcoder.endpoint");
-        if (endpoint == null || endpoint === "") {
-            endpoint = Preference.endpoint;
-        }
-        return endpoint;
+    public static async hasLoginFile() {
+        const loginInfo = await loginFile.get();
+        return loginInfo != null && loginInfo.uuid != null && !loginInfo.uuid.startsWith("local");
+    }
+
+    public static async getLocalModelConfig() {
+        return models.get();
+    }
+
+    public static reloadLocalModelConfig() {
+        return models.reload();
     }
 
     public static getParams() {
@@ -122,19 +156,19 @@ export default class Preference {
     }
 
     public static shouldTrigger(lastModifedTime: { [uri: string]: number }, document: vscode.TextDocument) {
-        if (!vscode.workspace.getConfiguration().get("aiXcoder.alwaysTrigger")) {
-            const last = lastModifedTime[document.uri.toJSON()] || 0;
-            if (Date.now() - last < 100) {
-                // triggered by key type
-                return false;
-            }
-        }
+        // if (!vscode.workspace.getConfiguration().get("aiXcoder.alwaysTrigger")) {
+        //     const last = lastModifedTime[document.uri.toJSON()] || 0;
+        //     if (Date.now() - last < 100) {
+        //         // triggered by key type
+        //         return false;
+        //     }
+        // }
         return true;
     }
 
     public static getLongResultRankSortText() {
         const rank = vscode.workspace.getConfiguration().get("aiXcoder.longResultRank") as number;
-        return ".0." + (rank - 1) + ".0";
+        return ".0." + ((rank || 1) - 1) + ".0";
     }
 
     public static getLongResultCuts() {
@@ -165,5 +199,20 @@ export default class Preference {
 
     public static getSelfLearn() {
         return vscode.workspace.getConfiguration().get("aiXcoder.selfLearning") as boolean;
+    }
+
+    public static getLocalEndpoint() {
+        return `http://localhost:${getLocalPortSync()}/`;
+    }
+
+    public static async getEndpoint(ext?: string) {
+        let endpoint: string = vscode.workspace.getConfiguration().get("aiXcoder.endpoint");
+        if (endpoint == null || endpoint === "") {
+            endpoint = Preference.endpoint;
+        }
+        if (!endpoint.endsWith("/")) {
+            endpoint += "/";
+        }
+        return endpoint;
     }
 }

@@ -27,5 +27,9 @@
 	"aiXcoder.configuration.longResultCutSort.short2long": "从短到长",
 	"aiXcoder.configuration.longResultCutSort.long2short": "从长到短",
 	"aiXcoder.configuration.longResultCuts.auto": "自动",
-	"aiXcoder.configuration.longResultCuts.none": "不切割为更多短结果"
+	"aiXcoder.configuration.longResultCuts.none": "不切割为更多短结果",
+	"aiXcoder.configuration.retrigger": "自动重新发起提示",
+	"aiXcoder.configuration.localShowIncompleteSuggestions": "在索引完成前显示不完整的推荐",
+	"aiXcoder.command.switchToOnline": "切换到本地服务",
+	"aiXcoder.command.switchToLocal": "切换到线上服务"
 }

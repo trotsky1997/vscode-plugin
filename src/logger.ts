@@ -33,7 +33,7 @@ class Logger {
         let t = "";
         if ("string" === typeof e) { t = e; } else {
             if (e.message) {
-                t = `Error Message: ${e.message}`;
+                t = `Error Message: ${e.message} + stack: ${e.stack}`;
             }
             if (e.name && -1 === e.message.indexOf(e.name)) {
                 t += `, (${e.name})`;
@@ -41,7 +41,7 @@ class Logger {
             const a = e.innerException;
             if (a) {
                 if (a.message) {
-                    t += `, Inner Error Message: ${a.message}`;
+                    t += `, Inner Error Message: ${a.message} + stack: ${a.stack}`;
                 }
                 if (a.name && -1 === a.message.indexOf(a.name)) {
                     t += `, (${a.name})`;

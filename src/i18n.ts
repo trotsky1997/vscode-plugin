@@ -90,10 +90,6 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "en": "AiXCoder requires a reload to integrate with Python extension.",
         "zh-cn": "AiXCoder需要重新加载以便与 Python 插件集成。",
     },
-    "msintellicode.enabled": {
-        "en": "AiXCoder is in compability mode because MS IntelliCode Extension is installed. Results from aiXcoder will be ranked lower when IntelliCode results are avaialble.",
-        "zh-cn": "AiXCoder正处于兼容模式因为微软IntelliCode插件已被安装。在IntelliCode插件提供推荐结果时AiXCoder的推荐结果位置将下移。",
-    },
     "nevershowagain": {
         "en": "Don't show again",
         "zh-cn": "不再显示",
@@ -179,8 +175,8 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "zh-cn": "您可以在一个外部浏览器窗口中显示搜索结果，只需要在设置中进行设置。",
     },
     "localServerDown": {
-        "en": "The local aiXcoder server is not responding. Please open the aiXcoder app and make sure the local server is running on %s.",
-        "zh-cn": "本地aiXcoder服务器没有响应。请打开aiXcoder应用并确保本地服务器运行在 %s 上。",
+        "en": "The local aiXcoder server is not responding. It may take a long time for the first time loading a project. Otherwise, you may try restarting the service. (The local server is running on %s)",
+        "zh-cn": "本地aiXcoder服务器没有响应。如果是初次加载项目，可能需要很长时间索引项目。否则您可以尝试重启。(本地服务器运行在 %s 上)",
     },
     "serverDown": {
         "en": "The aiXcoder server is not responding. Please make sure you have a stable network connection to %s.",
@@ -198,7 +194,7 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "en": "Restart Service",
         "zh-cn": "重启服务",
     },
-    "localServiceStarting" : {
+    "localServiceStarting": {
         "en": "Local service is starting. It will take up to a minute to warm up.",
         "zh-cn": "本地服务正在启动。可能需要不超过一分钟的时间来预热。",
     },
@@ -222,8 +218,121 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "en": "Unable to open aixcoder protocol. This might be due to the original app being moved or deleted. Please open aixcoder app. And then reload VSCode.",
         "zh-cn": "无法打开aixcoder协议，这可能是由于应用程序被移动或删除导致。请重新打开aixcoder应用。然后重新加载VSCode。",
     },
+    "aixInstallProgress": {
+        "en": "Installing aiXcoder service...",
+        "zh-cn": "正在安装aiXcoder服务...",
+    },
+    "aixUpdateProgress": {
+        "en": "Upgrading aiXcoder service...",
+        "zh-cn": "正在更新aiXcoder服务...",
+    },
+    "aixUpdatefailed": {
+        "en": "aiXcoder service update failed. You can manually download the latest service zipfile/tarball from: %s. And then unzip it here: %s.",
+        "zh-cn": "aiXcoder服务更新失败。您可以手动在此下载最新的压缩包：%s。然后解压到这个目录：%s。",
+    },
+    "JREMissing": {
+        "en": "Error: JRE not found! Please install Java in case some features disabled.",
+        "zh-cn": "错误：未找到JRE! 请安装Java以免影响部分功能正常使用。",
+    },
+    "openInBrowser": {
+        "en": "Open in browser",
+        "zh-cn": "在浏览器中打开",
+    },
+    "aixUnzipfailed": {
+        "en": "Failed to extract %s to %s.",
+        "zh-cn": "解压失败：从 %s 到 %s。",
+    },
+    "showFolder": {
+        "en": "Open this folder",
+        "zh-cn": "打开此目录",
+    },
+    "aixUpdated": {
+        "en": "AiXcoder local service is updated to %s (from %s).",
+        "zh-cn": "AiXcoder 本地服务已升级到 %s （从%s）。",
+    },
+    "aixInstalled": {
+        "en": "AiXcoder local service %s has been installed.",
+        "zh-cn": "AiXcoder 本地服务%s已安装。",
+    },
+    "unzipping": {
+        "en": "Extracting...",
+        "zh-cn": "正在解压...",
+    },
+    "localInitializing": {
+        "en": "aiXcoder is indexing your project for the first time. The suggestions may not be accurate until it is done.",
+        "zh-cn": "aiXcoder正在初次索引您的项目。在这结束之前提示可能是不准确的。",
+    },
+    "nosa-yes": {
+        "en": "Show incomplete suggestions",
+        "zh-cn": "展示提示",
+    },
+    "nosa-no": {
+        "en": "Wait for index to complete",
+        "zh-cn": "等待索引结束",
+    },
+    "close": {
+        "en": "Close",
+        "zh-cn": "关闭",
+    },
+    "localShowIncompleteSuggestions": {
+        "en": "You chose to %s. You can change it later in settings.",
+        "zh-cn": "您选择了%s。您可以之后在设置中更改。",
+    },
+    "intellicode.reload": {
+        "en": "AiXCoder requires a reload to integrate with IntelliCode extension.",
+        "zh-cn": "AiXCoder需要重新加载以便与 IntelliCode 集成。",
+    },
+    "intellicode.fail": {
+        "en": "IntelliCode integration failed. Please ensure you have latest version of aiXcoder and VS Code.",
+        "zh-cn": "IntelliCode 集成失败。请确保您安装了最新版本的aiXcoder插件和VS Code。",
+    },
+    "switchToLocal": {
+        "en": "aiXcoder is working in online mode. Do you want to switch to local service? You can always switch between local service and online service using commands.",
+        "zh-cn": "aiXcoder正在使用线上服务，是否切换到本地服务？您以后可以通过命令来切换线上和本地服务。",
+    },
+    "switchToOnline": {
+        "en": "aiXcoder is working in local mode. You need to login in aiXcoder installer to switch to online service.",
+        "zh-cn": "aiXcoder正在使用本地服务，您需要登录才能切换到线上服务。",
+    },
+    "continueToUseLocal": {
+        "en": "Keep Using Local Service",
+        "zh-cn": "继续使用本地服务",
+    },
+    "yes": {
+        "en": "Yes",
+        "zh-cn": "是",
+    },
+    "no": {
+        "en": "No",
+        "zh-cn": "否",
+    },
+    "showMe": {
+        "en": "Show Me",
+        "zh-cn": "显示命令",
+    },
+    "switchedToOnline": {
+        "en": "aiXcoder are now switched to online service.",
+        "zh-cn": "aiXcoder现在已切换到线上服务。",
+    },
+    "switchedToLocal": {
+        "en": "aiXcoder are now switched to local service.",
+        "zh-cn": "aiXcoder现在已切换到本地服务。",
+    },
+    "switchCommandPrefix": {
+        "en": "aiXcoder: Switch",
+        "zh-cn": "aiXcoder: 切换",
+    },
+    "promptToLogin": {
+        "en": "Please login on aiXcoder Installer before using online service",
+        "zh-cn": "请用aiXcoder安装器登录您的账号以使用线上服务",
+    },
 };
 
 export function localize(key: string, ...params: any[]) {
     return localizeMessages[key] ? util.format(localizeMessages[key][vscode.env.language] || localizeMessages[key].en, ...params) : key;
+}
+
+export function getLocale() {
+    const sep = vscode.env.language.indexOf("-");
+    return sep >= 0 ? vscode.env.language.substring(0, sep) : vscode.env.language;
 }

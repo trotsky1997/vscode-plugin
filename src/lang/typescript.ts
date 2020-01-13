@@ -31,6 +31,7 @@ export class TypeScriptLangUtil extends JavaScriptLangUtil {
         this.addSpacingOption(LangUtil.SpacingKeyALL, ":", false);
         this.addSpacingOption(LangUtil.SpacingKeyALL, "=>", true);
         this.addSpacingOption(">", "(", false);
+        this.addSpacingOption("constructor", "=", true);
     }
 
     public getKeywords(): Set<string> {
@@ -67,22 +68,5 @@ export class TypeScriptLangUtil extends JavaScriptLangUtil {
         } else {
             return false;
         }
-    }
-
-    public shouldPredict(text: string) {
-        // in string
-        text = this.datamask(text, new Set());
-        if (this.betweenPair(text, "\"", "\"") || this.betweenPair(text, "'", "'") || this.betweenPair(text, "`", "`")) {
-            return false;
-        }
-        // in comment
-        if (this.betweenPair(text, "/*", "*/")) {
-            return false;
-        }
-        const lineStart = text.lastIndexOf("\n") + 1;
-        if (text.indexOf("//", lineStart) >= 0) {
-            return false;
-        }
-        return true;
     }
 }

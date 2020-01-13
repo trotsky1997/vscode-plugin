@@ -1,6 +1,56 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.4.6] - 2020-01-13
+### Changed
+- A more robust and user-friendly update experience.
+
+## [0.4.5] - 2020-01-09
+### Changed
+- Prompts to login if previously used online service.
+
+## [0.4.4] - 2020-01-08
+### Fixed
+- Fixed an issue when writing inside string or comments.
+
+## [0.4.3] - 2020-01-08
+### Changed
+- Does not download/update local service if the plugin is using online service.
+- Prompts to switch to local service if already using online service.
+
+### Fixed
+- (JavaScript/TypeScript) A space before "}".
+- No longer provide completions inside string or comments.
+
+## [0.4.2] - 2020-01-06
+
+### Added
+- Supports new version file.
+- (Go) Supports go extension 0.12.0.
+
+### Fixed
+- (JavaScript/TypeScript) Fixed a conflict when suggestions contain "hasOwnProperty".
+
+## [0.4.1] - 2019-12-27
+
+### Fixed
+- Removed a deprecated "empty endpoint" warning.
+
+## [0.4.0] - 2019-12-25
+
+### Added
+- Merged local service support.
+
+### Fixed
+- Fixed a URL concatenation issue.
+- Fixed an issue when integrating with intellicode 1.2.2.
+
+## [0.2.4] - 2019-12-17
+
+### Changed
+- 对IntelliCode有更好的兼容。
+- 检查与本地版插件的冲突。
+
 ## [0.2.3] - 2019-12-13
 
 ### Fixed
