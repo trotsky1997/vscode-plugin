@@ -23,6 +23,7 @@ export class JavaScriptLangUtil extends LangUtil {
         this.addSpacingOption("var", LangUtil.SpacingKeyALL, true);
         this.addSpacingOption("...", LangUtil.SpacingKeyALL, false);
         this.addSpacingOption("import", LangUtil.SpacingKeyALL, true);
+        this.addSpacingOption(LangUtil.SpacingKeyALL, "}", true);
     }
 
     public getKeywords(): Set<string> {
@@ -32,7 +33,7 @@ export class JavaScriptLangUtil extends LangUtil {
     public datamask(s: string, trivialLiterals: Set<string>): string {
         let stringBuilder = "";
         let emptyLine = true;
-        let lastLineEnd = -1;
+        let lastLineEnd = 0;
         for (let i = 0; i < s.length; i++) {
             const c = s.charAt(i);
             if (c === "\n") {
@@ -63,22 +64,5 @@ export class JavaScriptLangUtil extends LangUtil {
             }
         }
         return stringBuilder;
-    }
-
-    public shouldPredict(text: string) {
-        // in string
-        text = this.datamask(text, new Set());
-        if (this.betweenPair(text, "\"", "\"") || this.betweenPair(text, "'", "'") || this.betweenPair(text, "`", "`")) {
-            return false;
-        }
-        // in comment
-        if (this.betweenPair(text, "/*", "*/")) {
-            return false;
-        }
-        const lineStart = text.lastIndexOf("\n") + 1;
-        if (text.indexOf("//", lineStart) >= 0) {
-            return false;
-        }
-        return true;
     }
 }

@@ -1,10 +1,10 @@
 import * as fs from "fs-extra";
 import { EOL, homedir } from "os";
 import * as path from "path";
-import { openurl } from "./API";
+// import { openurl } from "./API";
 import { onDeactivateHandlers } from "./extension";
 import * as vscode from "vscode";
-import { getUUID, isProfessional, myRequest } from "./API";
+import { getUUID, isProfessional } from "./API";
 import * as targz from "targz";
 import * as request from "request";
 
@@ -172,7 +172,7 @@ export default class Learner {
             }
         }
         this.saver = setTimeout(this.save.bind(this), 1000 * 10);
-
+        // openurl("aixcoder://upload");
     }
 
     private normalizePathToFileName(p: string) {

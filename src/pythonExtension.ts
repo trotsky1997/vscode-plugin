@@ -1,8 +1,6 @@
 import * as path from "path";
 import * as vscode from "vscode";
-import { TelemetryType } from "./API";
 import { fetchResults, formatSortData, getReqText, JSHooker, mergeSortResult, myID, sendPredictTelemetryLong, sendPredictTelemetryShort, showInformationMessageOnce, SortResultEx, STAR_DISPLAY } from "./extension";
-import { localize } from "./i18n";
 import { getInstance } from "./lang/commons";
 import log from "./logger";
 import { Syncer } from "./Syncer";
@@ -56,7 +54,7 @@ export async function activatePython(context: vscode.ExtensionContext) {
                 const ext = "python(Python)";
                 const { longResults, sortResults, offsetID, fetchTime, current } = await fetchResults(document, position, ext, "python", syncer);
                 lastTime = Date.now();
-                if (mspythonExtension) {
+                if (mspythonExtension && mspythonExtension.isActive && hooked) {
                     syncer.put(offsetID, { ...sortResults, ext, fetchTime, current });
                 } else {
                     const sortLabels = formatSortData(sortResults, getInstance("python"), document, ext, current);

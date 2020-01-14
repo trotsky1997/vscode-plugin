@@ -5,7 +5,7 @@ import { getInstance } from "./lang/commons";
 import log from "./logger";
 import { Syncer } from "./Syncer";
 
-export async function activateTypeScript(context: vscode.ExtensionContext) {
+export async function activateTypeScript(context: vscode.ExtensionContext, jsOnly: boolean) {
     let activated = false;
     async function _activate() {
         if (activated) {
@@ -68,37 +68,9 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
             return null;
         },
     };
-    const tsprovider = {
-        async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, completionContext: vscode.CompletionContext): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
-            await _activate();
-            log("=====================");
-            try {
-                const ext = "typescript(Typescript)";
-                const { offsetID, sortResults, fetchTime, longResults, current } = await fetchResults(document, position, ext, "ts", syncer, STAR_DISPLAY.LEFT);
-                if (msts && hooked) {
-                    syncer.put(offsetID, { ...sortResults, ext, fetchTime, current });
-                } else {
-                    const sortLabels = formatSortData(sortResults, getInstance("ts"), document, ext, current);
-                    longResults.push(...sortLabels);
-                }
-                if (!token.isCancellationRequested) {
-                    sendPredictTelemetryLong(ext, fetchTime, longResults);
-                }
-                log("provideCompletionItems TypeScript ends " + longResults.length);
-                return new vscode.CompletionList(longResults, true);
-            } catch (e) {
-                log(e);
-            }
-        },
-        resolveCompletionItem(): vscode.ProviderResult<vscode.CompletionItem> {
-            return null;
-        },
-    };
     const triggerCharacters = [".", "/", "@", "<", "=", "_", "$"];
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "javascript", scheme: "file" }, jsprovider, ...triggerCharacters));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "javascript", scheme: "untitled" }, jsprovider, ...triggerCharacters));
-    context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "typescript", scheme: "file" }, tsprovider, ...triggerCharacters));
-    context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "typescript", scheme: "untitled" }, tsprovider, ...triggerCharacters));
 
     const vueprovider = {
         async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, completionContext: vscode.CompletionContext): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
@@ -116,6 +88,9 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
                 } else {
                     if (t.startsWith("<script lang=\"ts\"", lastScriptTag) || t.startsWith("<script lang='ts'", lastScriptTag) || t.startsWith("<script lang=\"typescript\"", lastScriptTag) || t.startsWith("<script lang='typescript'", lastScriptTag)) {
                         ext = "typescript(Typescript)";
+                        if (jsOnly) {
+                            return [];
+                        }
                     }
                     const lastScriptTagEnd = t.indexOf(">", lastScriptTag) + 1;
                     text = lastScriptTagEnd === 0 ? "" : t.substring(lastScriptTagEnd);
@@ -164,6 +139,9 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
                 } else {
                     if (t.startsWith("<script lang=\"ts\"", lastScriptTag) || t.startsWith("<script lang='ts'", lastScriptTag) || t.startsWith("<script lang=\"typescript\"", lastScriptTag) || t.startsWith("<script lang='typescript'", lastScriptTag)) {
                         ext = "typescript(Typescript)";
+                        if (jsOnly) {
+                            return [];
+                        }
                     }
                     const lastScriptTagEnd = t.indexOf(">", lastScriptTag) + 1;
                     text = lastScriptTagEnd === 0 ? "" : t.substring(lastScriptTagEnd).trimLeft();
@@ -243,12 +221,43 @@ export async function activateTypeScript(context: vscode.ExtensionContext) {
     }
 
     const reactJsProvider = reactproviderMaker("javascript(Javascript)", "js");
-    const reactTsProvider = reactproviderMaker("typescript(Typescript)", "ts");
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "javascriptreact", scheme: "file" }, reactJsProvider, ...triggerCharacters));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "javascriptreact", scheme: "untitled" }, reactJsProvider, ...triggerCharacters));
-    context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "typescriptreact", scheme: "file" }, reactTsProvider, ...triggerCharacters));
-    context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "typescriptreact", scheme: "untitled" }, reactTsProvider, ...triggerCharacters));
 
+    if (!jsOnly) {
+        const tsprovider = {
+            async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, completionContext: vscode.CompletionContext): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
+                await _activate();
+                log("=====================");
+                try {
+                    const ext = "typescript(Typescript)";
+                    const { offsetID, sortResults, fetchTime, longResults, current } = await fetchResults(document, position, ext, "ts", syncer, STAR_DISPLAY.LEFT);
+                    if (msts && hooked) {
+                        syncer.put(offsetID, { ...sortResults, ext, fetchTime, current });
+                    } else {
+                        const sortLabels = formatSortData(sortResults, getInstance("ts"), document, ext, current);
+                        longResults.push(...sortLabels);
+                    }
+                    if (!token.isCancellationRequested) {
+                        sendPredictTelemetryLong(ext, fetchTime, longResults);
+                    }
+                    log("provideCompletionItems TypeScript ends " + longResults.length);
+                    return new vscode.CompletionList(longResults, true);
+                } catch (e) {
+                    log(e);
+                }
+            },
+            resolveCompletionItem(): vscode.ProviderResult<vscode.CompletionItem> {
+                return null;
+            },
+        };
+        context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "typescript", scheme: "file" }, tsprovider, ...triggerCharacters));
+        context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "typescript", scheme: "untitled" }, tsprovider, ...triggerCharacters));
+
+        const reactTsProvider = reactproviderMaker("typescript(Typescript)", "ts");
+        context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "typescriptreact", scheme: "file" }, reactTsProvider, ...triggerCharacters));
+        context.subscriptions.push(vscode.languages.registerCompletionItemProvider({ language: "typescriptreact", scheme: "untitled" }, reactTsProvider, ...triggerCharacters));
+    }
     return {
         async aixHook(ll: vscode.CompletionList | vscode.CompletionItem[], document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, completionContext: vscode.CompletionContext): Promise<vscode.CompletionList | vscode.CompletionItem[]> {
             try {

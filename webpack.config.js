@@ -3,6 +3,7 @@
 'use strict';
 
 const path = require('path');
+const webpack = require('webpack');
 
 /**@type {import('webpack').Configuration}*/
 const config = {
@@ -36,6 +37,11 @@ const config = {
         ]
       }
     ]
-  }
+  },
+  plugins: [
+    new webpack.IgnorePlugin(/^electron$/),
+    new webpack.IgnorePlugin(/^bsdiff-nodejs$/),
+    new webpack.IgnorePlugin(/^xxhash$/)
+  ]
 };
 module.exports = config;

@@ -38,7 +38,7 @@ export class PythonLangUtil extends LangUtil {
     public datamask(s: string, trivialLiterals: Set<string>): string {
         let stringBuilder = "";
         let emptyLine = true;
-        let lastLineEnd = -1;
+        let lastLineEnd = 0;
         for (let i = 0; i < s.length; i++) {
             const c = s.charAt(i);
             if (c === "\n") {
@@ -67,21 +67,6 @@ export class PythonLangUtil extends LangUtil {
             }
         }
         return stringBuilder;
-    }
-
-    public shouldPredict(text: string) {
-        // in string
-        text = this.datamask(text, new Set());
-        if (this.betweenPair(text, "\"", "\"") || this.betweenPair(text, "'", "'") ||
-            this.betweenPair(text, "\"\"\"", "\"\"\"") || this.betweenPair(text, "'''", "'''")) {
-            return false;
-        }
-        // in comment
-        const lineStart = text.lastIndexOf("\n") + 1;
-        if (text.indexOf("#", lineStart) >= 0) {
-            return false;
-        }
-        return true;
     }
 
     protected skipString(s: string, trivialLiterals: Set<string>, stringBuilder: string, i: number, char: string) {
