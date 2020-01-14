@@ -1,4 +1,4 @@
-import * as fs from "fs";
+import * as fs from "fs-extra";
 import { EOL, homedir } from "os";
 import * as path from "path";
 import { openurl } from "./API";
@@ -7,8 +7,6 @@ import * as vscode from "vscode";
 import { getUUID, isProfessional, myRequest } from "./API";
 import * as targz from "targz";
 import * as request from "request";
-
-const fsp = fs.promises;
 
 const learnFilesFolder = path.join(homedir(), "aiXcoder", "learnFiles");
 const lastUploadInfo = path.join(homedir(), "aiXcoder", "lastLearnFilesUpload");
@@ -21,7 +19,7 @@ const learnFilesRegistry = path.join(homedir(), "aiXcoder", "learnFiles", "regis
 async function readRegistry() {
     const savedFiles = new Map<string, Map<string, string>>();
     try {
-        const content = await fsp.readFile(learnFilesRegistry, "utf-8");
+        const content = await fs.readFile(learnFilesRegistry, "utf-8");
         const registry = content.split(/\r?\n/);
         for (const line of registry) {
             if (line.length > 0) {
@@ -84,14 +82,14 @@ export default class Learner {
         if (this.cached.size !== 0) {
             const savedFiles = await readRegistry();
             try {
-                await fsp.stat(learnFilesFolder);
+                await fs.stat(learnFilesFolder);
             } catch (e) {
-                await fsp.mkdir(learnFilesFolder);
+                await fs.mkdir(learnFilesFolder);
             }
             for (const [ext, cached] of this.cached) {
                 for (const file of cached) {
                     const cachedPath = this.normalizePathToFileName(file);
-                    await fsp.copyFile(file, path.join(learnFilesFolder, cachedPath));
+                    await fs.copyFile(file, path.join(learnFilesFolder, cachedPath));
                     if (!savedFiles.has(ext)) {
                         savedFiles.set(ext, new Map());
                     }
@@ -106,7 +104,7 @@ export default class Learner {
                     newRegistryContent.push([ext, file, cachedPath].join("\t"));
                 }
             }
-            await fsp.writeFile(learnFilesRegistry, newRegistryContent.join(EOL), "utf-8");
+            await fs.writeFile(learnFilesRegistry, newRegistryContent.join(EOL), "utf-8");
             this.cached.clear();
             console.log("saved");
         }
@@ -115,7 +113,7 @@ export default class Learner {
 
         let lastUploadTime;
         try {
-            const info = await fsp.readFile(lastUploadInfo, "utf-8");
+            const info = await fs.readFile(lastUploadInfo, "utf-8");
             lastUploadTime = parseInt(info, 10);
         } catch (e) {
             lastUploadTime = 0;
@@ -127,7 +125,7 @@ export default class Learner {
         } = await getUUID();
         // only upload every two hour
         
-        if (Date.now() - lastUploadTime > 1 * 60  * 1000 ) {//* 60
+        if (Date.now() - lastUploadTime > 1 * 60 *60 * 1000 ) {//* 60
             let have_file = false;
             const savedFiles = await readRegistry();
             for (const [ext, cached] of savedFiles) {
@@ -168,24 +166,9 @@ export default class Learner {
                 });
 
                 console.log("selflearnupload",body);
-                await fsp.unlink(dest);
-                const deleteFolderRecursive = async function(rmpath) {
-                    try {
-                        (await fsp.readdir(rmpath)).forEach(async (file, index) => {
-                        const curPath = path.join(rmpath, file);
-                        if ((await fsp.lstat(curPath)).isDirectory()) { // recurse
-                          deleteFolderRecursive(curPath);
-                        } else { // delete file
-                            await fsp.unlink(curPath);
-                        }
-                      });
-                      await fsp.rmdir(rmpath);
-                    } catch (e) {
-                        console.log(e);
-                    }
-                  };
-                await deleteFolderRecursive(learnFilesFolder);
-                await fsp.writeFile(lastUploadInfo, Date.now().toString(), "utf8");
+                await fs.unlink(dest);
+                await fs.remove(learnFilesFolder)
+                await fs.writeFile(lastUploadInfo, Date.now().toString(), "utf8");
             }
         }
         this.saver = setTimeout(this.save.bind(this), 1000 * 10);

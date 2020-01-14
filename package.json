@@ -180,7 +180,9 @@
         "webpack-cli": "^3.3.10"
     },
     "dependencies": {
+        "@types/fs-extra": "^8.0.1",
         "agentkeepalive": "^4.1.0",
+        "fs-extra": "^8.1.0",
         "request": "^2.88.0",
         "request-promise": "^4.2.5",
         "targz": "^1.0.1",
