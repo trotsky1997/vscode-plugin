@@ -588,7 +588,7 @@ class AixUpdaterClient {
      * @param {string | string[]} patchUrl
      * @param {string | string[]} fullDownloadUrl
      * @param {(progress: UpdateProgress) => void} [progressListener]
-     * @param {() => Promise<void>} [beforeUpdate]
+     * @param {(msg?: string) => Promise<void>} [beforeUpdate]
      * @param {AiXCancellationToken} [token]
      */
     static async simplePatch(localPath, patchUrl, fullDownloadUrl, progressListener, beforeUpdate, token) {
@@ -641,6 +641,7 @@ class AixUpdaterClient {
                     downloadProgresses: [downloadStatus]
                 }));
                 const patchFolder = path.join(localPath, "__" + filename + "__");
+                await beforeUpdate("decompress");
                 await decompress(path.join(localPath, filename), patchFolder);
 
                 checkCancelled();
@@ -682,7 +683,7 @@ class AixUpdaterClient {
                     checkCancelled();
 
                     try {
-                        await beforeUpdate();
+                        await beforeUpdate("patch");
                         checkCancelled();
                         progressListener(new UpdateProgress(UpdateStatus.SIMPLE_PATCH_FILE, nSimpleStatus));
                         await applyAllPatches(patches, false, true, (digest) => {
@@ -732,9 +733,10 @@ class AixUpdaterClient {
         }, token);
         const patchFolder = path.join(localPath, "..", "__" + fullFileName + "__");
         checkCancelled();
+        await beforeUpdate("decompress");
         await decompress(path.join(localPath, "..", fullFileName), patchFolder);
         checkCancelled();
-        await beforeUpdate();
+        await beforeUpdate("patch");
         checkCancelled();
         await fs.move(localPath, path.join(localPath, "..", localVersion));
         await fs.move(patchFolder, localPath);
