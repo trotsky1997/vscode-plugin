@@ -1,6 +1,15 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.4.9] - 2020-01-15
+### Added
+- Now supports using with [Remote Development](https://code.visualstudio.com/docs/remote/remote-overview).
+
+### Fixed
+- Fixed latest Python + intellicode integration.
+- Bug when writing in not-saved files.
+- Bug when installing on Linux.
+
 ## [0.4.7] - 2020-01-13
 ### Fixed
 - Fixed a service installation issue on Linux.

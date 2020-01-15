@@ -738,8 +738,18 @@ class AixUpdaterClient {
         checkCancelled();
         await beforeUpdate("patch");
         checkCancelled();
-        await fs.move(localPath, path.join(localPath, "..", localVersion));
-        await fs.move(patchFolder, localPath);
+        if (localVersion !== "0.0.0") {
+            try {
+                if (!(await fs.stat(localPath)).isDirectory()) {
+                    await fs.remove(localPath);
+                }
+                await fs.rename(localPath, path.join(localPath, "..", localVersion));
+            } catch (error) {
+                // first time install
+                console.log(error);
+            }
+        }
+        await fs.rename(patchFolder, localPath);
         return AixUpdaterClient.getCurrentLocalVersion(localPath);
     }
 

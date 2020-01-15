@@ -183,7 +183,7 @@ export async function startLocalService(soft: boolean) {
     }
 
     serverStarting = true;
-    authorize(); // chmod 777 for mac
+    await authorize(); // chmod 777 for mac
     launchLocalServer();
     await vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
