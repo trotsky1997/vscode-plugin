@@ -7,10 +7,10 @@ import * as vscode from "vscode";
 import { getUUID, isProfessional } from "./API";
 import * as targz from "targz";
 import * as request from "request";
+import Preference from "./Preference";
 
 const learnFilesFolder = path.join(homedir(), "aiXcoder", "learnFiles");
 const lastUploadInfo = path.join(homedir(), "aiXcoder", "lastLearnFilesUpload");
-const endpoint = vscode.workspace.getConfiguration().get("aiXcoder.endpoint");
 try {
     fs.mkdirSync(learnFilesFolder);
 } catch (e) { }
@@ -59,6 +59,7 @@ export async function asyncRequestPost(url: string, options?: request.CoreOption
 export default class Learner {
     public saver: NodeJS.Timeout;
     private cached = new Map<string, Set<string>>();
+    private savedFiles = new Map<string, string>();
     public constructor() {
         onDeactivateHandlers.push(this.destroy.bind(this));
         this.saver = setTimeout(this.save.bind(this), 1000 * 10);
@@ -77,10 +78,35 @@ export default class Learner {
         clearInterval(this.saver);
         this.save();
     }
+    async sendf(endpoint, uuid, ext, filePath, data) {
+        console.log(`${endpoint}file`);
+
+        const body = await asyncRequestPost(`${endpoint}file`, {
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            form: {
+                "uuid": uuid,
+                "ext": ext,
+                "text": data,
+                "fileid": filePath,
+                "project": "autoTrain"
+            }
+        })
+        console.log("upload file:", filePath, body);
+
+    }
+    async sendFile(endpoint, uuid, ext, filePath, fileid) {
+        try {
+            const data = await fs.readFile(filePath, 'utf-8');
+            this.sendf(endpoint, uuid, ext, fileid, data);
+        } catch (error) {
+            // file not exists
+        }
+    }
 
     public async save() {
         if (this.cached.size !== 0) {
-            const savedFiles = await readRegistry();
             try {
                 await fs.stat(learnFilesFolder);
             } catch (e) {
@@ -90,25 +116,14 @@ export default class Learner {
                 for (const file of cached) {
                     const cachedPath = this.normalizePathToFileName(file);
                     await fs.copyFile(file, path.join(learnFilesFolder, cachedPath));
-                    if (!savedFiles.has(ext)) {
-                        savedFiles.set(ext, new Map());
-                    }
-                    if (!savedFiles.get(ext).has(file)) {
-                        savedFiles.get(ext).set(file, cachedPath);
-                    }
+                    this.savedFiles.set(cachedPath, ext);
                 }
             }
-            const newRegistryContent = [];
-            for (const [ext, cached] of savedFiles) {
-                for (const [file, cachedPath] of cached) {
-                    newRegistryContent.push([ext, file, cachedPath].join("\t"));
-                }
-            }
-            await fs.writeFile(learnFilesRegistry, newRegistryContent.join(EOL), "utf-8");
             this.cached.clear();
+
             console.log("saved");
         }
-        
+
         // openurl("aixcoder://upload");
 
         let lastUploadTime;
@@ -118,67 +133,30 @@ export default class Learner {
         } catch (e) {
             lastUploadTime = 0;
         }
-        
+
         const {
             token,
             uuid,
         } = await getUUID();
         // only upload every two hour
-        
-        if (Date.now() - lastUploadTime > 1 * 60 *60 * 1000 ) {//* 60
-            let have_file = false;
-            const savedFiles = await readRegistry();
-            for (const [ext, cached] of savedFiles) {
-                for (const [file, cachedPath] of cached) {
-                    try {
-                        // await fs.copyFile(file, path.join(learnFilesFolder, cachedPath));
-                        have_file = true;
-                    } catch (e) {
-                        // ignore
-                        console.log(e.stack || e.message || e);
-                    }
-                }
-            }
-            
-            if(have_file){
-                // zip
-                const dest = path.join(homedir(), "aiXcoder", "learnFiles.tar.gz");
-                await new Promise((resolve, reject) => {
-                    targz.compress({
-                        src: learnFilesFolder,
-                        dest,
-                    }, (e => {
-                        if (e) {
-                            reject(e);
-                        } else {
-                            resolve();
-                        }
-                    }));
-                });
-                
-                const body = await asyncRequestPost(`${endpoint}selflearnupload?uuid=${uuid}`, {
-                    headers: {
-                        "Content-Type": "multipart/form-data",
-                    },
-                }, (req) => {
-                    const form = req.form();
-                    form.append("file", fs.createReadStream(dest));
-                });
 
-                console.log("selflearnupload",body);
-                await fs.unlink(dest);
-                await fs.remove(learnFilesFolder)
+        if (Date.now() - lastUploadTime > 1 * 60 * 60 * 1000) {
+            if (this.savedFiles.size > 0) {
+                for (const [cachedPath, ext] of this.savedFiles.entries()) {
+                    this.sendFile(await Preference.getEndpoint(), uuid, ext, path.join(learnFilesFolder, cachedPath), cachedPath);
+                }
+                await fs.remove(learnFilesFolder);
+                this.savedFiles.clear();
                 await fs.writeFile(lastUploadInfo, Date.now().toString(), "utf8");
             }
         }
         this.saver = setTimeout(this.save.bind(this), 1000 * 10);
         // openurl("aixcoder://upload");
     }
-
     private normalizePathToFileName(p: string) {
         p = p.replace(/[^a-zA-Z0-9-._]+/g, "_");
         return p.substr(Math.max(p.length - 128, 0));
     }
 
-    
+
 }

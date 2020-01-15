@@ -198,7 +198,8 @@ export default class Preference {
     }
 
     public static getSelfLearn() {
-        return vscode.workspace.getConfiguration().get("aiXcoder.selfLearning") as boolean;
+        return vscode.workspace.getConfiguration().get("aiXcoder.selfLearning") as boolean ||
+            vscode.workspace.getConfiguration().get("aiXcoder.autoLearningEnterprise") as boolean;
     }
 
     public static getLocalEndpoint() {
@@ -210,7 +211,7 @@ export default class Preference {
         if (endpoint == null || endpoint === "") {
             endpoint = Preference.endpoint;
         }
-        if (!endpoint.endsWith("/")) {
+        if (endpoint && !endpoint.endsWith("/")) {
             endpoint += "/";
         }
         return endpoint;

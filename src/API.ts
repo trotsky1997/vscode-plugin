@@ -125,7 +125,7 @@ async function saStatusCheckerWorker() {
         await new Promise((resolve) => setTimeout(resolve, 3000));
     }
 }
-saStatusCheckerWorker();
+// saStatusCheckerWorker();
 
 function reverseString(str) {
     let newString = "";
@@ -137,24 +137,10 @@ function reverseString(str) {
 
 export async function predict(langUtil: LangUtil, text: string, ext: string, remainingText: string, laterCode: string, lastQueryUUID: number, fileID: string, retry = true) {
     if (Preference.getSelfLearn()) {
-        if (Preference.isProfessional === undefined) {
-            // showInformationMessageOnce("unableToLogin", "login").then((selection) => {
-            //     if (selection === "login") {
-            //         openurl(`aixcoder://login`);
-            //     }
-            // });
-        } else if (Preference.isProfessional) {
-            if (learner == null) {
-                learner = new Learner();
-            }
-            learner.learn(ext, fileID);
-        } else {
-            showInformationMessageOnce("notProfessionalEdition", "learnProfessional").then((selection) => {
-                if (selection === "learnProfessional") {
-                    vscode.commands.executeCommand("vscode.open", vscode.Uri.parse("https://www.aixcoder.com/#/Product?tab=0"));
-                }
-            });
+        if (learner == null) {
+            learner = new Learner();
         }
+        learner.learn(ext, fileID);
     }
     let localRequest = false;
     const endpoint = await Preference.getEndpoint(ext);
@@ -171,10 +157,10 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
         }
     }
 
-    saStatusChecker(ext);
-    if (saStatus < 2 && !vscode.workspace.getConfiguration().get("aiXcoder.localShowIncompleteSuggestions")) {
-        return null;
-    }
+    // saStatusChecker(ext);
+    // if (saStatus < 2 && !vscode.workspace.getConfiguration().get("aiXcoder.localShowIncompleteSuggestions")) {
+    //     return null;
+    // }
 
     let maskedText: string;
     let maskedRemainingText: string;
@@ -303,6 +289,9 @@ export async function getTrivialLiterals(ext: string) {
 export async function checkUpdate() {
     try {
         const updateURL = Preference.remoteVersionUrl;
+        if (!updateURL) {
+            return;
+        }
         const versionJson = await myRequest({
             method: "get",
             url: "",

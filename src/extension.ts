@@ -702,12 +702,12 @@ export async function activate(context: vscode.ExtensionContext) {
         }
 
         await Preference.init(context);
-        (async function checkUpdate() {
-            await API.checkLocalServiceUpdate();
-            setTimeout(checkUpdate, 4 * 1000 * 60 * 60);
-        })();
+        // (async function checkUpdate() {
+        //     await API.checkLocalServiceUpdate();
+        //     setTimeout(checkUpdate, 4 * 1000 * 60 * 60);
+        // })();
 
-        const endpoint = Preference.getEndpoint();
+        const endpoint = await Preference.getEndpoint();
         if (!endpoint) {
             vscode.window.showWarningMessage(localize("aiXcoder.endpoint.empty"), localize("openSetting")).then((selected) => {
                 if (selected === localize("openSetting")) {
