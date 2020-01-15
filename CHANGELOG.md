@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.4.7] - 2020-01-13
+### Fixed
+- Fixed a service installation issue on Linux.
+
 ## [0.4.6] - 2020-01-13
 ### Changed
 - A more robust and user-friendly update experience.
