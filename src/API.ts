@@ -164,16 +164,16 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
             return null;
         }
         log("LOCAL!");
+
+        saStatusChecker(ext);
+        if (saStatus < 2 && !vscode.workspace.getConfiguration().get("aiXcoder.localShowIncompleteSuggestions")) {
+            return null;
+        }
     } else {
         lastLocalRequest = localRequest = false;
         if (!networkController.shouldPredict()) {
             return null;
         }
-    }
-
-    saStatusChecker(ext);
-    if (saStatus < 2 && !vscode.workspace.getConfiguration().get("aiXcoder.localShowIncompleteSuggestions")) {
-        return null;
     }
 
     let maskedText: string;

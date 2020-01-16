@@ -5,6 +5,9 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 ### Changed
 - Delay Java environment check until activating java features.
 
+### Fixed
+- A bug that checks local server status even when using online service.
+
 ## [0.4.9] - 2020-01-15
 ### Added
 - Now supports using with [Remote Development](https://code.visualstudio.com/docs/remote/remote-overview).

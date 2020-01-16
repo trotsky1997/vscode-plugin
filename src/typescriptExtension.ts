@@ -208,7 +208,7 @@ export async function activateTypeScript(context: vscode.ExtensionContext, jsOnl
                     if (!token.isCancellationRequested) {
                         sendPredictTelemetryLong(ext, fetchTime, longResults);
                     }
-                    log("provideCompletionItems vue of " + ext + " ends " + longResults.length);
+                    log("provideCompletionItems react of " + ext + " ends " + longResults.length);
                     return new vscode.CompletionList(longResults, true);
                 } catch (e) {
                     log(e);
