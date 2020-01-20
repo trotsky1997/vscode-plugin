@@ -198,7 +198,8 @@ export default class Preference {
     }
 
     public static getSelfLearn() {
-        return vscode.workspace.getConfiguration().get("aiXcoder.selfLearning") as boolean;
+        return vscode.workspace.getConfiguration().get("aiXcoder.selfLearning") as boolean ||
+            vscode.workspace.getConfiguration().get("aiXcoder.autoLearningEnterprise") as boolean;
     }
 
     public static getLocalEndpoint() {
