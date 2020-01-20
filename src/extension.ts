@@ -803,19 +803,19 @@ export async function activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.search", (uri) => {
             doSearch(context, uri);
         }));
-        if (await Preference.hasLoginFile()) {
-            vscode.commands.executeCommand("setContext", "aiXcoderHasLogin", true);
-            context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.switchToOnline", () => {
-                switchToLocal(false);
-                showInformationMessage("switchedToOnline");
-            }));
-            context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.switchToLocal", () => {
-                switchToLocal(true);
-                showInformationMessage("switchedToLocal");
-            }));
-        } else {
-            vscode.commands.executeCommand("setContext", "aiXcoderHasLogin", false);
-        }
+        // if (await Preference.hasLoginFile()) {
+        //     vscode.commands.executeCommand("setContext", "aiXcoderHasLogin", true);
+        //     context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.switchToOnline", () => {
+        //         switchToLocal(false);
+        //         showInformationMessage("switchedToOnline");
+        //     }));
+        //     context.subscriptions.push(vscode.commands.registerCommand("aiXcoder.switchToLocal", () => {
+        //         switchToLocal(true);
+        //         showInformationMessage("switchedToLocal");
+        //     }));
+        // } else {
+        //     vscode.commands.executeCommand("setContext", "aiXcoderHasLogin", false);
+        // }
         const aixHooks: {
             [lang: string]: void | {
                 aixHook: (ll: vscode.CompletionList | vscode.CompletionItem[], ...args: any) => Promise<vscode.CompletionList | vscode.CompletionItem[]>,

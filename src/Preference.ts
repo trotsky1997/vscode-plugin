@@ -120,8 +120,9 @@ export default class Preference {
     }
 
     public static async hasLoginFile() {
-        const loginInfo = await loginFile.get();
-        return loginInfo != null && loginInfo.uuid != null && !loginInfo.uuid.startsWith("local");
+        return true;
+        // const loginInfo = await loginFile.get();
+        // return loginInfo != null && loginInfo.uuid != null && !loginInfo.uuid.startsWith("local");
     }
 
     public static async getLocalModelConfig() {
