@@ -258,6 +258,10 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "en": "Extracting...",
         "zh-cn": "正在解压...",
     },
+    "updating": {
+        "en": "Applying update...",
+        "zh-cn": "正在应用更新...",
+    },
     "localInitializing": {
         "en": "aiXcoder is indexing your project for the first time. The suggestions may not be accurate until it is done.",
         "zh-cn": "aiXcoder正在初次索引您的项目。在这结束之前提示可能是不准确的。",

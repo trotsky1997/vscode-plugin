@@ -20,11 +20,19 @@ export async function activatePython(context: vscode.ExtensionContext) {
         if (mspythonExtension) {
             log("AiX: ms-python.python detected");
             const distjsPath = path.join(mspythonExtension.extensionPath, "out", "client", "extension.js");
-            hooked = await JSHooker("/**AiXHooked-16**/", distjsPath, mspythonExtension, "python.reload", "python.fail", (distjs) => {
+            hooked = await JSHooker("/**AiXHooked-17**/", distjsPath, mspythonExtension, "python.reload", "python.fail", (distjs) => {
                 // inject ms engine
-                const handleResultCode = (r: string) => `const aix = require(\"vscode\").extensions.getExtension("${myID}");const api = aix && aix.exports;if(api && api.aixhook){r = await api.aixhook("python",${r},$1,$2,$3,$4);}`;
-                const replaceTarget = `middleware:{provideCompletionItem:async($1,$2,$3,$4,$5)=>{$6;let rr=$7;${handleResultCode("rr")};return rr;}`;
-                distjs = distjs.replace(/middleware:{provideCompletionItem:\((\w+),(\w+),(\w+),(\w+),(\w+)\)=>\((.+?),(\5\(\1,\2,\3,\4\))\)/, replaceTarget);
+                const replaceTarget = `provideCompletionItems: async (e, t, n, r) => {
+                    let rr = a.provideCompletionItem ? a.provideCompletionItem(e, t, r, n, o) : o(e, t, r, n);
+                    rr = await rr;
+                    const aix = require("vscode").extensions.getExtension("${myID}");
+                    const api = aix && aix.exports;
+                    if(api && api.aixhook){
+                        rr = api.aixhook("python",rr,e,t,r,n);
+                    }
+                    return rr;
+                }`;
+                distjs = distjs.replace("provideCompletionItems:(e,t,n,r)=>a.provideCompletionItem?a.provideCompletionItem(e,t,r,n,o):o(e,t,r,n)", replaceTarget);
 
                 // inject jedi engine
                 const pythonCompletionItemProviderSignature = "t.PythonCompletionItemProvider=l}";

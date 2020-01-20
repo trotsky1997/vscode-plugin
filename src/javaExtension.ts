@@ -8,24 +8,6 @@ import log from "./logger";
 import { Syncer } from "./Syncer";
 
 export async function activateJava(context: vscode.ExtensionContext) {
-    const findJavaHome = require("find-java-home");
-    const javaHome = vscode.workspace.getConfiguration().get("java.home") as string || await new Promise((resolve, reject) => {
-        findJavaHome((err, home) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(home);
-            }
-        });
-    });
-    if (javaHome) {
-        process.env.PATH += ";" + path.join(javaHome, "bin");
-    }
-    try {
-        await execAsync("java -version");
-    } catch (e) {
-        showInformationMessageOnce("JREMissing");
-    }
     const redhatjavaExtension = vscode.extensions.getExtension("redhat.java");
     let activated = false;
     const syncer = new Syncer<SortResultEx>();
@@ -35,6 +17,26 @@ export async function activateJava(context: vscode.ExtensionContext) {
             return;
         }
         activated = true;
+
+        const findJavaHome = require("find-java-home");
+        const javaHome = vscode.workspace.getConfiguration().get("java.home") as string || await new Promise((resolve, reject) => {
+            findJavaHome((err, home) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(home);
+                }
+            });
+        });
+        if (javaHome) {
+            process.env.PATH += ";" + path.join(javaHome, "bin");
+        }
+        try {
+            await execAsync("java -version");
+        } catch (e) {
+            showInformationMessageOnce("JREMissing");
+        }
+
         if (redhatjavaExtension) {
             log("AiX: redhat.java detected");
 

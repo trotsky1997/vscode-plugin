@@ -183,7 +183,7 @@ export async function startLocalService(soft: boolean) {
     }
 
     serverStarting = true;
-    authorize(); // chmod 777 for mac
+    await authorize(); // chmod 777 for mac
     launchLocalServer();
     await vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
@@ -317,9 +317,13 @@ export async function forceUpdate(localVersion: string, remoteVersion: string) {
                         message: p.toString(getLocale()),
                     });
                 }
-            }, () => {
-                progress.report({ message: localize("unzipping") });
-                return kill();
+            }, async (msg) => {
+                if (msg === "decompress") {
+                    progress.report({ message: localize("unzipping") });
+                } else if (msg === "patch") {
+                    progress.report({ message: localize("updating") });
+                    await kill();
+                }
             }, cancellationToken);
             if (localVersion === "0.0.0") {
                 showInformationMessage(localize("aixInstalled", remoteVersion));

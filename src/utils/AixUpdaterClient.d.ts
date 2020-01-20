@@ -104,7 +104,7 @@ declare class AixUpdaterClient {
     /**
      * Patch a local folder with a simple patch
      */
-    static simplePatch(localPath: string, patchUrl: string | string[], fullDownloadUrl: string | string[], progressListener?: (progress: AixUpdaterClient.UpdateProgress) => void, beforeUpdate?: () => Promise<void>, token?: AixUpdaterClient.AiXCancellationToken): Promise<string>;
+    static simplePatch(localPath: string, patchUrl: string | string[], fullDownloadUrl: string | string[], progressListener?: (progress: AixUpdaterClient.UpdateProgress) => void, beforeUpdate?: (msg?: string) => Promise<void>, token?: AixUpdaterClient.AiXCancellationToken): Promise<string>;
 
     constructor(options: AixUpdaterClient.AixUpdaterOptions);
 
