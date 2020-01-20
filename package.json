@@ -137,6 +137,11 @@
                     "type": "boolean",
                     "default": false,
                     "description": "%aiXcoder.configuration.localShowIncompleteSuggestions%"
+                },
+                "aiXcoder.autoLearningEnterprise": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "%aiXcoder.configuration.autoLearningEnterprise%"
                 }
             }
         },
@@ -233,6 +238,7 @@
         "fs-extra": "^8.1.0",
         "request": "^2.88.0",
         "request-promise": "^4.2.5",
+        "targz": "^1.0.1",
         "tiny-async-pool": "^1.1.0",
         "uuid": "^3.3.3"
     }
