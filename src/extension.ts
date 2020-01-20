@@ -707,14 +707,8 @@ export async function activate(context: vscode.ExtensionContext) {
             setTimeout(checkUpdate, 4 * 1000 * 60 * 60);
         })();
 
-        const endpoint = Preference.getEndpoint();
-        if (!endpoint) {
-            vscode.window.showWarningMessage(localize("aiXcoder.endpoint.empty"), localize("openSetting")).then((selected) => {
-                if (selected === localize("openSetting")) {
-                    vscode.commands.executeCommand("workbench.action.openSettings", "aiXcoder: Endpoint");
-                }
-            });
-        }
+        // prompt empty endpoing check
+        Preference.getEndpoint();
 
         API.checkUpdate();
         const askedTelemetry = context.globalState.get("aiXcoder.askedTelemetry");

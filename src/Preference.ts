@@ -210,9 +210,16 @@ export default class Preference {
         if (endpoint == null || endpoint === "") {
             endpoint = Preference.endpoint;
         }
-        if (!endpoint.endsWith("/")) {
+        if (endpoint && !endpoint.endsWith("/")) {
             endpoint += "/";
         }
-        return endpoint;
+        if (endpoint == null || endpoint === "") {
+            vscode.window.showWarningMessage(localize("aiXcoder.endpoint.empty"), localize("openSetting")).then((selected) => {
+                if (selected === localize("openSetting")) {
+                    vscode.commands.executeCommand("workbench.action.openSettings", "aiXcoder: Endpoint");
+                }
+            });
+        }
+        return endpoint || "";
     }
 }

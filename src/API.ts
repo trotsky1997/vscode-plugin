@@ -303,6 +303,9 @@ export async function getTrivialLiterals(ext: string) {
 export async function checkUpdate() {
     try {
         const updateURL = Preference.remoteVersionUrl;
+        if (updateURL == null) {
+            return;
+        }
         const versionJson = await myRequest({
             method: "get",
             url: "",
