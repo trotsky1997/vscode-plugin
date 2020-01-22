@@ -10,6 +10,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 
 ### Fixed
 - A bug that checks local server status even when using online service.
+- Error when login file does not exists.
 
 ## [0.4.9] - 2020-01-15
 ### Added

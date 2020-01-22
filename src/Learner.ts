@@ -116,9 +116,9 @@ export default class Learner {
         const {
             uuid,
         } = await getUUID();
-        // only upload every two hour
+        // only upload every 10 minutes
 
-        if (Date.now() - lastUploadTime > 1 * 60 * 60 * 1000) {
+        if (Date.now() - lastUploadTime > 10 * 60 * 1000) {
             if (this.savedFiles.size > 0) {
                 for (const [cachedPath, ext] of this.savedFiles.entries()) {
                     this.sendFile(await Preference.getEndpoint(), uuid, ext, path.join(learnFilesFolder, cachedPath), cachedPath);

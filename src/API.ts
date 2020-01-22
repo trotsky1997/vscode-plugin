@@ -422,10 +422,14 @@ export async function getModels(): Promise<string[]> {
 }
 
 export async function getUUID(): Promise<{ token: string, uuid: string }> {
-    const loginFile = path.join(os.homedir(), "aiXcoder", "login");
-    const content = await fs.readFile(loginFile, "utf-8");
-    const { token, uuid } = JSON.parse(content);
-    return { token, uuid };
+    try {
+        const loginFile = path.join(os.homedir(), "aiXcoder", "login");
+        const content = await fs.readFile(loginFile, "utf-8");
+        const { token, uuid } = JSON.parse(content);
+        return { token, uuid };
+    } catch (error) {
+        return { token: "", uuid: "vscode" };
+    }
 }
 
 export async function isProfessional() {
