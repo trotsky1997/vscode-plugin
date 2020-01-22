@@ -57,9 +57,24 @@ export default class Preference {
     public static installPage: string;
     public static defaultModel: Map<string, string> = new Map();
 
-    public static async init(context: vscode.ExtensionContext) {
-        Preference.context = context;
+    public static async saveEnterpriseModel(lang: string, ext: string) {
+        let jo;
+        const configFile = path.join(homedir, "aiXcoder", "aix-enterprise-config.json");
+        try {
+            const text = await fs.readFile(configFile, "utf-8");
+            jo = JSON.parse(text);
+        } catch (e) {
+            jo = {};
+        }
+        if (!jo.model) {
+            jo.model = {};
+        }
+        jo.model[lang] = ext;
+        await fs.writeFile(configFile, JSON.stringify(jo, null, 2), "utf-8");
+        await Preference.loadEnterpriseConfig();
+    }
 
+    public static async loadEnterpriseConfig() {
         try {
             const configFile = path.join(homedir, "aiXcoder", "aix-enterprise-config.json");
             const text = await fs.readFile(configFile, "utf-8");
@@ -79,7 +94,11 @@ export default class Preference {
         } catch (e) {
             // TODO: handle exception
         }
+    }
 
+    public static async init(context: vscode.ExtensionContext) {
+        Preference.context = context;
+        await Preference.loadEnterpriseConfig();
         if (Preference.uuid == null || Preference.uuid === "") {
             // try {
             //     Preference.uuid = (await getUUID()).uuid;

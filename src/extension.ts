@@ -793,6 +793,7 @@ export async function activate(context: vscode.ExtensionContext) {
                 if (selectedModel != null) {
                     vscode.workspace.getConfiguration().update("aiXcoder.model." + selectedLang.lang, selectedModel);
                     vscode.window.showInformationMessage(util.format(localize("model.switch"), langs[selectedLang.lang], selectedModel));
+                    Preference.saveEnterpriseModel(selectedLang.lang, selectedModel);
                 }
             }
         };

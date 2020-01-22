@@ -2,6 +2,9 @@
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
 ## [0.4.10] -
+### Added
+- Save model configurations globally instead of workspace-level.
+
 ### Changed
 - Delay Java environment check until activating java features.
 
