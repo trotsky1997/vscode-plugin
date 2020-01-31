@@ -1,6 +1,6 @@
 # aiXcoder Visual Studio Code Plugin
 
-AiXcoder is an code suggestions generator using the latest AI technologies. Our model is trained on over 1 TB of open source code and served from your own computer.
+AiXcoder is a code suggestions generator using the latest AI technologies. Our model is trained on over 1 TB of open source code and served from your own computer.
 
 For now aiXcoder only supports Java/JavaScript/TypeScript/Python in offline mode.
 
