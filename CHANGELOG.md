@@ -1,7 +1,7 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
-## [0.4.10] -
+## [0.4.11] - 2020-02-03
 ### Changed
 - Delay Java environment check until activating java features.
 
