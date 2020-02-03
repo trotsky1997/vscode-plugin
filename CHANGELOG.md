@@ -7,6 +7,8 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 
 ### Fixed
 - A bug that checks local server status even when using online service.
+- A first time install bug on OS X and Linux.
+- Some typos.
 
 ## [0.4.9] - 2020-01-15
 ### Added

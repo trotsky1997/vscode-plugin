@@ -723,7 +723,7 @@ class AixUpdaterClient {
             total: 0,
             transferred: 0,
         };
-        await downloadTo(fullDownloadUrl, path.join(localPath, ".."), fullFileName, (progress) => {
+        await downloadTo(fullDownloadUrl, path.resolve(localPath, ".."), fullFileName, (progress) => {
             Object.assign(downloadStatus, progress);
             progressListener(new UpdateProgress(UpdateStatus.SIMPLE_DOWNLOAD_FULL, nStatus, {
                 totalFiles: 1,
@@ -731,10 +731,10 @@ class AixUpdaterClient {
                 downloadProgresses: [downloadStatus]
             }));
         }, token);
-        const patchFolder = path.join(localPath, "..", "__" + fullFileName + "__");
+        const patchFolder = path.resolve(localPath, "..", "__" + fullFileName + "__");
         checkCancelled();
         await beforeUpdate("decompress");
-        await decompress(path.join(localPath, "..", fullFileName), patchFolder);
+        await decompress(path.resolve(localPath, "..", fullFileName), patchFolder);
         checkCancelled();
         await beforeUpdate("patch");
         checkCancelled();
@@ -743,7 +743,7 @@ class AixUpdaterClient {
                 if (!(await fs.stat(localPath)).isDirectory()) {
                     await fs.remove(localPath);
                 }
-                await fs.rename(localPath, path.join(localPath, "..", localVersion));
+                await fs.rename(localPath, path.resolve(localPath, "..", localVersion));
             } catch (error) {
                 // first time install
                 console.log(error);
