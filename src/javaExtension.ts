@@ -41,7 +41,7 @@ export async function activateJava(context: vscode.ExtensionContext) {
             log("AiX: redhat.java detected");
 
             const distjsPath = path.join(redhatjavaExtension.extensionPath, "dist", "extension.js");
-            hooked = await JSHooker("/**AiXHooked-0**/", distjsPath, redhatjavaExtension, "java.reload", "java.fail", (distjs) => {
+            hooked = await JSHooker("/**AiXHooked-1**/", distjsPath, redhatjavaExtension, "java.reload", "java.fail", (distjs) => {
                 const middleware = `middleware:{
                     provideCompletionItem:async(_a1,_a2,_a3,_a4,_a5)=>{
                         let rr=_a5(_a1,_a2,_a3,_a4);
@@ -53,7 +53,7 @@ export async function activateJava(context: vscode.ExtensionContext) {
                         return rr;
                     }
                 }`;
-                distjs = distjs.replace(",outputChannelName:E", ",outputChannelName:E," + middleware);
+                distjs = distjs.replace(/,outputChannelName:(\w+?)\}/, ",outputChannelName:$1," + middleware + "}");
                 return distjs;
             });
 

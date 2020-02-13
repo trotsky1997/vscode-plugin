@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.4.13] - 2020-02-03
+### Fixed
+- Now works with Language Support for Java(TM) by Red Hat 0.55.1
+
 ## [0.4.12] - 2020-02-03
 ### Changed
 - Delay Java environment check until activating java features.
