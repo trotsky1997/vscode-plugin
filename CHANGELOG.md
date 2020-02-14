@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.4.16] - 2020-02-14
+### Fixed
+- Fix service start up issue on MacOS and Liunx.
+
 ## [0.4.13] - 2020-02-03
 ### Fixed
 - Now works with Language Support for Java(TM) by Red Hat 0.55.1

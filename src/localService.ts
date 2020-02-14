@@ -255,7 +255,7 @@ async function kill() {
 
 async function authorize() {
     if (os.platform() !== "win32") {
-        await execAsync(`chmod -R 777 ${getAixcoderInstallUserPath()}`);
+        await execAsync(`chmod -R 777 "${getAixcoderInstallUserPath()}"`);
     }
 }
 
