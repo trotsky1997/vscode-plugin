@@ -482,7 +482,7 @@ class AiXCancellationToken {
  * @param {(err?: any) => void} onErr 
  * @param {AiXCancellationToken} token 
  */
-async function downloadEx(url, targetPath, onProgress, onSpeed, onErr, token) {
+async function downloadEx(url, targetPath, onProgress, onSpeed, onErr, token, timeout = 5000) {
     let speedTestStart = 0;
     let totalP = {
         transferred: 0,
@@ -495,7 +495,7 @@ async function downloadEx(url, targetPath, onProgress, onSpeed, onErr, token) {
     }, 100);
 
     const stream = webdownload(url, targetPath, {
-        timeout: 5000
+        timeout
     });
     let myReq = null;
     stream.on("request", (req) => {
@@ -538,24 +538,34 @@ async function downloadEx(url, targetPath, onProgress, onSpeed, onErr, token) {
 async function getDownloadSpeed(url, cancellationToken) {
     const tmpPath = "speedtest." + Math.random() + ".tmp";
     let testSpeed = 0;
-    try {
-        await downloadEx(url, tmpPath, (p) => {
-            //progress
-        }, (elapsed, transferred, speed) => {
-            testSpeed = speed;
-            if (elapsed > 3000 || transferred > 100 * 1024) {
-                cancellationToken.cancel("speedLow");
-            }
-        }, (err) => {
-            if (err === "error" || err === "speedLow") {
-                // ignore
-            } else {
-                cancellationToken.cancel("error");
+    let tries = 3;
+    let timeout = 5000;
+    while (true) {
+        try {
+            await downloadEx(url, tmpPath, (p) => {
+                //progress
+            }, (elapsed, transferred, speed) => {
+                testSpeed = speed;
+                if (elapsed > 3000 || transferred > 100 * 1024) {
+                    cancellationToken.cancel("speedLow");
+                }
+            }, (err) => {
+                if (err === "error" || err === "speedLow") {
+                    // ignore
+                } else {
+                    cancellationToken.cancel("error");
+                    throw err;
+                }
+            }, cancellationToken, timeout * (4 - tries));
+            break;
+        } catch (err) {
+            if (tries <= 0) {
                 throw err;
             }
-        }, cancellationToken);
-    } finally {
-        await fs.remove(tmpPath);
+        } finally {
+            tries -= 1;
+            await fs.remove(tmpPath);
+        }
     }
     return testSpeed;
 }
@@ -578,7 +588,7 @@ class AixUpdaterClient {
                 bestI = i;
             }
         }
-        // console.log(speeds);
+        console.log(speeds);
         return speeds[bestI] > 0 ? urlList[bestI] : null;
     }
 
@@ -715,7 +725,7 @@ class AixUpdaterClient {
         if (fullDownloadUrl == null) {
             throw new Error("No download url is reachable in " + util.inspect(urlList));
         }
-        const fullFileName = fullDownloadUrl.substring(fullDownloadUrl.lastIndexOf("/") + 1);
+        const fullFileName = fullDownloadUrl.substring(fullDownloadUrl.lastIndexOf("/") + 1);   ``
         /** @type {FileProgress} */
         const downloadStatus = {
             name: fullFileName,

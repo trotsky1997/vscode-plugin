@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.4.17] - 2020-02-14
+### Changed
+- Adding retries and longer timeouts, service downloading/updating is more robust.
+
 ## [0.4.16] - 2020-02-14
 ### Fixed
 - Fix service start up issue on MacOS and Liunx.
