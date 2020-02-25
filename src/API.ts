@@ -193,8 +193,10 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
     const offset = CodeStore.getInstance().getDiffPosition(fileID, maskedText);
     const md5 = md5Hash(maskedText);
     const additionalParams: any = {};
-    let laterCodeReversed;
+    let laterCodeReversed: string;
+    let originalLaterCode: string;
     if (localRequest) {
+        originalLaterCode = laterCode;
         // additionalParams.fullCode = maskedText;
         laterCodeReversed = reverseString(laterCode);
         const laterOffset = CodeStore.getInstance().getDiffPosition(fileID + ".later", laterCodeReversed);
@@ -215,29 +217,45 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
             additionalParams.saExecutor = vscode.workspace.getConfiguration().get("python.pythonPath");
         }
 
+        const postForm = {
+            text: maskedText.substring(offset),    // 这个是输入的内容，暂时先用p来代替
+            ext,
+            uuid: Preference.uuid,
+            fileid: fileID,
+            project: projName,
+            projectRoot: proj ? proj.uri.fsPath : "",
+            remaining_text: maskedRemainingText,
+            queryUUID: lastQueryUUID,
+            offset,
+            md5,
+            sort: 1,
+            const: 1,
+            prob_th_ngram: 1,
+            prob_th_ngram_t: 1,
+            version: myVersion,
+            long_result_cuts: Preference.getLongResultCuts(),
+            ...Preference.getRequestParams(),
+            ...additionalParams,
+        };
+        if (Preference.getRequestParams().dumpParams) {
+            const tmp = { ...postForm };
+            const t = maskedText;
+            delete tmp.text;
+            delete tmp.offset;
+            delete tmp.md5;
+            if (tmp.laterCode) {
+                tmp.laterCode = originalLaterCode;
+                delete tmp.laterOffset;
+                delete tmp.laterMd5;
+            }
+            log(`====\n${JSON.stringify(tmp, null, 2)}\n====\n`);
+            log(`text:\n${t}\n====\n`);
+        }
+
         const resp = await myRequest({
             method: "post",
             url: "predict",
-            form: {
-                text: maskedText.substring(offset),    // 这个是输入的内容，暂时先用p来代替
-                ext,
-                uuid: Preference.uuid,
-                fileid: fileID,
-                project: projName,
-                projectRoot: proj ? proj.uri.fsPath : "",
-                remaining_text: maskedRemainingText,
-                queryUUID: lastQueryUUID,
-                offset,
-                md5,
-                sort: 1,
-                const: 1,
-                prob_th_ngram: 1,
-                prob_th_ngram_t: 1,
-                version: myVersion,
-                long_result_cuts: Preference.getLongResultCuts(),
-                ...Preference.getRequestParams(),
-                ...additionalParams,
-            },
+            form: postForm,
             headers: {
                 ext,
                 uuid: Preference.uuid,

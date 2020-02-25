@@ -285,12 +285,12 @@ function formatResData(results: PredictResult, langUtil: LangUtil, document: vsc
             if (!unique.has(label)) {
                 const z: AiXCompletionItem = {
                     label,
-                    filterText: langUtil.render(filterTextMergedTokens, 0),
+                    filterText: langUtil.render(filterTextMergedTokens, 0).replace(/ /g, ""),
                     insertText: new vscode.SnippetString(rendered),
                     kind: vscode.CompletionItemKind.Snippet,
                     sortText: Preference.getLongResultRankSortText() + "." + (sortL2S ? 1 - title.length / 100 : title.length / 100),
                     aixPrimary: true,
-                    detail: "aiXcoder: " + result.prob.toLocaleString("en", { style: "percent", minimumFractionDigits: 2 }),
+                    detail: `aiXcoder: ${label}`,
                 };
                 z.command = { ...command, arguments: command.arguments.concat([result, z]) };
                 r.push(z);
@@ -321,7 +321,7 @@ export function formatSortData(results: SortResult | null, langUtil: LangUtil, d
             insertText: single.word,
             kind: vscode.CompletionItemKind.Variable,
             sortText: "0." + insertedRank++,
-            detail: "aiXcoder: " + single.prob.toLocaleString("en", { style: "percent", minimumFractionDigits: 2 }),
+            detail: single.prob > 0.1 && single.prob < 0.9 ? `aiXcoder: ${single.prob.toLocaleString("en", { style: "percent", minimumFractionDigits: 2 })}` : null,
         };
         z.command = { ...command, arguments: command.arguments.concat([single, z]) };
         r.push(z);
