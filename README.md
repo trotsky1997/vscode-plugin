@@ -1,12 +1,6 @@
 # aiXcoder Visual Studio Code Plugin
 
-AiXcoder is a code suggestions generator using the latest AI technologies. Our model is trained on over 1 TB of open source code and served from your own computer.
-
-For now aiXcoder only supports Java/JavaScript/TypeScript/Python in offline mode.
-
-Currently it runs on 64-bit Windows/Mac OS and Linux.
-
-Java:
+AiXcoder is a powerful code completer based on state-of-the-art deep learning technology. It can recommend the code that most likely to be typed during your coding process. aiXcoder also has the potential of recommending you a full line of code, which will help you coding faster.
 
 ![writing Java code with aiXcoder](https://github.com/aixcoder-plugin/vscode-plugin/raw/master/images/java_example.gif)
 
@@ -19,15 +13,15 @@ Java:
 
 ## Features
 
-1. Only support Java/JavaScript/TypeScript/Python for now. More languages (C++/Go/Php) on the way...
+1. Java is supported now. More languages (Python/JavaScript/TypeScript/C++) will be supported later.
 2. Completely works offline. Your code is safe in your hand.
 3. Long completion result with length up to a full line.
 4. Rearrange completion items in a likelyhood probability descending order.
 
 ## Troubleshooting
 
-The local server is downloaded into &lt;home&gt;/aiXcoder/installer/localserver/current/server/. Removing the folder and then restart VSCode will force this plugin to re-download the service.
-
-The service is started as several processes including "aix-node(.exe)", you can safely kill them at any time. The plugin will automatically launch the service upon a completion event if not running.
+1. AiXcoder will be launched automatically when you begin to type code.
+2. When you start using aiXcoder on a new project, an indexing process is required to parse your code. This is necessary for aiXcoder to provide more accurate completions.
+3. The service is running as several processes including "aix-node(.exe)". You can safely kill the process(es) at any time. The executables are located in &lt;home&gt;/aiXcoder/installer/localserver/current/server/. Removing the folder and then restart VSCode will force this plugin to re-download the service.
 
 **Enjoy!**

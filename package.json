@@ -1,6 +1,6 @@
 {
     "name": "aixcoder",
-    "displayName": "aiXcoder AI Code Completer",
+    "displayName": "aiXcoder Code Completer",
     "description": "A free code completion tool powered by deep learning.",
     "version": "0.4.16",
     "publisher": "aixcoder-plugin",
