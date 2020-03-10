@@ -5,6 +5,9 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 ### Changed
 - Revised readme text.
 
+### Fixed
+- Fixed a quotes issue on JS/TS files.
+
 ## [0.4.17] - 2020-02-14
 ### Changed
 - Adding retries and longer timeouts, service downloading/updating is more robust.

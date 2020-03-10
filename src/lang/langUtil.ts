@@ -323,6 +323,8 @@ export abstract class LangUtil {
             case "<str>":
                 if (value[0] === "\"" && value[value.length - 1] === "\"") {
                     value = value.substring(1, value.length - 1);
+                } else if (value[0] === "'" && value[value.length - 1] === "'") {
+                    return value.replace("<str_space>", " ");
                 }
                 return "\"" + value.replace("<str_space>", " ") + "\"";
             case "<char>":

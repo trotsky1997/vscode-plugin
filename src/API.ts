@@ -178,14 +178,19 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
 
     let maskedText: string;
     let maskedRemainingText: string;
-    try {
-        maskedText = await DataMasking.mask(langUtil, text, ext);
-        maskedRemainingText = await DataMasking.mask(langUtil, remainingText, ext);
-    } catch (error) {
-        if (error instanceof MatchFailedError) {
-            return null;
+    if (localRequest) {
+        maskedText = text;
+        maskedRemainingText = remainingText;
+    } else {
+        try {
+            maskedText = await DataMasking.mask(langUtil, text, ext);
+            maskedRemainingText = await DataMasking.mask(langUtil, remainingText, ext);
+        } catch (error) {
+            if (error instanceof MatchFailedError) {
+                return null;
+            }
+            throw error;
         }
-        throw error;
     }
     const u = vscode.window.activeTextEditor.document.uri;
     const proj = vscode.workspace.getWorkspaceFolder(u);
