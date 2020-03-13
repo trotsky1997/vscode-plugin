@@ -1,7 +1,7 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
-## [0.4.18] - 
+## [0.4.18] - 2020-03-13
 ### Changed
 - Revised readme text.
 
