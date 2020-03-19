@@ -20,7 +20,7 @@ function md5Hash(s: string) {
     return crypto.createHash("md5").update(s).digest("hex");
 }
 
-async function myRequest(options: request.OptionsWithUrl, endpoint: string) {
+export async function myRequest(options: request.OptionsWithUrl, endpoint: string) {
     const proxyUrl: string = vscode.workspace.getConfiguration().get("http.proxy");
     const proxyAuth: string = vscode.workspace.getConfiguration().get("http.proxyAuthorization");
     const proxyStrictSSL: boolean = vscode.workspace.getConfiguration().get("http.proxyStrictSSL");

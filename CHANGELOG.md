@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [0.4.19] - 2020-03-19
+### Fixed
+- Fixed an ordering issue.
+
 ## [0.4.18] - 2020-03-13
 ### Changed
 - Revised readme text.

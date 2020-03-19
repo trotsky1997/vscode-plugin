@@ -18,6 +18,7 @@ import { getLocalPort, switchToLocal } from "./localService";
 import log from "./logger";
 import { activatePhp } from "./phpExtension";
 import Preference from "./Preference";
+import { promptProfessional } from "./professionalModels";
 import { activatePython } from "./pythonExtension";
 import { AiXSearchSerializer, doSearch } from "./search";
 import { Syncer } from "./Syncer";
@@ -49,78 +50,78 @@ export function compareVersion(v1: any, v2: any) {
 
 const shownMessages = new Set();
 export async function showInformationMessageOnce(message: string, ...items: string[]): Promise<string | undefined> {
-    if (!shownMessages.has(message)) {
-        shownMessages.add(message);
-        const localizedItems = [];
-        for (const item of items) {
-            localizedItems.push(localize(item));
-        }
-        const select = await vscode.window.showInformationMessage(localize(message), ...localizedItems);
-        const localizedSelection = localizedItems.indexOf(select);
-        if (localizedSelection >= 0) {
-            return items[localizedSelection];
-        }
-        return select;
-    }
-    return "skip";
+    return showMessage(message, {
+        type: "info",
+        once: true,
+        items,
+    });
 }
 
 export async function showWarningMessageOnce(message: string, ...items: string[]): Promise<string | undefined> {
-    if (!shownMessages.has(message)) {
-        shownMessages.add(message);
-        const localizedItems = [];
-        for (const item of items) {
-            localizedItems.push(localize(item));
-        }
-        const select = await vscode.window.showWarningMessage(localize(message), ...localizedItems);
-        const localizedSelection = localizedItems.indexOf(select);
-        if (localizedSelection >= 0) {
-            return items[localizedSelection];
-        }
-        return select;
-    }
-    return "skip";
+    return showMessage(message, {
+        type: "warn",
+        once: true,
+        items,
+    });
 }
 
 export async function showInformationMessage(message: string, ...items: string[]): Promise<string | undefined> {
-    if (!Preference.context.globalState.get("hide:" + message)) {
-        const localizedItems = [];
-        for (const item of items) {
-            localizedItems.push(localize(item));
-        }
-        const additionalItems = [];
-        if (localizedItems.length === 0) {
-            additionalItems.push(localize("close"));
-        }
-        additionalItems.push(localize("nevershowagain"));
-        const select = await vscode.window.showInformationMessage(localize(message), ...localizedItems, ...additionalItems);
-        if (select === localize("close")) {
-            return;
-        }
-        if (select === localize("nevershowagain")) {
-            Preference.context.globalState.update("hide:" + message, true);
-            return;
-        }
-        const localizedSelection = localizedItems.indexOf(select);
-        if (localizedSelection >= 0) {
-            return items[localizedSelection];
-        }
-        return select;
-    }
+    return showMessage(message, {
+        type: "info",
+        items,
+        nevershowagain: true,
+    });
 }
 
 export async function showWarningMessage(message: string, ...items: string[]): Promise<string | undefined> {
+    return showMessage(message, {
+        type: "warn",
+        items,
+        nevershowagain: true,
+    });
+}
+
+export interface MessageOptions {
+    type: "info" | "warn" | "error";
+    once?: boolean;
+    items?: string[];
+    nevershowagain?: boolean;
+}
+
+export async function showMessage(message: string, options?: MessageOptions): Promise<string | undefined> {
+    options = {
+        type: "info",
+        once: false,
+        items: [],
+        nevershowagain: false,
+        ...(options || {}),
+    };
+    if (options.once) {
+        if (!shownMessages.has(message)) {
+            shownMessages.add(message);
+        } else {
+            return "skip";
+        }
+    }
+    let msgFunc = vscode.window.showInformationMessage;
+    if (options.type === "warn") {
+        msgFunc = vscode.window.showWarningMessage;
+    } else if (options.type === "error") {
+        msgFunc = vscode.window.showErrorMessage;
+    }
     if (!Preference.context.globalState.get("hide:" + message)) {
         const localizedItems = [];
-        for (const item of items) {
+        for (const item of options.items) {
             localizedItems.push(localize(item));
         }
         const additionalItems = [];
         if (localizedItems.length === 0) {
             additionalItems.push(localize("close"));
         }
-        additionalItems.push(localize("nevershowagain"));
-        const select = await vscode.window.showWarningMessage(localize(message), ...localizedItems, ...additionalItems);
+        if (options.nevershowagain) {
+            additionalItems.push(localize("nevershowagain"));
+        }
+        const select = await msgFunc(localize(message), ...localizedItems, ...additionalItems);
         if (select === localize("close")) {
             return;
         }
@@ -130,7 +131,7 @@ export async function showWarningMessage(message: string, ...items: string[]): P
         }
         const localizedSelection = localizedItems.indexOf(select);
         if (localizedSelection >= 0) {
-            return items[localizedSelection];
+            return options.items[localizedSelection];
         }
         return select;
     }
@@ -147,8 +148,15 @@ export interface CompletionOptions {
     filters?: string[];
 }
 
+export interface ModelInfo {
+    display: string;
+    ext: string;
+    info: { [locale: string]: string };
+}
+
 interface PredictResult {
     data: SinglePredictResult[];
+    professionalModel?: ModelInfo;
 }
 
 interface SinglePredictResult {
@@ -355,6 +363,11 @@ export async function fetchResults2(text: string, remainingText: string, laterCo
         let predictResults: PredictResult = fetchBody && typeof fetchBody === "string" ? JSON.parse(fetchBody) : fetchBody;
         if (predictResults.data == null) {
             predictResults = { data: predictResults as any };
+        }
+        const professionalModel = predictResults.professionalModel;
+        if (professionalModel) {
+            // not logged in or not owning this model
+            promptProfessional(professionalModel, ext);
         }
         let current = "";
         for (const lr of predictResults.data) {
