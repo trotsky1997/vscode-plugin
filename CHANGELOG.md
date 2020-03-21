@@ -1,6 +1,9 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [1.0.0] - 2020-03-21
+Formal release of aiXcoder.
+
 ## [0.4.19] - 2020-03-19
 ### Fixed
 - Fixed an ordering issue.

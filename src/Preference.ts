@@ -193,13 +193,15 @@ export default class Preference {
             const mc = await Preference.getLocalModelConfig();
             if (Object.keys(mc).length === 0) {
                 // prompt for switching to local
-                showInformationMessageOnce("switchToLocal", "yes", "no", "showme").then((selection) => {
+                showInformationMessageOnce("switchToLocal", "yes", "no", "showme", "learnmore").then((selection) => {
                     if (selection === "yes") {
                         switchToLocal(true);
                     } else if (selection === "no") {
                         switchToLocal(false);
                     } else if (selection === "showMe") {
                         vscode.commands.executeCommand("workbench.action.quickOpen", ">" + localize("switchCommandPrefix"));
+                    } else if (selection === "learnmore") {
+                        vscode.commands.executeCommand("vscode.open", vscode.Uri.parse("https://www.aixcoder.com/#/versionInfo"));
                     }
                 });
                 endpoint = "https://api.aixcoder.com";

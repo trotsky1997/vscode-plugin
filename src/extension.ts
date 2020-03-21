@@ -698,10 +698,15 @@ export function mergeSortResult(l: vscode.CompletionItem[], sortResults: SortRes
 
 const lastModifedTime: { [uri: string]: number } = {};
 
+function listenForTextEditor(e: vscode.TextDocumentChangeEvent) {
+
+}
+
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export async function activate(context: vscode.ExtensionContext) {
     try {
+        context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(listenForTextEditor));
         log("AiX: aiXcoder activating");
         if (os.platform() === "win32" && compareVersion(os.release(), "10") < 0) {
             const star = vscode.workspace.getConfiguration().get("aiXcoder.symbol");
