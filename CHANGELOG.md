@@ -1,7 +1,15 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
-## [1.0.1] - 2020-03-23
+## [1.0.3] - 
+
+### Changed
+- Prevent too low or too high probility from showing up.
+
+### Fixed
+- An occational ordering issue.
+
+## [1.0.2] - 2020-03-23
 
 ### Added
 - Support for local service 2.0.0.

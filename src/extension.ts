@@ -329,14 +329,16 @@ export function formatSortData(results: SortResult | null, langUtil: LangUtil, d
         if (single.word.match(/^<.+>$/)) {
             continue;
         }
+        const rankText = insertedRank.toString().padStart(3, "0");
         const z: AiXCompletionItem = {
             label: star + single.word,
             filterText: current + single.word.substring(current.length),
             insertText: single.word,
             kind: vscode.CompletionItemKind.Variable,
-            sortText: "0." + insertedRank++,
+            sortText: ".0." + rankText,
             detail: single.prob > 0.1 && single.prob < 0.9 ? `aiXcoder: ${single.prob.toLocaleString("en", { style: "percent", minimumFractionDigits: 2 })}` : null,
         };
+        insertedRank++;
         z.command = { ...command, arguments: command.arguments.concat([single, z]) };
         r.push(z);
     }
@@ -674,7 +676,8 @@ export function mergeSortResult(l: vscode.CompletionItem[], sortResults: SortRes
             bestSystemCompletion.label = starDisplay === STAR_DISPLAY.LEFT ? star + bestSystemCompletion.label : (starDisplay === STAR_DISPLAY.RIGHT ? bestSystemCompletion.label + star : bestSystemCompletion.label);
             bestSystemCompletion.sortText = ".0." + rankText;
             bestSystemCompletion.command = { ...telemetryCommand, arguments: telemetryCommand.arguments.concat([single]) };
-            bestSystemCompletion.detail = (bestSystemCompletion.detail ? bestSystemCompletion.detail + "\n" : "") + "aiXcoder: " + single.prob.toLocaleString("en", { style: "percent", minimumFractionDigits: 2 });
+            const probString = single.prob > 0.1 && single.prob < 0.9 ? "aiXcoder: " + single.prob.toLocaleString("en", { style: "percent", minimumFractionDigits: 2 }) : "";
+            bestSystemCompletion.detail = (bestSystemCompletion.detail ? bestSystemCompletion.detail + "\n" : "") + probString;
             if (bestSystemCompletion.kind === vscode.CompletionItemKind.Function && insertText.indexOf("(") === -1) {
                 bestSystemCompletion.insertText = new vscode.SnippetString(insertText).appendText("(").appendTabstop().appendText(")");
             }
