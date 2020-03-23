@@ -759,6 +759,7 @@ class AixUpdaterClient {
                 console.log(error);
             }
         }
+        await fs.remove(localPath);
         await fs.rename(patchFolder, localPath);
         return AixUpdaterClient.getCurrentLocalVersion(localPath);
     }

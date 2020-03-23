@@ -135,6 +135,42 @@ function reverseString(str) {
     return newString;
 }
 
+export async function notifyFileChange(doc: vscode.TextDocument, text: string, ext: string, fileID: string) {
+    const endpoint = await Preference.getEndpoint(ext);
+    if (endpoint.indexOf("localhost") < 0) {
+        return;
+    }
+    if (fileID.match(/^Untitled-\d+$/)) {
+        const lang = ext.substring(ext.indexOf("(") + 1, ext.length - 1).toLowerCase();
+        fileID += "." + (realExtension[lang] || lang);
+    }
+    const additionalParams: any = {};
+    if (ext.endsWith("(Python)")) {
+        additionalParams.saExecutor = vscode.workspace.getConfiguration().get("python.pythonPath");
+    }
+    const proj = vscode.workspace.getWorkspaceFolder(doc.uri);
+    const projName = proj ? proj.name : "_scratch";
+    const postForm = {
+        text,    // 这个是输入的内容，暂时先用p来代替
+        ext,
+        uuid: Preference.uuid,
+        fileid: fileID,
+        project: projName,
+        projectRoot: proj ? proj.uri.fsPath : "",
+        ...additionalParams,
+    };
+    const resp = await myRequest({
+        method: "post",
+        url: "eventChanged",
+        form: postForm,
+        headers: {
+            ext,
+            uuid: Preference.uuid,
+        },
+        timeout: firstLocalRequestAttempt ? 10000 : 2000,
+    }, endpoint);
+}
+
 export async function predict(langUtil: LangUtil, text: string, ext: string, remainingText: string, laterCode: string, lastQueryUUID: number, fileID: string, retry = true) {
     if (Preference.getSelfLearn()) {
         if (Preference.isProfessional === undefined) {

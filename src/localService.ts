@@ -155,7 +155,7 @@ export function isServerStarting() {
 
 let lastOpenFailed = false;
 export async function startLocalService(soft: boolean) {
-    if (lastOpenFailed) { return; }
+    if (!soft && lastOpenFailed) { return; }
     const aixcoderPath = path.join(getAixcoderInstallUserPath(), "localserver", "current", "server");
     try {
         await fs.mkdirp(aixcoderPath);

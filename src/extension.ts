@@ -36,6 +36,12 @@ export const myVersion = myPackageJSON.version;
 export function compareVersion(v1: any, v2: any) {
     if (typeof v1 !== "string") { return false; }
     if (typeof v2 !== "string") { return false; }
+    if (v1.startsWith("v")) {
+        v1 = v1.substr(1);
+    }
+    if (v2.startsWith("v")) {
+        v2 = v2.substr(1);
+    }
     v1 = v1.split(".");
     v2 = v2.split(".");
     const k = Math.min(v1.length, v2.length);
@@ -698,7 +704,28 @@ export function mergeSortResult(l: vscode.CompletionItem[], sortResults: SortRes
 
 const lastModifedTime: { [uri: string]: number } = {};
 
+export const language2ext = {
+    c: "cpp(Cpp)",
+    cpp: "cpp(Cpp)",
+    go: "go(Go)",
+    java: "java(Java)",
+    php: "php(Php)",
+    python: "python(Python)",
+    javascript: "javascript(Javascript)",
+    vue: "javascript(Javascript)",
+    html: "javascript(Javascript)",
+    javascriptreact: "javascript(Javascript)",
+    typescript: "typescript(Typescript)",
+    typescriptreact: "typescript(Typescript)",
+};
+
 function listenForTextEditor(e: vscode.TextDocumentChangeEvent) {
+    if (language2ext[e.document.languageId]) {
+        notifyFileChange(e.document, e.document.getText(), language2ext[e.document.languageId], e.document.fileName);
+    }
+}
+
+function listenForTextEditorSwitch(e: vscode.TextEditor) {
 
 }
 
@@ -707,6 +734,7 @@ function listenForTextEditor(e: vscode.TextDocumentChangeEvent) {
 export async function activate(context: vscode.ExtensionContext) {
     try {
         context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(listenForTextEditor));
+        context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(listenForTextEditorSwitch));
         log("AiX: aiXcoder activating");
         if (os.platform() === "win32" && compareVersion(os.release(), "10") < 0) {
             const star = vscode.workspace.getConfiguration().get("aiXcoder.symbol");

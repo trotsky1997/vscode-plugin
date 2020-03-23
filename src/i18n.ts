@@ -291,7 +291,7 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "zh-cn": "IntelliCode 集成失败。请确保您安装了最新版本的aiXcoder插件和VS Code。",
     },
     "switchToLocal": {
-        "en": "aiXcoder is working in online mode. Do you want to switch to local service? You can always switch between local service and online service using commands.",
+        "en": "aiXcoder code completion service is running in online mode. Do you want to switch to local service? You can always switch between local service and online service using commands.",
         "zh-cn": "aiXcoder正在使用线上服务，是否切换到本地服务？您以后可以通过命令来切换线上和本地服务。",
     },
     "switchToOnline": {

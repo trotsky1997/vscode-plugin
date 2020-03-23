@@ -1,6 +1,14 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
+## [1.0.1] - 2020-03-23
+
+### Added
+- Support for local service 2.0.0.
+
+### Fixed
+- Will correctly reflect code change in other files when generating completions.
+
 ## [1.0.0] - 2020-03-21
 Formal release of aiXcoder.
 
