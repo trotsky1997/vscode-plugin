@@ -721,12 +721,12 @@ export const language2ext = {
 
 function listenForTextEditor(e: vscode.TextDocumentChangeEvent) {
     if (language2ext[e.document.languageId]) {
-        notifyFileChange(e.document, e.document.getText(), language2ext[e.document.languageId], e.document.fileName);
+        API.notifyFileChange(e.document, e.document.getText(), language2ext[e.document.languageId], e.document.fileName);
     }
 }
 
 function listenForTextEditorSwitch(e: vscode.TextEditor) {
-
+    lastPromise = null;
 }
 
 // this method is called when your extension is activated
