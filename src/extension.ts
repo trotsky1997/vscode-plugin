@@ -280,7 +280,7 @@ function formatResData(results: PredictResult, langUtil: LangUtil, document: vsc
     const sortL2S = Preference.getLongResultCutsLong2Short();
     const unique = new Set();
     for (const result of results.data) {
-        if (result.tokens.length > minCompletionTokensCount) {
+        if (result.tokens && result.tokens.length > minCompletionTokensCount) {
             // if (result.tokens.length === 2 && result.tokens[1] === "(" && result.tokens[0].match(/[a-zA-Z0-9_$]+/)) {
             //     continue;
             // }
@@ -368,28 +368,29 @@ export async function fetchResults2(text: string, remainingText: string, laterCo
         fetchTime = 0;
     }
     try {
-        let predictResults: PredictResult = fetchBody && typeof fetchBody === "string" ? JSON.parse(fetchBody) : fetchBody;
-        if (predictResults.data == null) {
-            predictResults = { data: predictResults as any };
+        const predictResults: PredictResult = fetchBody && typeof fetchBody === "string" ? JSON.parse(fetchBody) : fetchBody;
+        const predictResultsv2 = predictResults.data == null ? { data: predictResults as any } : predictResults;
+        if (predictResultsv2.data.tokens == null) {
+            predictResultsv2.data.tokens = [];
         }
-        const professionalModel = predictResults.professionalModel;
+        const professionalModel = predictResultsv2.data.professionalModel;
         if (professionalModel) {
             // not logged in or not owning this model
             promptProfessional(professionalModel, ext);
         }
         let current = "";
-        for (const lr of predictResults.data) {
+        for (const lr of predictResultsv2.data) {
             if (lr.current) {
                 current = lr.current;
                 break;
             }
         }
-        let strLabels = formatResData(predictResults, langUtil, document, ext, text, starDisplay);
+        let strLabels = formatResData(predictResultsv2, langUtil, document, ext, text, starDisplay);
         // log("predict result:");
         // log(strLabels);
         const results = {
             queryUUID: queryUUID.toString(),
-            list: predictResults.data.length > 0 ? predictResults.data[0].sort || [] : [],
+            list: predictResultsv2.data.length > 0 ? predictResultsv2.data[0].sort || [] : [],
         };
         const unique = new Set();
         for (const sortResult of results.list) {

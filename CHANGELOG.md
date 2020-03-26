@@ -5,9 +5,12 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 
 ### Changed
 - Prevent too low or too high probility from showing up.
+- No longer keep older version of local service to save space.
 
 ### Fixed
 - An occational ordering issue.
+- Show an error message when the local service failed to install.
+- (JS/TS) Typing any key will close the popup completion list.
 
 ## [1.0.2] - 2020-03-23
 

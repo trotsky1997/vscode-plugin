@@ -271,7 +271,8 @@ export async function activateTypeScript(context: vscode.ExtensionContext, jsOnl
                 if (!token.isCancellationRequested) {
                     sendPredictTelemetryShort(ext, fetchTime, sortResults);
                 }
-                return new vscode.CompletionList(items, true);
+                // there is an issue that closes the popup on key typed if isIncomplete is true
+                return new vscode.CompletionList(items, false);
             } catch (e) {
                 log(e);
             }

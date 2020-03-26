@@ -336,11 +336,13 @@ export async function forceUpdate(localVersion: string, remoteVersion: string) {
             }
             const downloadPage = "https://github.com/aixcoder-plugin/localservice/releases";
             log(localize("aixUpdatefailed", downloadPage, aixcoderPath));
-            // vscode.window.showInformationMessage(localize("aixUpdatefailed", downloadPage, aixcoderPath), localize("openInBrowser")).then((select) => {
-            //     if (select === localize("openInBrowser")) {
-            //         vscode.commands.executeCommand("vscode.open", vscode.Uri.parse(downloadPage));
-            //     }
-            // });
+            if (localVersion === "0.0.0") {
+                vscode.window.showInformationMessage(localize("aixUpdatefailed", downloadPage, aixcoderPath), localize("openInBrowser")).then((select) => {
+                    if (select === localize("openInBrowser")) {
+                        vscode.commands.executeCommand("vscode.open", vscode.Uri.parse(downloadPage));
+                    }
+                });
+            }
         }
         lastOpenFailed = false;
     }).then(null, (err) => {

@@ -725,7 +725,7 @@ class AixUpdaterClient {
         if (fullDownloadUrl == null) {
             throw new Error("No download url is reachable in " + util.inspect(urlList));
         }
-        const fullFileName = fullDownloadUrl.substring(fullDownloadUrl.lastIndexOf("/") + 1);   ``
+        const fullFileName = fullDownloadUrl.substring(fullDownloadUrl.lastIndexOf("/") + 1);
         /** @type {FileProgress} */
         const downloadStatus = {
             name: fullFileName,
@@ -761,6 +761,12 @@ class AixUpdaterClient {
         }
         await fs.remove(localPath);
         await fs.rename(patchFolder, localPath);
+        for (let f of await fs.readdir(path.resolve(localPath, ".."))) {
+            f = path.resolve(localPath, "..", f);
+            if (f !== localPath) {
+                fs.remove(f);
+            }
+        }
         return AixUpdaterClient.getCurrentLocalVersion(localPath);
     }
 
