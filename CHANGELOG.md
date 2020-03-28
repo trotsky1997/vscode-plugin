@@ -3,6 +3,9 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 
 ## [1.0.3] - 
 
+### Added
+- Starts up local server and warms up model immediately after opening a file.
+
 ### Changed
 - Prevent too low or too high probility from showing up.
 - No longer keep older version of local service to save space.

@@ -4,7 +4,7 @@ import * as os from "os";
 import * as path from "path";
 import * as request from "request-promise";
 import * as vscode from "vscode";
-import { compareVersion, myVersion, showInformationMessageOnce, showWarningMessage, showWarningMessageOnce } from "./extension";
+import { compareVersion, language2ext, myVersion, showInformationMessageOnce, showWarningMessage, showWarningMessageOnce } from "./extension";
 import { localize } from "./i18n";
 import { LangUtil } from "./lang/langUtil";
 import { MatchFailedError } from "./lang/MatchFailedError";
@@ -171,6 +171,38 @@ export async function notifyFileChange(doc: vscode.TextDocument, text: string, e
     }, endpoint);
 }
 
+const warmedUps = {};
+
+export async function localWarmUp(document: vscode.TextDocument) {
+    const ext = language2ext[document.languageId];
+    if (warmedUps[ext]) { return; }
+    if (ext) {
+        const endpoint = await Preference.getEndpoint(ext);
+        if (endpoint.indexOf("localhost") >= 0) {
+            await startLocalService(true);
+            const u = vscode.window.activeTextEditor.document.uri;
+            const proj = vscode.workspace.getWorkspaceFolder(u);
+            const postForm: any = {
+                ext,
+                projectRoot: proj ? proj.uri.fsPath : "",
+            };
+            if (ext.endsWith("(Python)")) {
+                postForm.saExecutor = vscode.workspace.getConfiguration().get("python.pythonPath");
+            } else if (ext.endsWith("(Java)")) {
+                postForm.mavenConfigPath = vscode.workspace.getConfiguration().get("java.configuration.maven.userSettings");
+            }
+            const resp = await myRequest({
+                method: "post",
+                url: "warmup",
+                form: postForm,
+                timeout: firstLocalRequestAttempt ? 10000 : 2000,
+            }, endpoint);
+            log("Warm up " + ext + " " + resp);
+        }
+    }
+    warmedUps[ext] = true;
+}
+
 export async function predict(langUtil: LangUtil, text: string, ext: string, remainingText: string, laterCode: string, lastQueryUUID: number, fileID: string, retry = true) {
     if (Preference.getSelfLearn()) {
         if (Preference.isProfessional === undefined) {
@@ -256,6 +288,8 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
         }
         if (ext.endsWith("(Python)")) {
             additionalParams.saExecutor = vscode.workspace.getConfiguration().get("python.pythonPath");
+        } else if (ext.endsWith("(Java)")) {
+            additionalParams.mavenConfigPath = vscode.workspace.getConfiguration().get("java.configuration.maven.userSettings");
         }
 
         const postForm = {
@@ -387,7 +421,7 @@ export async function checkLocalServiceUpdate() {
                 headers: {
                     "User-Agent": "aiXcoder-vscode-plugin",
                 },
-            }, "http://image.aixcoder.com");
+            }, "https://image.aixcoder.com");
         } catch (error) {
             const updateURL = "repos/aixcoder-plugin/localservice/releases/latest";
             const versionJson = await myRequest({

@@ -731,6 +731,7 @@ function listenForTextEditor(e: vscode.TextDocumentChangeEvent) {
 
 function listenForTextEditorSwitch(e: vscode.TextEditor) {
     lastPromise = null;
+    API.localWarmUp(e.document);
 }
 
 // this method is called when your extension is activated
@@ -739,6 +740,7 @@ export async function activate(context: vscode.ExtensionContext) {
     try {
         context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(listenForTextEditor));
         context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(listenForTextEditorSwitch));
+        API.localWarmUp(vscode.window.activeTextEditor.document);
         log("AiX: aiXcoder activating");
         if (os.platform() === "win32" && compareVersion(os.release(), "10") < 0) {
             const star = vscode.workspace.getConfiguration().get("aiXcoder.symbol");
