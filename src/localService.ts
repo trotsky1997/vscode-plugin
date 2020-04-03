@@ -155,7 +155,7 @@ export function isServerStarting() {
 
 let lastOpenFailed = false;
 export async function startLocalService(soft: boolean) {
-    if (lastOpenFailed) { return; }
+    if (!soft && lastOpenFailed) { return; }
     const aixcoderPath = path.join(getAixcoderInstallUserPath(), "localserver", "current", "server");
     try {
         await fs.mkdirp(aixcoderPath);
@@ -255,7 +255,7 @@ async function kill() {
 
 async function authorize() {
     if (os.platform() !== "win32") {
-        await execAsync(`chmod -R 777 ${getAixcoderInstallUserPath()}`);
+        await execAsync(`chmod -R 777 "${getAixcoderInstallUserPath()}"`);
     }
 }
 
@@ -335,11 +335,14 @@ export async function forceUpdate(localVersion: string, remoteVersion: string) {
                 log(err);
             }
             const downloadPage = "https://github.com/aixcoder-plugin/localservice/releases";
-            vscode.window.showInformationMessage(localize("aixUpdatefailed", downloadPage, aixcoderPath), localize("openInBrowser")).then((select) => {
-                if (select === localize("openInBrowser")) {
-                    vscode.commands.executeCommand("vscode.open", vscode.Uri.parse(downloadPage));
-                }
-            });
+            log(localize("aixUpdatefailed", downloadPage, aixcoderPath));
+            if (localVersion === "0.0.0") {
+                vscode.window.showInformationMessage(localize("aixUpdatefailed", downloadPage, aixcoderPath), localize("openInBrowser")).then((select) => {
+                    if (select === localize("openInBrowser")) {
+                        vscode.commands.executeCommand("vscode.open", vscode.Uri.parse(downloadPage));
+                    }
+                });
+            }
         }
         lastOpenFailed = false;
     }).then(null, (err) => {

@@ -482,7 +482,7 @@ class AiXCancellationToken {
  * @param {(err?: any) => void} onErr 
  * @param {AiXCancellationToken} token 
  */
-async function downloadEx(url, targetPath, onProgress, onSpeed, onErr, token) {
+async function downloadEx(url, targetPath, onProgress, onSpeed, onErr, token, timeout = 5000) {
     let speedTestStart = 0;
     let totalP = {
         transferred: 0,
@@ -495,7 +495,7 @@ async function downloadEx(url, targetPath, onProgress, onSpeed, onErr, token) {
     }, 100);
 
     const stream = webdownload(url, targetPath, {
-        timeout: 5000
+        timeout
     });
     let myReq = null;
     stream.on("request", (req) => {
@@ -538,24 +538,34 @@ async function downloadEx(url, targetPath, onProgress, onSpeed, onErr, token) {
 async function getDownloadSpeed(url, cancellationToken) {
     const tmpPath = "speedtest." + Math.random() + ".tmp";
     let testSpeed = 0;
-    try {
-        await downloadEx(url, tmpPath, (p) => {
-            //progress
-        }, (elapsed, transferred, speed) => {
-            testSpeed = speed;
-            if (elapsed > 3000 || transferred > 100 * 1024) {
-                cancellationToken.cancel("speedLow");
-            }
-        }, (err) => {
-            if (err === "error" || err === "speedLow") {
-                // ignore
-            } else {
-                cancellationToken.cancel("error");
+    let tries = 3;
+    let timeout = 5000;
+    while (true) {
+        try {
+            await downloadEx(url, tmpPath, (p) => {
+                //progress
+            }, (elapsed, transferred, speed) => {
+                testSpeed = speed;
+                if (elapsed > 3000 || transferred > 100 * 1024) {
+                    cancellationToken.cancel("speedLow");
+                }
+            }, (err) => {
+                if (err === "error" || err === "speedLow") {
+                    // ignore
+                } else {
+                    cancellationToken.cancel("error");
+                    throw err;
+                }
+            }, cancellationToken, timeout * (4 - tries));
+            break;
+        } catch (err) {
+            if (tries <= 0) {
                 throw err;
             }
-        }, cancellationToken);
-    } finally {
-        await fs.remove(tmpPath);
+        } finally {
+            tries -= 1;
+            await fs.remove(tmpPath);
+        }
     }
     return testSpeed;
 }
@@ -578,7 +588,7 @@ class AixUpdaterClient {
                 bestI = i;
             }
         }
-        // console.log(speeds);
+        console.log(speeds);
         return speeds[bestI] > 0 ? urlList[bestI] : null;
     }
 
@@ -723,7 +733,7 @@ class AixUpdaterClient {
             total: 0,
             transferred: 0,
         };
-        await downloadTo(fullDownloadUrl, path.join(localPath, ".."), fullFileName, (progress) => {
+        await downloadTo(fullDownloadUrl, path.resolve(localPath, ".."), fullFileName, (progress) => {
             Object.assign(downloadStatus, progress);
             progressListener(new UpdateProgress(UpdateStatus.SIMPLE_DOWNLOAD_FULL, nStatus, {
                 totalFiles: 1,
@@ -731,10 +741,10 @@ class AixUpdaterClient {
                 downloadProgresses: [downloadStatus]
             }));
         }, token);
-        const patchFolder = path.join(localPath, "..", "__" + fullFileName + "__");
+        const patchFolder = path.resolve(localPath, "..", "__" + fullFileName + "__");
         checkCancelled();
         await beforeUpdate("decompress");
-        await decompress(path.join(localPath, "..", fullFileName), patchFolder);
+        await decompress(path.resolve(localPath, "..", fullFileName), patchFolder);
         checkCancelled();
         await beforeUpdate("patch");
         checkCancelled();
@@ -743,13 +753,20 @@ class AixUpdaterClient {
                 if (!(await fs.stat(localPath)).isDirectory()) {
                     await fs.remove(localPath);
                 }
-                await fs.rename(localPath, path.join(localPath, "..", localVersion));
+                await fs.rename(localPath, path.resolve(localPath, "..", localVersion));
             } catch (error) {
                 // first time install
                 console.log(error);
             }
         }
+        await fs.remove(localPath);
         await fs.rename(patchFolder, localPath);
+        for (let f of await fs.readdir(path.resolve(localPath, ".."))) {
+            f = path.resolve(localPath, "..", f);
+            if (f !== localPath) {
+                fs.remove(f);
+            }
+        }
         return AixUpdaterClient.getCurrentLocalVersion(localPath);
     }
 

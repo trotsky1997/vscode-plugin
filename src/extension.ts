@@ -18,6 +18,7 @@ import { getLocalPort, switchToLocal } from "./localService";
 import log from "./logger";
 import { activatePhp } from "./phpExtension";
 import Preference from "./Preference";
+import { promptProfessional } from "./professionalModels";
 import { activatePython } from "./pythonExtension";
 import { AiXSearchSerializer, doSearch } from "./search";
 import { Syncer } from "./Syncer";
@@ -35,6 +36,12 @@ export const myVersion = myPackageJSON.version;
 export function compareVersion(v1: any, v2: any) {
     if (typeof v1 !== "string") { return false; }
     if (typeof v2 !== "string") { return false; }
+    if (v1.startsWith("v")) {
+        v1 = v1.substr(1);
+    }
+    if (v2.startsWith("v")) {
+        v2 = v2.substr(1);
+    }
     v1 = v1.split(".");
     v2 = v2.split(".");
     const k = Math.min(v1.length, v2.length);
@@ -49,78 +56,78 @@ export function compareVersion(v1: any, v2: any) {
 
 const shownMessages = new Set();
 export async function showInformationMessageOnce(message: string, ...items: string[]): Promise<string | undefined> {
-    if (!shownMessages.has(message)) {
-        shownMessages.add(message);
-        const localizedItems = [];
-        for (const item of items) {
-            localizedItems.push(localize(item));
-        }
-        const select = await vscode.window.showInformationMessage(localize(message), ...localizedItems);
-        const localizedSelection = localizedItems.indexOf(select);
-        if (localizedSelection >= 0) {
-            return items[localizedSelection];
-        }
-        return select;
-    }
-    return "skip";
+    return showMessage(message, {
+        type: "info",
+        once: true,
+        items,
+    });
 }
 
 export async function showWarningMessageOnce(message: string, ...items: string[]): Promise<string | undefined> {
-    if (!shownMessages.has(message)) {
-        shownMessages.add(message);
-        const localizedItems = [];
-        for (const item of items) {
-            localizedItems.push(localize(item));
-        }
-        const select = await vscode.window.showWarningMessage(localize(message), ...localizedItems);
-        const localizedSelection = localizedItems.indexOf(select);
-        if (localizedSelection >= 0) {
-            return items[localizedSelection];
-        }
-        return select;
-    }
-    return "skip";
+    return showMessage(message, {
+        type: "warn",
+        once: true,
+        items,
+    });
 }
 
 export async function showInformationMessage(message: string, ...items: string[]): Promise<string | undefined> {
-    if (!Preference.context.globalState.get("hide:" + message)) {
-        const localizedItems = [];
-        for (const item of items) {
-            localizedItems.push(localize(item));
-        }
-        const additionalItems = [];
-        if (localizedItems.length === 0) {
-            additionalItems.push(localize("close"));
-        }
-        additionalItems.push(localize("nevershowagain"));
-        const select = await vscode.window.showInformationMessage(localize(message), ...localizedItems, ...additionalItems);
-        if (select === localize("close")) {
-            return;
-        }
-        if (select === localize("nevershowagain")) {
-            Preference.context.globalState.update("hide:" + message, true);
-            return;
-        }
-        const localizedSelection = localizedItems.indexOf(select);
-        if (localizedSelection >= 0) {
-            return items[localizedSelection];
-        }
-        return select;
-    }
+    return showMessage(message, {
+        type: "info",
+        items,
+        nevershowagain: true,
+    });
 }
 
 export async function showWarningMessage(message: string, ...items: string[]): Promise<string | undefined> {
+    return showMessage(message, {
+        type: "warn",
+        items,
+        nevershowagain: true,
+    });
+}
+
+export interface MessageOptions {
+    type: "info" | "warn" | "error";
+    once?: boolean;
+    items?: string[];
+    nevershowagain?: boolean;
+}
+
+export async function showMessage(message: string, options?: MessageOptions): Promise<string | undefined> {
+    options = {
+        type: "info",
+        once: false,
+        items: [],
+        nevershowagain: false,
+        ...(options || {}),
+    };
+    if (options.once) {
+        if (!shownMessages.has(message)) {
+            shownMessages.add(message);
+        } else {
+            return "skip";
+        }
+    }
+    let msgFunc = vscode.window.showInformationMessage;
+    if (options.type === "warn") {
+        msgFunc = vscode.window.showWarningMessage;
+    } else if (options.type === "error") {
+        msgFunc = vscode.window.showErrorMessage;
+    }
     if (!Preference.context.globalState.get("hide:" + message)) {
         const localizedItems = [];
-        for (const item of items) {
+        for (const item of options.items) {
             localizedItems.push(localize(item));
         }
         const additionalItems = [];
         if (localizedItems.length === 0) {
             additionalItems.push(localize("close"));
         }
-        additionalItems.push(localize("nevershowagain"));
-        const select = await vscode.window.showWarningMessage(localize(message), ...localizedItems, ...additionalItems);
+        if (options.nevershowagain) {
+            additionalItems.push(localize("nevershowagain"));
+        }
+        const select = await msgFunc(localize(message), ...localizedItems, ...additionalItems);
         if (select === localize("close")) {
             return;
         }
@@ -130,7 +137,7 @@ export async function showWarningMessage(message: string, ...items: string[]): P
         }
         const localizedSelection = localizedItems.indexOf(select);
         if (localizedSelection >= 0) {
-            return items[localizedSelection];
+            return options.items[localizedSelection];
         }
         return select;
     }
@@ -147,8 +154,15 @@ export interface CompletionOptions {
     filters?: string[];
 }
 
+export interface ModelInfo {
+    display: string;
+    ext: string;
+    info: { [locale: string]: string };
+}
+
 interface PredictResult {
     data: SinglePredictResult[];
+    professionalModel?: ModelInfo;
 }
 
 interface SinglePredictResult {
@@ -266,7 +280,7 @@ function formatResData(results: PredictResult, langUtil: LangUtil, document: vsc
     const sortL2S = Preference.getLongResultCutsLong2Short();
     const unique = new Set();
     for (const result of results.data) {
-        if (result.tokens.length > minCompletionTokensCount) {
+        if (result.tokens && result.tokens.length > minCompletionTokensCount) {
             // if (result.tokens.length === 2 && result.tokens[1] === "(" && result.tokens[0].match(/[a-zA-Z0-9_$]+/)) {
             //     continue;
             // }
@@ -285,12 +299,12 @@ function formatResData(results: PredictResult, langUtil: LangUtil, document: vsc
             if (!unique.has(label)) {
                 const z: AiXCompletionItem = {
                     label,
-                    filterText: langUtil.render(filterTextMergedTokens, 0),
+                    filterText: langUtil.render(filterTextMergedTokens, 0).replace(/ /g, ""),
                     insertText: new vscode.SnippetString(rendered),
                     kind: vscode.CompletionItemKind.Snippet,
                     sortText: Preference.getLongResultRankSortText() + "." + (sortL2S ? 1 - title.length / 100 : title.length / 100),
                     aixPrimary: true,
-                    detail: "aiXcoder: " + result.prob.toLocaleString("en", { style: "percent", minimumFractionDigits: 2 }),
+                    detail: `aiXcoder: ${label}`,
                 };
                 z.command = { ...command, arguments: command.arguments.concat([result, z]) };
                 r.push(z);
@@ -315,14 +329,16 @@ export function formatSortData(results: SortResult | null, langUtil: LangUtil, d
         if (single.word.match(/^<.+>$/)) {
             continue;
         }
+        const rankText = insertedRank.toString().padStart(3, "0");
         const z: AiXCompletionItem = {
             label: star + single.word,
             filterText: current + single.word.substring(current.length),
             insertText: single.word,
             kind: vscode.CompletionItemKind.Variable,
-            sortText: "0." + insertedRank++,
-            detail: "aiXcoder: " + single.prob.toLocaleString("en", { style: "percent", minimumFractionDigits: 2 }),
+            sortText: ".0." + rankText,
+            detail: single.prob > 0.1 && single.prob < 0.9 ? `aiXcoder: ${single.prob.toLocaleString("en", { style: "percent", minimumFractionDigits: 2 })}` : null,
         };
+        insertedRank++;
         z.command = { ...command, arguments: command.arguments.concat([single, z]) };
         r.push(z);
     }
@@ -352,23 +368,29 @@ export async function fetchResults2(text: string, remainingText: string, laterCo
         fetchTime = 0;
     }
     try {
-        let predictResults: PredictResult = fetchBody && typeof fetchBody === "string" ? JSON.parse(fetchBody) : fetchBody;
-        if (predictResults.data == null) {
-            predictResults = { data: predictResults as any };
+        const predictResults: PredictResult = fetchBody && typeof fetchBody === "string" ? JSON.parse(fetchBody) : fetchBody;
+        const predictResultsv2 = predictResults.data == null ? { data: predictResults as any } : predictResults;
+        if (predictResultsv2.data.tokens == null) {
+            predictResultsv2.data.tokens = [];
+        }
+        const professionalModel = predictResultsv2.data.professionalModel;
+        if (professionalModel) {
+            // not logged in or not owning this model
+            promptProfessional(professionalModel, ext);
         }
         let current = "";
-        for (const lr of predictResults.data) {
+        for (const lr of predictResultsv2.data) {
             if (lr.current) {
                 current = lr.current;
                 break;
             }
         }
-        let strLabels = formatResData(predictResults, langUtil, document, ext, text, starDisplay);
+        let strLabels = formatResData(predictResultsv2, langUtil, document, ext, text, starDisplay);
         // log("predict result:");
         // log(strLabels);
         const results = {
             queryUUID: queryUUID.toString(),
-            list: predictResults.data.length > 0 ? predictResults.data[0].sort || [] : [],
+            list: predictResultsv2.data.length > 0 ? predictResultsv2.data[0].sort || [] : [],
         };
         const unique = new Set();
         for (const sortResult of results.list) {
@@ -655,7 +677,8 @@ export function mergeSortResult(l: vscode.CompletionItem[], sortResults: SortRes
             bestSystemCompletion.label = starDisplay === STAR_DISPLAY.LEFT ? star + bestSystemCompletion.label : (starDisplay === STAR_DISPLAY.RIGHT ? bestSystemCompletion.label + star : bestSystemCompletion.label);
             bestSystemCompletion.sortText = ".0." + rankText;
             bestSystemCompletion.command = { ...telemetryCommand, arguments: telemetryCommand.arguments.concat([single]) };
-            bestSystemCompletion.detail = (bestSystemCompletion.detail ? bestSystemCompletion.detail + "\n" : "") + "aiXcoder: " + single.prob.toLocaleString("en", { style: "percent", minimumFractionDigits: 2 });
+            const probString = single.prob > 0.1 && single.prob < 0.9 ? "aiXcoder: " + single.prob.toLocaleString("en", { style: "percent", minimumFractionDigits: 2 }) : "";
+            bestSystemCompletion.detail = (bestSystemCompletion.detail ? bestSystemCompletion.detail + "\n" : "") + probString;
             if (bestSystemCompletion.kind === vscode.CompletionItemKind.Function && insertText.indexOf("(") === -1) {
                 bestSystemCompletion.insertText = new vscode.SnippetString(insertText).appendText("(").appendTabstop().appendText(")");
             }
@@ -688,10 +711,39 @@ interface ModelQuickPickItem extends vscode.QuickPickItem {
 }
 const lastModifedTime: { [uri: string]: number } = {};
 
+export const language2ext = {
+    c: "cpp(Cpp)",
+    cpp: "cpp(Cpp)",
+    go: "go(Go)",
+    java: "java(Java)",
+    php: "php(Php)",
+    python: "python(Python)",
+    javascript: "javascript(Javascript)",
+    vue: "javascript(Javascript)",
+    html: "javascript(Javascript)",
+    javascriptreact: "javascript(Javascript)",
+    typescript: "typescript(Typescript)",
+    typescriptreact: "typescript(Typescript)",
+};
+
+function listenForTextEditor(e: vscode.TextDocumentChangeEvent) {
+    if (language2ext[e.document.languageId]) {
+        API.notifyFileChange(e.document, e.document.getText(), language2ext[e.document.languageId], e.document.fileName);
+    }
+}
+
+function listenForTextEditorSwitch(e: vscode.TextEditor) {
+    lastPromise = null;
+    API.localWarmUp(e.document);
+}
+
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export async function activate(context: vscode.ExtensionContext) {
     try {
+        context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(listenForTextEditor));
+        context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(listenForTextEditorSwitch));
+        API.localWarmUp(vscode.window.activeTextEditor.document);
         log("AiX: aiXcoder activating");
         if (os.platform() === "win32" && compareVersion(os.release(), "10") < 0) {
             const star = vscode.workspace.getConfiguration().get("aiXcoder.symbol");

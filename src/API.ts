@@ -4,7 +4,7 @@ import * as os from "os";
 import * as path from "path";
 import * as request from "request-promise";
 import * as vscode from "vscode";
-import { compareVersion, myVersion, showInformationMessageOnce, showWarningMessage, showWarningMessageOnce } from "./extension";
+import { compareVersion, language2ext, myVersion, showInformationMessageOnce, showWarningMessage, showWarningMessageOnce } from "./extension";
 import { localize } from "./i18n";
 import { LangUtil } from "./lang/langUtil";
 import { MatchFailedError } from "./lang/MatchFailedError";
@@ -20,7 +20,7 @@ function md5Hash(s: string) {
     return crypto.createHash("md5").update(s).digest("hex");
 }
 
-async function myRequest(options: request.OptionsWithUrl, endpoint: string) {
+export async function myRequest(options: request.OptionsWithUrl, endpoint: string) {
     const proxyUrl: string = vscode.workspace.getConfiguration().get("http.proxy");
     const proxyAuth: string = vscode.workspace.getConfiguration().get("http.proxyAuthorization");
     const proxyStrictSSL: boolean = vscode.workspace.getConfiguration().get("http.proxyStrictSSL");
@@ -135,6 +135,74 @@ function reverseString(str) {
     return newString;
 }
 
+export async function notifyFileChange(doc: vscode.TextDocument, text: string, ext: string, fileID: string) {
+    const endpoint = await Preference.getEndpoint(ext);
+    if (endpoint.indexOf("localhost") < 0) {
+        return;
+    }
+    if (fileID.match(/^Untitled-\d+$/)) {
+        const lang = ext.substring(ext.indexOf("(") + 1, ext.length - 1).toLowerCase();
+        fileID += "." + (realExtension[lang] || lang);
+    }
+    const additionalParams: any = {};
+    if (ext.endsWith("(Python)")) {
+        additionalParams.saExecutor = vscode.workspace.getConfiguration().get("python.pythonPath");
+    }
+    const proj = vscode.workspace.getWorkspaceFolder(doc.uri);
+    const projName = proj ? proj.name : "_scratch";
+    const postForm = {
+        text,    // 这个是输入的内容，暂时先用p来代替
+        ext,
+        uuid: Preference.uuid,
+        fileid: fileID,
+        project: projName,
+        projectRoot: proj ? proj.uri.fsPath : "",
+        ...additionalParams,
+    };
+    const resp = await myRequest({
+        method: "post",
+        url: "eventChanged",
+        form: postForm,
+        headers: {
+            ext,
+            uuid: Preference.uuid,
+        },
+        timeout: firstLocalRequestAttempt ? 10000 : 2000,
+    }, endpoint);
+}
+
+const warmedUps = {};
+
+export async function localWarmUp(document: vscode.TextDocument) {
+    const ext = language2ext[document.languageId];
+    if (warmedUps[ext]) { return; }
+    if (ext) {
+        const endpoint = await Preference.getEndpoint(ext);
+        if (endpoint.indexOf("localhost") >= 0) {
+            await startLocalService(true);
+            const u = vscode.window.activeTextEditor.document.uri;
+            const proj = vscode.workspace.getWorkspaceFolder(u);
+            const postForm: any = {
+                ext,
+                projectRoot: proj ? proj.uri.fsPath : "",
+            };
+            if (ext.endsWith("(Python)")) {
+                postForm.saExecutor = vscode.workspace.getConfiguration().get("python.pythonPath");
+            } else if (ext.endsWith("(Java)")) {
+                postForm.mavenConfigPath = vscode.workspace.getConfiguration().get("java.configuration.maven.userSettings");
+            }
+            const resp = await myRequest({
+                method: "post",
+                url: "warmup",
+                form: postForm,
+                timeout: firstLocalRequestAttempt ? 10000 : 2000,
+            }, endpoint);
+            log("Warm up " + ext + " " + resp);
+        }
+    }
+    warmedUps[ext] = true;
+}
+
 export async function predict(langUtil: LangUtil, text: string, ext: string, remainingText: string, laterCode: string, lastQueryUUID: number, fileID: string, retry = true) {
     if (Preference.getSelfLearn()) {
         if (learner == null) {
@@ -164,14 +232,19 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
 
     let maskedText: string;
     let maskedRemainingText: string;
-    try {
-        maskedText = await DataMasking.mask(langUtil, text, ext);
-        maskedRemainingText = await DataMasking.mask(langUtil, remainingText, ext);
-    } catch (error) {
-        if (error instanceof MatchFailedError) {
-            return null;
+    if (localRequest) {
+        maskedText = text;
+        maskedRemainingText = remainingText;
+    } else {
+        try {
+            maskedText = await DataMasking.mask(langUtil, text, ext);
+            maskedRemainingText = await DataMasking.mask(langUtil, remainingText, ext);
+        } catch (error) {
+            if (error instanceof MatchFailedError) {
+                return null;
+            }
+            throw error;
         }
-        throw error;
     }
     const u = vscode.window.activeTextEditor.document.uri;
     const proj = vscode.workspace.getWorkspaceFolder(u);
@@ -180,8 +253,10 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
     const md5 = md5Hash(maskedText);
     ext = Preference.enterpriseExt(ext);
     const additionalParams: any = {};
-    let laterCodeReversed;
+    let laterCodeReversed: string;
+    let originalLaterCode: string;
     if (localRequest) {
+        originalLaterCode = laterCode;
         // additionalParams.fullCode = maskedText;
         laterCodeReversed = reverseString(laterCode);
         const laterOffset = CodeStore.getInstance().getDiffPosition(fileID + ".later", laterCodeReversed);
@@ -200,31 +275,49 @@ export async function predict(langUtil: LangUtil, text: string, ext: string, rem
         }
         if (ext.endsWith("(Python)")) {
             additionalParams.saExecutor = vscode.workspace.getConfiguration().get("python.pythonPath");
+        } else if (ext.endsWith("(Java)")) {
+            additionalParams.mavenConfigPath = vscode.workspace.getConfiguration().get("java.configuration.maven.userSettings");
+        }
+
+        const postForm = {
+            text: maskedText.substring(offset),    // 这个是输入的内容，暂时先用p来代替
+            ext,
+            uuid: Preference.uuid,
+            fileid: fileID,
+            project: projName,
+            projectRoot: proj ? proj.uri.fsPath : "",
+            remaining_text: maskedRemainingText,
+            queryUUID: lastQueryUUID,
+            offset,
+            md5,
+            sort: 1,
+            const: 1,
+            prob_th_ngram: 1,
+            prob_th_ngram_t: 1,
+            version: myVersion,
+            long_result_cuts: Preference.getLongResultCuts(),
+            ...Preference.getRequestParams(),
+            ...additionalParams,
+        };
+        if (Preference.getRequestParams().dumpParams) {
+            const tmp = { ...postForm };
+            const t = maskedText;
+            delete tmp.text;
+            delete tmp.offset;
+            delete tmp.md5;
+            if (tmp.laterCode) {
+                tmp.laterCode = originalLaterCode;
+                delete tmp.laterOffset;
+                delete tmp.laterMd5;
+            }
+            log(`====\n${JSON.stringify(tmp, null, 2)}\n====\n`);
+            log(`text:\n${t}\n====\n`);
         }
 
         const resp = await myRequest({
             method: "post",
             url: "predict",
-            form: {
-                text: maskedText.substring(offset),    // 这个是输入的内容，暂时先用p来代替
-                ext,
-                uuid: Preference.uuid,
-                fileid: fileID,
-                project: projName,
-                projectRoot: proj ? proj.uri.fsPath : "",
-                remaining_text: maskedRemainingText,
-                queryUUID: lastQueryUUID,
-                offset,
-                md5,
-                sort: 1,
-                const: 1,
-                prob_th_ngram: 1,
-                prob_th_ngram_t: 1,
-                version: myVersion,
-                long_result_cuts: Preference.getLongResultCuts(),
-                ...Preference.getRequestParams(),
-                ...additionalParams,
-            },
+            form: postForm,
             headers: {
                 ext,
                 uuid: Preference.uuid,
@@ -348,7 +441,7 @@ export async function checkLocalServiceUpdate() {
                 headers: {
                     "User-Agent": "aiXcoder-vscode-plugin",
                 },
-            }, "http://image.aixcoder.com");
+            }, "https://image.aixcoder.com");
         } catch (error) {
             const updateURL = "repos/aixcoder-plugin/localservice/releases/latest";
             const versionJson = await myRequest({

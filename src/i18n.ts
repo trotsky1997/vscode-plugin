@@ -123,8 +123,8 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "zh-cn": "AiXCoder: PHP Intelephense 插件没有安装或启用。请安装 PHP Intelephense 插件以获得最佳体验。",
     },
     "hookFailPerm": {
-        "en": "AiXCoder integration failed. Please restart VS Code in administator mode (only needed once before next time VS Code updates itself).",
-        "zh-cn": "AiXCoder集成失败，请以管理员权限启动VS Code以重试（VS Code更新之前只需要一次）。",
+        "en": "AiXCoder integration failed. Please restart VS Code in administator mode (only needed once before the next time VS Code updates itself).",
+        "zh-cn": "AiXCoder集成失败，请以管理员权限启动VS Code以重试（VS Code下次更新之前只需要一次）。",
     },
     "hookFailOther": {
         "en": "AiXCoder integration failed. Cause: %s",
@@ -291,7 +291,7 @@ export const localizeMessages: { [key: string]: { en: string, "zh-cn": string } 
         "zh-cn": "IntelliCode 集成失败。请确保您安装了最新版本的aiXcoder插件和VS Code。",
     },
     "switchToLocal": {
-        "en": "aiXcoder is working in online mode. Do you want to switch to local service? You can always switch between local service and online service using commands.",
+        "en": "aiXcoder code completion service is running in online mode. Do you want to switch to local service? You can always switch between local service and online service using commands.",
         "zh-cn": "aiXcoder正在使用线上服务，是否切换到本地服务？您以后可以通过命令来切换线上和本地服务。",
     },
     "switchToOnline": {

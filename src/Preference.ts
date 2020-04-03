@@ -29,7 +29,11 @@ const loginFile = new FileAutoSyncer<{ uuid?: string, token?: string }>(path.joi
     if (err) {
         return {};
     }
-    return JSON.parse(text);
+    try {
+        return JSON.parse(text);
+    } catch (error) {
+        return {};
+    }
 });
 
 export const localserver = path.join(homedir, "aiXcoder", "localserver.json");
@@ -188,7 +192,7 @@ export default class Preference {
 
     public static getLongResultRankSortText() {
         const rank = vscode.workspace.getConfiguration().get("aiXcoder.longResultRank") as number;
-        return ".0." + ((rank || 1) - 1) + ".0";
+        return ".0." + ((rank || 2) - 1).toString().padStart(3, "0");
     }
 
     public static getLongResultCuts() {

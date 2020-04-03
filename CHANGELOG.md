@@ -1,16 +1,64 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
-## [0.4.10] -
+## [1.0.3] - 
+
 ### Added
+- Starts up local server and warms up model immediately after opening a file.
 - Save model configurations globally instead of workspace-level.
 
+### Changed
+- Prevent too low or too high probility from showing up.
+- No longer keep older version of local service to save space.
+
+### Fixed
+- An occational ordering issue.
+- Show an error message when the local service failed to install.
+- (JS/TS) Typing any key will close the popup completion list.
+
+## [1.0.2] - 2020-03-23
+
+### Added
+- Support for local service 2.0.0.
+
+### Fixed
+- Will correctly reflect code change in other files when generating completions.
+
+## [1.0.0] - 2020-03-21
+Formal release of aiXcoder.
+
+## [0.4.19] - 2020-03-19
+### Fixed
+- Fixed an ordering issue.
+
+## [0.4.18] - 2020-03-13
+### Changed
+- Revised readme text.
+
+### Fixed
+- Fixed a quotes issue on JS/TS files.
+
+## [0.4.17] - 2020-02-14
+### Changed
+- Adding retries and longer timeouts, service downloading/updating is more robust.
+
+## [0.4.16] - 2020-02-14
+### Fixed
+- Fix service start up issue on MacOS and Liunx.
+
+## [0.4.13] - 2020-02-03
+### Fixed
+- Now works with Language Support for Java(TM) by Red Hat 0.55.1
+
+## [0.4.12] - 2020-02-03
 ### Changed
 - Delay Java environment check until activating java features.
 
 ### Fixed
 - A bug that checks local server status even when using online service.
 - Error when login file does not exists.
+- A first time install bug on OS X and Linux.
+- Some typos.
 
 ## [0.4.9] - 2020-01-15
 ### Added

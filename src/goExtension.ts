@@ -15,11 +15,11 @@ export async function activateGo(context: vscode.ExtensionContext) {
     let hooked = false;
     if (msgo) {
         const distjsPath = path.join(msgo.extensionPath, "out", "src", "goLanguageServer.js");
-        hooked = await JSHooker("/**AiXHooked-1**/", distjsPath, msgo, "go.reload", "go.fail", (distjs) => {
+        hooked = await JSHooker("/**AiXHooked-2**/", distjsPath, msgo, "go.reload", "go.fail", (distjs) => {
             const pciStart = SafeStringUtil.indexOf(distjs, "middleware: {");
             const A = distjs.substring(0, pciStart + "middleware: {".length);
             const B = distjs.substring(pciStart + "middleware: {".length);
-            const handleResultCode = `provideCompletionItems: async (document, position, context, token, next) => {
+            const handleResultCode = `provideCompletionItem: async (document, position, context, token, next) => {
                 let r = next(document, position, context, token);
                 const aix = require("vscode").extensions.getExtension("${myID}");
                 const api = aix && aix.exports;
