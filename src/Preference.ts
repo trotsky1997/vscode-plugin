@@ -3,10 +3,9 @@ import * as os from "os";
 import * as path from "path";
 import * as uuidv4 from "uuid/v4";
 import * as vscode from "vscode";
-import { showInformationMessageOnce } from "./extension";
 import FileAutoSyncer from "./FileAutoSyncer";
 import { localize } from "./i18n";
-import { getLocalPortSync, installerExists, switchToLocal } from "./localService";
+import { getLocalPortSync } from "./localService";
 
 function getParamsFromUrl(url: string) {
     url = decodeURI(url);
