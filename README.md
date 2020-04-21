@@ -13,7 +13,7 @@ AiXcoder is a powerful code completer & code serach engine based on state-of-the
 
 ## Features
 
-1. Java/JavaScript/TypeScript is supported now. More languages supports (Python/C++/PHP/Go) are on the way...
+1. Java is supported now. More languages supports (JavaScript/TypeScript/Python/C++/PHP/Go) are on the way...
 2. Completely works offline. Your code is safe in your hand.
 3. Long completion result with length up to a full line.
 4. Rearrange completion items in a likelyhood probability descending order.

@@ -14,6 +14,7 @@ All notable changes to the "aiXcoder" extension will be documented in this file.
 - An occational ordering issue.
 - Show an error message when the local service failed to install.
 - (JS/TS) Typing any key will close the popup completion list.
+- Updated readme.
 
 ## [1.0.2] - 2020-03-23
 
