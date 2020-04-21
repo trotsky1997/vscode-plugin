@@ -189,7 +189,7 @@ export default class Preference {
 
     public static async getEndpoint(ext: string) {
         let endpoint = "";
-        if (await Preference.hasLoginFile()) {
+        if (await Preference.hasLoginFile() && ext === "java(Java)") {
             const mc = await Preference.getLocalModelConfig();
             if (Object.keys(mc).length === 0) {
                 // prompt for switching to local
