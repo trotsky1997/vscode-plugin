@@ -1,4 +1,5 @@
-// @ts-check
+// @ts-nocheck
+
 const fs = require("fs-extra");
 const path = require("path");
 const semver = require("semver");
@@ -31,15 +32,15 @@ async function execAsync(cmd) {
 }
 
 /**
- * 
- * @param {string} zipPath 
- * @param {string} targetPath 
+ *
+ * @param {string} zipPath
+ * @param {string} targetPath
  */
 async function decompress(zipPath, targetPath) {
     try {
         await fs.remove(targetPath);
     } catch (e) {
-        //ignore
+        // ignore
     }
     if (zipPath.endsWith(".tar.gz")) {
         await execAsync(`mkdir -p "${targetPath}" && tar zxf "${zipPath}" -C "${targetPath}"`);
@@ -145,8 +146,8 @@ const localization = {
  */
 /**
  * @template T
- * @param {(...args: any[]) => Promise<T>} f 
- * @param {any[]} args 
+ * @param {(...args: any[]) => Promise<T>} f
+ * @param {any[]} args
  * @returns {Promise<T>}
  */
 async function retry(f, ...args) {
@@ -156,8 +157,8 @@ async function retry(f, ...args) {
 /**
  * @template T
  * @param {AsyncRetryOptions} [options]
- * @param {(...args: any[]) => Promise<T>} f 
- * @param {any[]} args 
+ * @param {(...args: any[]) => Promise<T>} f
+ * @param {any[]} args
  * @returns {Promise<T>}
  */
 async function _retry(options, f, ...args) {
@@ -190,10 +191,10 @@ async function _retry(options, f, ...args) {
 
 class UpdateProgress {
     /**
-     * 
-     * @param {number} status 
-     * @param {number} totalSteps 
-     * @param {DownloadProgress} [downloadProgress] 
+     *
+     * @param {number} status
+     * @param {number} totalSteps
+     * @param {DownloadProgress} [downloadProgress]
      */
     constructor(status, totalSteps, downloadProgress) {
         this.status = status;
@@ -203,54 +204,54 @@ class UpdateProgress {
     }
 
     /**
-     * 
-     * @param {string} [lang] 
-     * 
+     *
+     * @param {string} [lang]
+     *
      * @returns {string}
      */
     toString(lang) {
         lang = lang || "en";
         let status;
         switch (this.status) {
-            case UpdateStatus.FETCH_REMOTE_VERSION:
-                status = localization.STATUS_FETCH_REMOTE_VERSION[lang];
-                break;
-            case UpdateStatus.READ_LOCAL_VERSION:
-                status = localization.STATUS_READ_LOCAL_VERSION[lang];
-                break;
-            case UpdateStatus.FETCH_MANIFEST:
-                status = localization.STATUS_FETCH_MANIFEST[lang];
-                break;
-            case UpdateStatus.VERIFY_LOCAL_FILES:
-                status = localization.STATUS_VERIFY_LOCAL_FILES[lang];
-                break;
-            case UpdateStatus.DOWNLOAD_PATCH:
-                status = localization.STATUS_DOWNLOAD_PATCH[lang];
-                break;
-            case UpdateStatus.PATCH_FILE:
-                status = localization.STATUS_PATCH_FILE[lang];
-                break;
-            case UpdateStatus.SIMPLE_READ_LOCAL_VERSION:
-                status = localization.STATUS_SIMPLE_READ_LOCAL_VERSION[lang];
-                break;
-            case UpdateStatus.SIMPLE_DOWNLOAD_PATCH:
-                status = localization.STATUS_SIMPLE_DOWNLOAD_PATCH[lang];
-                break;
-            case UpdateStatus.SIMPLE_PATCH_FILE:
-                status = localization.STATUS_SIMPLE_PATCH_FILE[lang];
-                break;
-            case UpdateStatus.SIMPLE_DOWNLOAD_FULL:
-                status = localization.STATUS_SIMPLE_DOWNLOAD_FULL[lang];
-                break;
-            default:
-                status = localization.STATUS_UNKNOWN[lang];
+        case UpdateStatus.FETCH_REMOTE_VERSION:
+            status = localization.STATUS_FETCH_REMOTE_VERSION[lang];
+            break;
+        case UpdateStatus.READ_LOCAL_VERSION:
+            status = localization.STATUS_READ_LOCAL_VERSION[lang];
+            break;
+        case UpdateStatus.FETCH_MANIFEST:
+            status = localization.STATUS_FETCH_MANIFEST[lang];
+            break;
+        case UpdateStatus.VERIFY_LOCAL_FILES:
+            status = localization.STATUS_VERIFY_LOCAL_FILES[lang];
+            break;
+        case UpdateStatus.DOWNLOAD_PATCH:
+            status = localization.STATUS_DOWNLOAD_PATCH[lang];
+            break;
+        case UpdateStatus.PATCH_FILE:
+            status = localization.STATUS_PATCH_FILE[lang];
+            break;
+        case UpdateStatus.SIMPLE_READ_LOCAL_VERSION:
+            status = localization.STATUS_SIMPLE_READ_LOCAL_VERSION[lang];
+            break;
+        case UpdateStatus.SIMPLE_DOWNLOAD_PATCH:
+            status = localization.STATUS_SIMPLE_DOWNLOAD_PATCH[lang];
+            break;
+        case UpdateStatus.SIMPLE_PATCH_FILE:
+            status = localization.STATUS_SIMPLE_PATCH_FILE[lang];
+            break;
+        case UpdateStatus.SIMPLE_DOWNLOAD_FULL:
+            status = localization.STATUS_SIMPLE_DOWNLOAD_FULL[lang];
+            break;
+        default:
+            status = localization.STATUS_UNKNOWN[lang];
         }
         status = `(${this.step}/${this.totalSteps}) ${status}`;
         if (this.downloadProgress) {
             status += `${this.downloadProgress.filesDownloaded}/${this.downloadProgress.totalFiles}`;
             if (this.downloadProgress.downloadProgresses && this.downloadProgress.downloadProgresses.length > 0) {
                 status += " - ";
-                for (let fileProgress of this.downloadProgress.downloadProgresses) {
+                for (const fileProgress of this.downloadProgress.downloadProgresses) {
                     status += `\n${fileProgress.name}: ${fileProgress.transferred}/${fileProgress.total} - `;
                     status += fileProgress.percent.toLocaleString(undefined, { style: "percent", minimumFractionDigits: 2 });
                 }
@@ -261,11 +262,11 @@ class UpdateProgress {
 }
 
 /**
- * 
- * @param {string} uri 
+ *
+ * @param {string} uri
  * @param {string} targetFolder
  * @param {string} [filename]
- * @param {(progress: FileProgressLite) => void} [progressListener] 
+ * @param {(progress: FileProgressLite) => void} [progressListener]
  * @param {AiXCancellationToken} token
  * @returns {Promise<void>}
  */
@@ -302,8 +303,8 @@ async function downloadTo(uri, targetFolder, filename, progressListener, token) 
 }
 
 /**
- * @param {string} uri 
- * @param {(progress: FileProgressLite) => void} [progressListener] 
+ * @param {string} uri
+ * @param {(progress: FileProgressLite) => void} [progressListener]
  * @param {AiXCancellationToken} token
  * @returns {Promise<Buffer>}
  */
@@ -334,9 +335,9 @@ async function download(uri, progressListener, token) {
 }
 
 /**
- * 
+ *
  * @param {string[]} args
- * 
+ *
  * @returns {string}
  */
 function joinAbsoluteUrlPath(...args) {
@@ -355,7 +356,7 @@ function joinAbsoluteUrlPath(...args) {
 
 /**
  * @param {string} file
- * 
+ *
  * @returns {Promise<string>}
  */
 async function calcDigest(file) {
@@ -374,8 +375,8 @@ async function calcDigest(file) {
 }
 
 /**
- * 
- * @param {string} manifestString 
+ *
+ * @param {string} manifestString
  */
 function parseManifest(manifestString) {
     const fileList = [];
@@ -393,12 +394,12 @@ function parseManifest(manifestString) {
 }
 
 /**
- * 
+ *
  * @param {PatchInfo[]} patches the patche files.
- * @param {boolean} verifyOld 
- * @param {boolean} verifyNew 
- * @param {AiXCancellationToken} token 
- * @param {(digest: string) => string} getPatchedFileTemp 
+ * @param {boolean} verifyOld
+ * @param {boolean} verifyNew
+ * @param {AiXCancellationToken} token
+ * @param {(digest: string) => string} getPatchedFileTemp
  */
 async function applyAllPatches(patches, verifyOld, verifyNew, getPatchedFileTemp, token) {
     await Promise.all(patches.map(async({ file, patchFile, oldDigest, newDigest }) => {
@@ -414,7 +415,7 @@ async function applyAllPatches(patches, verifyOld, verifyNew, getPatchedFileTemp
         const patchedFileTemp = getPatchedFileTemp(newDigest);
         try {
             if (!hasNative) {
-                throw "";
+                throw new Error();
             }
             const verifyNewDigest = await calcDigest(patchedFileTemp);
             if (verifyNewDigest !== newDigest) {
@@ -474,13 +475,13 @@ class AiXCancellationToken {
 }
 
 /**
- * 
- * @param {string} url 
- * @param {string} targetPath 
- * @param {(p: FileProgressLite) => void} onProgress 
- * @param {(elapsed: number, transferred: number, speed: number) => void} onSpeed 
- * @param {(err?: any) => void} onErr 
- * @param {AiXCancellationToken} token 
+ *
+ * @param {string} url
+ * @param {string} targetPath
+ * @param {(p: FileProgressLite) => void} onProgress
+ * @param {(elapsed: number, transferred: number, speed: number) => void} onSpeed
+ * @param {(err?: any) => void} onErr
+ * @param {AiXCancellationToken} token
  */
 async function downloadEx(url, targetPath, onProgress, onSpeed, onErr, token, timeout = 5000) {
     let speedTestStart = 0;
@@ -531,19 +532,19 @@ async function downloadEx(url, targetPath, onProgress, onSpeed, onErr, token, ti
 
 
 /**
- * 
- * @param {string} url 
- * @param {AiXCancellationToken} cancellationToken 
+ *
+ * @param {string} url
+ * @param {AiXCancellationToken} cancellationToken
  */
 async function getDownloadSpeed(url, cancellationToken) {
     const tmpPath = "speedtest." + Math.random() + ".tmp";
     let testSpeed = 0;
     let tries = 3;
-    let timeout = 5000;
+    const timeout = 5000;
     while (true) {
         try {
             await downloadEx(url, tmpPath, (p) => {
-                //progress
+                // progress
             }, (elapsed, transferred, speed) => {
                 testSpeed = speed;
                 if (elapsed > 3000 || transferred > 100 * 1024) {
@@ -572,8 +573,8 @@ async function getDownloadSpeed(url, cancellationToken) {
 
 class AixUpdaterClient {
     /**
-     * 
-     * @param {string[]} urlList 
+     *
+     * @param {string[]} urlList
      * @param {AiXCancellationToken} token
      */
     static async selectBestMirror(urlList, token) {
@@ -594,6 +595,7 @@ class AixUpdaterClient {
 
     /**
      * Patch a local folder with a simple patch
+     *
      * @param {string} localPath
      * @param {string | string[]} patchUrl
      * @param {string | string[]} fullDownloadUrl
@@ -643,7 +645,7 @@ class AixUpdaterClient {
                     }));
                 }, token);
                 checkCancelled();
-                downloadStatus.transferred == downloadStatus.total;
+                downloadStatus.transferred = downloadStatus.total;
                 downloadStatus.percent = 1;
                 progressListener(new UpdateProgress(UpdateStatus.SIMPLE_DOWNLOAD_PATCH, nStatus, {
                     totalFiles: 1,
@@ -718,56 +720,57 @@ class AixUpdaterClient {
                 await fs.remove(path.join(localPath, filename));
             }
         }
-
-        checkCancelled();
-        const urlList = fullDownloadUrl;
-        fullDownloadUrl = await this.selectBestMirror(fullDownloadUrl, token);
-        if (fullDownloadUrl == null) {
-            throw new Error("No download url is reachable in " + util.inspect(urlList));
-        }
-        const fullFileName = fullDownloadUrl.substring(fullDownloadUrl.lastIndexOf("/") + 1);
-        /** @type {FileProgress} */
-        const downloadStatus = {
-            name: fullFileName,
-            percent: 0,
-            total: 0,
-            transferred: 0,
-        };
-        await downloadTo(fullDownloadUrl, path.resolve(localPath, ".."), fullFileName, (progress) => {
-            Object.assign(downloadStatus, progress);
-            progressListener(new UpdateProgress(UpdateStatus.SIMPLE_DOWNLOAD_FULL, nStatus, {
-                totalFiles: 1,
-                filesDownloaded: 0,
-                downloadProgresses: [downloadStatus]
-            }));
-        }, token);
-        const patchFolder = path.resolve(localPath, "..", "__" + fullFileName + "__");
-        checkCancelled();
-        await beforeUpdate("decompress");
-        await decompress(path.resolve(localPath, "..", fullFileName), patchFolder);
-        checkCancelled();
-        await beforeUpdate("patch");
-        checkCancelled();
-        if (localVersion !== "0.0.0") {
-            try {
-                if (!(await fs.stat(localPath)).isDirectory()) {
-                    await fs.remove(localPath);
+        {
+            checkCancelled();
+            const urlList = fullDownloadUrl;
+            fullDownloadUrl = await this.selectBestMirror(fullDownloadUrl, token);
+            if (fullDownloadUrl == null) {
+                throw new Error("No download url is reachable in " + util.inspect(urlList));
+            }
+            const fullFileName = fullDownloadUrl.substring(fullDownloadUrl.lastIndexOf("/") + 1);
+            /** @type {FileProgress} */
+            const downloadStatus = {
+                name: fullFileName,
+                percent: 0,
+                total: 0,
+                transferred: 0,
+            };
+            await downloadTo(fullDownloadUrl, path.resolve(localPath, ".."), fullFileName, (progress) => {
+                Object.assign(downloadStatus, progress);
+                progressListener(new UpdateProgress(UpdateStatus.SIMPLE_DOWNLOAD_FULL, nStatus, {
+                    totalFiles: 1,
+                    filesDownloaded: 0,
+                    downloadProgresses: [downloadStatus]
+                }));
+            }, token);
+            const patchFolder = path.resolve(localPath, "..", "__" + fullFileName + "__");
+            checkCancelled();
+            await beforeUpdate("decompress");
+            await decompress(path.resolve(localPath, "..", fullFileName), patchFolder);
+            checkCancelled();
+            await beforeUpdate("patch");
+            checkCancelled();
+            if (localVersion !== "0.0.0") {
+                try {
+                    if (!(await fs.stat(localPath)).isDirectory()) {
+                        await fs.remove(localPath);
+                    }
+                    await fs.rename(localPath, path.resolve(localPath, "..", localVersion));
+                } catch (error) {
+                    // first time install
+                    console.log(error);
                 }
-                await fs.rename(localPath, path.resolve(localPath, "..", localVersion));
-            } catch (error) {
-                // first time install
-                console.log(error);
             }
-        }
-        await fs.remove(localPath);
-        await fs.rename(patchFolder, localPath);
-        for (let f of await fs.readdir(path.resolve(localPath, ".."))) {
-            f = path.resolve(localPath, "..", f);
-            if (f !== localPath) {
-                fs.remove(f);
+            await fs.remove(localPath);
+            await fs.rename(patchFolder, localPath);
+            for (let f of await fs.readdir(path.resolve(localPath, ".."))) {
+                f = path.resolve(localPath, "..", f);
+                if (f !== localPath) {
+                    fs.remove(f);
+                }
             }
+            return AixUpdaterClient.getCurrentLocalVersion(localPath);
         }
-        return AixUpdaterClient.getCurrentLocalVersion(localPath);
     }
 
     /**
@@ -775,11 +778,11 @@ class AixUpdaterClient {
      * @property {string} baseUrl The CDN storage path
      * @property {string} artifact The internal artifact ID
      * @property {string} [storageFolder] The storage folder to save patch and backup files to.
-     *                                    The folder will be created if not already exists.
-     *                                    You can safely delete the folder after the update, but it will
-     *                                    save time if you need to revert to a previous version.
-     *                                    It creates a folder called `aixupdatercache` under current directory
-     *                                    if not specified.
+     * The folder will be created if not already exists.
+     * You can safely delete the folder after the update, but it will
+     * save time if you need to revert to a previous version.
+     * It creates a folder called `aixupdatercache` under current directory
+     * if not specified.
      * @property {number} [maxConcurrency] The max download concurrency. Default value 5.
      */
 
@@ -792,8 +795,8 @@ class AixUpdaterClient {
      */
 
     /**
-     * 
-     * @param {AixUpdaterOptions} options 
+     *
+     * @param {AixUpdaterOptions} options
      */
     constructor(options) {
         this.baseUrl = joinAbsoluteUrlPath(options.baseUrl, "update", options.artifact);
@@ -803,9 +806,9 @@ class AixUpdaterClient {
 
     /**
      * Reads the current version of `localPath` by reading version file
-     * 
+     *
      * @param {string} localPath the path to the local directory containing the need-to-update artifact.
-     * 
+     *
      * @returns {Promise<string>} current version of `localPath`
      */
     static async getCurrentLocalVersion(localPath) {
@@ -818,7 +821,7 @@ class AixUpdaterClient {
                 const versionFile = path.join(localPath, ".version");
                 const version = await fs.promises.readFile(versionFile, "utf-8");
                 return version;
-            } catch (error) {
+            } catch (error2) {
                 return "0.0.0";
             }
         }
@@ -826,7 +829,7 @@ class AixUpdaterClient {
 
     /**
      * Check the newest version online
-     * 
+     *
      * @param {AiXCancellationToken} [token]
      * @returns {Promise<string | void>} newest version online
      */
@@ -837,7 +840,7 @@ class AixUpdaterClient {
 
     /**
      * Compares local version against the newest version online.
-     * 
+     *
      * @param {string} currentVersion the current version to compare
      * @param {AiXCancellationToken} [token]
      * @returns {Promise<string | void>} If there is a newer version available, returns the new version. Otherwise returns null.
@@ -849,8 +852,8 @@ class AixUpdaterClient {
     }
 
     /**
-     * 
-     * @param {string} version 
+     *
+     * @param {string} version
      * @param {AiXCancellationToken} [token]
      * @returns {Promise<FileInfo[]>}
      */
@@ -864,7 +867,7 @@ class AixUpdaterClient {
 
     /**
      * Download patch files to temporary folder.
-     * 
+     *
      * @param {string} localPath the path to the local directory containing the need-to-update artifact.
      * @param {string} toVersion the target version to update to
      * @param {(progress: UpdateProgress) => void} progressListener
@@ -1006,12 +1009,12 @@ class AixUpdaterClient {
 
     /**
      * Apply patch files to a folder
-     * 
+     *
      * @param {PatchInfo[]} patches the patche files.
      * @param {boolean} [verifyOld] check file integrity before patching
      * @param {boolean} [verifyNew] check file integrity after patching
      * @param {AiXCancellationToken} [token]
-     * 
+     *
      * @returns {Promise<void>}
      */
     async applyPatch(patches, verifyOld, verifyNew, token) {
@@ -1028,7 +1031,7 @@ class AixUpdaterClient {
 
     /**
      * Fetch newest patch files and apply them
-     * 
+     *
      * @param {string} localPath the path to the local directory containing the need-to-update artifact.
      * @param {string | void} [targetVersion] the target version to update to
      * @param {(progress: UpdateProgress) => void} [progressListener]
