@@ -1,7 +1,7 @@
 # Change Log
 All notable changes to the "aiXcoder" extension will be documented in this file.
 
-## [1.0.3] - 
+## [1.0.3] - 2020-04-22
 
 ### Added
 - Starts up local server and warms up model immediately after opening a file.
